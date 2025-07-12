@@ -1,0 +1,252 @@
+.formulario-socio,
+.formulario-proveedor-con-hotel,
+.formulario-proveedor-sin-hotel {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.formulario-socio h3,
+.formulario-proveedor-con-hotel h3,
+.formulario-proveedor-sin-hotel h3 {
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Secciones con colores diferentes */
+.seccion {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.datos-empresa {
+  background: #e8f4fd;
+  border-left-color: #3498db;
+}
+
+.datos-persona {
+  background: #f0f9f0;
+  border-left-color: #27ae60;
+}
+
+.seccion h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Subsecciones */
+.subseccion {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+}
+
+.datos-personales {
+  background: #fff8e1;
+  border-left: 3px solid #f39c12;
+}
+
+.checkin-checkout {
+  background: #fce4ec;
+  border-left: 3px solid #e91e63;
+}
+
+.acreditaciones {
+  background: #f3e5f5;
+  border-left: 3px solid #9c27b0;
+}
+
+.cena-cierre {
+  background: #e8f5e8;
+  border-left: 3px solid #4caf50;
+}
+
+.agenda-reuniones {
+  background: #fff3e0;
+  border-left: 3px solid #ff9800;
+}
+
+.comentarios {
+  background: #f5f5f5;
+  border-left-color: #95a5a6;
+}
+
+.subseccion h5 {
+  margin: 0 0 1rem 0;
+  color: #34495e;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Grid de formularios */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Checkboxes */
+.checkbox-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Botones */
+.btn-primary,
+.btn-success,
+.btn-secondary,
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+/* Acciones del formulario */
+.form-actions {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.agregar-persona {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+/* Textarea para comentarios */
+.comentarios textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Nueva clase para información del hotel */
+.hotel-info {
+  background: #e3f2fd;
+  border-left: 3px solid #2196f3;
+}
+
+/* Nueva clase para transporte y alojamiento */
+.transporte-alojamiento {
+  background: #fff9c4;
+  border-left: 3px solid #ffeb3b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .checkbox-group {
+    flex-direction: column;
+  }
+  
+  .seccion-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+}
