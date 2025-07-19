@@ -14,33 +14,23 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      // Primero verificar si el usuario existe en nuestra base de datos
-      const userData = await FirebaseService.obtenerUsuarioPorEmail(email);
+      console.log('🔐 Login: Intentando login para:', email);
       
-      if (!userData) {
-        setError('Usuario no encontrado');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar la contraseña (en desarrollo, usar la contraseña almacenada)
-      if (userData.password !== password) {
-        setError('Contraseña incorrecta');
-        setLoading(false);
-        return;
-      }
-
-      // Si es válido, hacer login
-      onLogin({
+      // ✅ USAR validarLogin que ya tiene toda la lógica:
+      const userData = await FirebaseService.validarLogin(email, password);
+      
+      console.log('✅ Login: Usuario validado:', {
+        id: userData.id,
         email: userData.email,
-        perfil: userData.perfil,
-        primerIngreso: userData.primerIngreso,
-        id: userData.id
+        passwordCambiado: userData.passwordCambiado
       });
-
+      
+      // ✅ PASAR TODOS los datos del usuario:
+      onLogin(userData); // Todo el objeto con todos los campos reales
+      
     } catch (error) {
-      console.error('Error en login:', error);
-      setError('Error al iniciar sesión');
+      console.error('❌ Login: Error:', error);
+      setError(error.message || 'Error al iniciar sesión');
     }
     
     setLoading(false);
@@ -62,6 +52,7 @@ function Login({ onLogin }) {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              placeholder="Ingresa tu email"
             />
           </div>
           <div className="form-group">
@@ -73,6 +64,7 @@ function Login({ onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              placeholder="Ingresa tu contraseña"
             />
           </div>
           {error && <div className="error">{error}</div>}
@@ -80,6 +72,27 @@ function Login({ onLogin }) {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+        
+        {/* Botón temporal para debugging */}
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <button 
+            type="button"
+            onClick={() => {
+              setEmail('admin@redacero.com');
+              setPassword('admin123');
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.8rem'
+            }}
+          >
+            🔧 Login Admin (Dev)
+          </button>
+        </div>
       </div>
     </div>
   );

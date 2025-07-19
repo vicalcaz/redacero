@@ -1,56 +1,158 @@
-/* filepath: c:\Users\Public\RedAcero\redacero-eventos\src\components\EventManagement.jsx */
 import { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 import './EventManagement.css';
+import SubirImagen from './SubirImagen';
 
 function EventManagement() {
   const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [imagenBase64, setImagenBase64] = useState(null);
+
   const [nuevoEvento, setNuevoEvento] = useState({
     nombre: '',
-    fecha: '',
-    formularioTipo: 'Socio'
+    descripcion: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    ubicacion: '',
+    estado: 'planificado',
+    destacado: false,
+    imagenBase64: null
   });
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-
-  const tiposFormulario = ['Socio', 'Proveedor con hotel', 'Proveedor sin hotel'];
 
   useEffect(() => {
     cargarEventos();
   }, []);
 
-  const cargarEventos = async () => {
-    try {
-      const eventosData = await FirebaseService.obtenerEventos();
-      setEventos(eventosData);
-    } catch (error) {
-      console.error('Error cargando eventos:', error);
-    }
-  };
-
-  const handleCrearEvento = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setGuardando(true);
+
+    if (nuevoEvento.fechaHasta && nuevoEvento.fechaDesde &&
+      new Date(nuevoEvento.fechaHasta) < new Date(nuevoEvento.fechaDesde)) {
+      alert('❌ La fecha hasta no puede ser anterior a la fecha desde');
+      setGuardando(false);
+      return;
+    }
+
+    const eventoData = {
+      ...nuevoEvento,
+      imagenBase64: imagenBase64,
+      fechaCreacion: editando ? editando.fechaCreacion : new Date().toISOString(),
+      fechaActualizacion: new Date().toISOString(),
+      fechaCreacionString: editando ? editando.fechaCreacionString : new Date().toLocaleString('es-AR'),
+      fechaActualizacionString: new Date().toLocaleString('es-AR')
+    };
+
     try {
-      await FirebaseService.crearEvento(nuevoEvento);
-      setNuevoEvento({ nombre: '', fecha: '', formularioTipo: 'Socio' });
-      setMostrarFormulario(false);
+      if (editando) {
+        await FirebaseService.actualizarEvento(editando.id, eventoData);
+        alert('✅ Evento actualizado exitosamente');
+      } else {
+        await FirebaseService.crearEvento(eventoData);
+        alert('✅ Evento creado exitosamente');
+      }
+      limpiarFormulario();
       cargarEventos();
     } catch (error) {
-      console.error('Error creando evento:', error);
+      console.error('Error guardando evento:', error);
+      alert('❌ Error al guardar el evento');
+    } finally {
+      setGuardando(false);
     }
   };
 
-  const handleEliminarEvento = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este evento?')) {
+  const cargarEventos = async () => {
+    try {
+      setLoading(true);
+      const data = await FirebaseService.obtenerEventos();
+      setEventos(data);
+    } catch (error) {
+      console.error('Error cargando eventos:', error);
+      alert('Error al cargar eventos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditar = (evento) => {
+    setEditando(evento);
+    setNuevoEvento({
+      nombre: evento.nombre || '',
+      descripcion: evento.descripcion || '',
+      fechaDesde: evento.fechaDesde || '',
+      fechaHasta: evento.fechaHasta || '',
+      ubicacion: evento.ubicacion || '',
+      estado: evento.estado || 'planificado',
+      destacado: evento.destacado || false,
+      imagenBase64: evento.imagenBase64 || null
+    });
+    setImagenBase64(evento.imagenBase64 || null);
+  };
+
+  const limpiarFormulario = () => {
+    setNuevoEvento({
+      nombre: '',
+      descripcion: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      ubicacion: '',
+      estado: 'planificado',
+      destacado: false,
+      imagenBase64: null
+    });
+    setImagenBase64(null);
+    setEditando(null);
+  };
+
+  const actualizarCampo = (campo, valor) => {
+    setNuevoEvento(prev => ({
+      ...prev,
+      [campo]: valor
+    }));
+  };
+
+  const handleEliminar = async (id) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
       try {
         await FirebaseService.eliminarEvento(id);
+        alert('✅ Evento eliminado exitosamente');
         cargarEventos();
       } catch (error) {
         console.error('Error eliminando evento:', error);
+        alert('❌ Error al eliminar el evento');
       }
     }
   };
 
+  const toggleDestacado = async (evento) => {
+    try {
+      const nuevoEstadoDestacado = !evento.destacado;
+      await FirebaseService.actualizarEvento(evento.id, {
+        destacado: nuevoEstadoDestacado,
+        fechaActualizacion: new Date().toISOString(),
+        fechaActualizacionString: new Date().toLocaleString('es-AR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      });
+      alert(nuevoEstadoDestacado ?
+        '⭐ Evento marcado como destacado' :
+        '☆ Evento removido de destacados'
+      );
+      cargarEventos();
+    } catch (error) {
+      console.error('Error actualizando estado destacado:', error);
+      alert('❌ Error al actualizar el evento');
+    }
+  };
+
   const formatearFecha = (fecha) => {
+    if (!fecha) return '';
     return new Date(fecha).toLocaleDateString('es-AR', {
       year: 'numeric',
       month: 'long',
@@ -58,97 +160,231 @@ function EventManagement() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Cargando eventos...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="event-management">
-      <div className="header">
-        <h2>Administración de Eventos</h2>
-        <button 
-          className="btn-primary"
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-        >
-          {mostrarFormulario ? 'Cancelar' : 'Nuevo Evento'}
-        </button>
+    <div className="gestion-eventos-container">
+      <div className="gestion-eventos-header">
+        <h1>Gestión de Eventos</h1>
+        <p>Administre las fechas, detalles e imágenes de los eventos</p>
       </div>
 
-      {mostrarFormulario && (
-        <div className="formulario-evento">
-          <h3>Crear Nuevo Evento</h3>
-          <form onSubmit={handleCrearEvento}>
-            <div className="form-group">
-              <label>Nombre del Evento:</label>
-              <input
-                type="text"
-                value={nuevoEvento.nombre}
-                onChange={(e) => setNuevoEvento({...nuevoEvento, nombre: e.target.value})}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Fecha del Evento:</label>
-              <input
-                type="date"
-                value={nuevoEvento.fecha}
-                onChange={(e) => setNuevoEvento({...nuevoEvento, fecha: e.target.value})}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Tipo de Formulario:</label>
-              <select
-                value={nuevoEvento.formularioTipo}
-                onChange={(e) => setNuevoEvento({...nuevoEvento, formularioTipo: e.target.value})}
-              >
-                {tiposFormulario.map(tipo => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn-success">Crear Evento</button>
-              <button 
-                type="button" 
-                className="btn-secondary"
-                onClick={() => setMostrarFormulario(false)}
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <div className="gestion-eventos-card">
+        <h2>{editando ? 'Editar Evento' : 'Crear Nuevo Evento'}</h2>
+        <form onSubmit={handleSubmit} className="event-form">
+          <div className="form-group">
+            <label htmlFor="nombre">Nombre del Evento *</label>
+            <input
+              type="text"
+              id="nombre"
+              value={nuevoEvento.nombre}
+              onChange={(e) => actualizarCampo('nombre', e.target.value)}
+              required
+            />
+          </div>
 
-      <div className="tabla-eventos">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Fecha</th>
-              <th>Formulario Asignado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
+          <div className="form-group">
+            <label htmlFor="descripcion">Descripción</label>
+            <textarea
+              id="descripcion"
+              value={nuevoEvento.descripcion}
+              onChange={(e) => actualizarCampo('descripcion', e.target.value)}
+              rows="3"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="fechaDesde">Fecha Desde</label>
+            <input
+              type="date"
+              id="fechaDesde"
+              value={nuevoEvento.fechaDesde}
+              onChange={(e) => actualizarCampo('fechaDesde', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="fechaHasta">Fecha Hasta</label>
+            <input
+              type="date"
+              id="fechaHasta"
+              value={nuevoEvento.fechaHasta}
+              onChange={(e) => actualizarCampo('fechaHasta', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="ubicacion">Ubicación</label>
+            <input
+              type="text"
+              id="ubicacion"
+              value={nuevoEvento.ubicacion}
+              onChange={(e) => actualizarCampo('ubicacion', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="estado">Estado</label>
+            <select
+              id="estado"
+              value={nuevoEvento.estado}
+              onChange={(e) => actualizarCampo('estado', e.target.value)}
+            >
+              <option value="planificado">Planificado</option>
+              <option value="activo">Activo</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div className="form-group destacado-section">
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="destacado"
+                checked={nuevoEvento.destacado}
+                onChange={(e) => actualizarCampo('destacado', e.target.checked)}
+                className="destacado-checkbox"
+              />
+              <label htmlFor="destacado" className="destacado-label">
+                <span className="checkbox-icon">
+                  {nuevoEvento.destacado ? '⭐' : '☆'}
+                </span>
+                <span className="checkbox-text">
+                  <strong>Evento Destacado</strong>
+                  <small>Se mostrará prominentemente en la página de inicio</small>
+                </span>
+              </label>
+            </div>
+            {nuevoEvento.destacado && (
+              <div className="destacado-info">
+                <p>✨ Este evento aparecerá destacado en la página principal</p>
+                <p>💡 <strong>Recomendación:</strong> Los eventos destacados deben tener imagen para mejor presentación</p>
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>🖼️ Imagen del Evento</label>
+            <SubirImagen
+              onImagenSeleccionada={setImagenBase64}
+              imagenActual={imagenBase64}
+            />
+          </div>
+
+          <div className="form-actions">
+            {editando && (
+              <button type="button" onClick={limpiarFormulario} className="gestion-eventos-btn btn-secundario">
+                Cancelar Edición
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={guardando}
+              className="gestion-eventos-btn btn-primario"
+            >
+              {guardando ? 'Guardando...' : editando ? 'Actualizar Evento' : 'Crear Evento'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="gestion-eventos-card">
+        <h2>Eventos Creados ({eventos.length})</h2>
+        {eventos.length === 0 ? (
+          <div className="no-events">
+            <p>No hay eventos creados aún.</p>
+            <p>¡Crea tu primer evento usando el formulario de arriba!</p>
+          </div>
+        ) : (
+          <div className="events-grid">
             {eventos.map(evento => (
-              <tr key={evento.id}>
-                <td>{evento.nombre}</td>
-                <td>{formatearFecha(evento.fecha)}</td>
-                <td>
-                  <span className={`badge ${evento.formularioTipo.replace(/\s+/g, '-').toLowerCase()}`}>
-                    {evento.formularioTipo}
-                  </span>
-                </td>
-                <td>
-                  <button 
-                    className="btn-danger"
-                    onClick={() => handleEliminarEvento(evento.id)}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
+              <div key={evento.id} className={`event-card ${evento.destacado ? 'destacado' : ''}`}>
+                {evento.imagenBase64 && (
+                  <div className="event-image-container">
+                    <img
+                      src={evento.imagenBase64}
+                      alt={evento.nombre}
+                      className="event-image"
+                    />
+                  </div>
+                )}
+                <div className="event-header">
+                  <h3>
+                    {evento.destacado && <span className="star-icon">⭐</span>}
+                    {evento.nombre}
+                  </h3>
+                  <div className="event-actions">
+                    <button
+                      onClick={() => toggleDestacado(evento)}
+                      className={`btn-star ${evento.destacado ? 'active' : ''}`}
+                      title={evento.destacado ? 'Quitar de destacados' : 'Marcar como destacado'}
+                    >
+                      {evento.destacado ? '⭐' : '☆'}
+                    </button>
+                    <button
+                      onClick={() => handleEditar(evento)}
+                      className="btn-edit"
+                      title="Editar evento"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleEliminar(evento.id)}
+                      className="btn-delete"
+                      title="Eliminar evento"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+                <div className="event-content">
+                  {evento.descripcion && (
+                    <p className="event-description">{evento.descripcion}</p>
+                  )}
+                  <div className="event-details">
+                    {evento.fechaDesde && (
+                      <div className="detail-item">
+                        <span className="detail-icon">📅</span>
+                        <span className="detail-text">
+                          {evento.fechaDesde?.split('-').reverse().join('/')}
+                          {evento.fechaHasta && evento.fechaHasta !== evento.fechaDesde &&
+                            ` - ${evento.fechaHasta.split('-').reverse().join('/')}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    {evento.ubicacion && (
+                      <div className="detail-item">
+                        <span className="detail-icon">📍</span>
+                        <span className="detail-text">{evento.ubicacion}</span>
+                      </div>
+                    )}
+                    <div className="detail-item">
+                      <span className="detail-icon">📊</span>
+                      <span className={`status-badge status-${evento.estado}`}>
+                        {evento.estado?.charAt(0).toUpperCase() + evento.estado?.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="event-metadata">
+                    <small>Creado: {evento.fechaCreacionString}</small>
+                    {evento.fechaActualizacionString && evento.fechaActualizacionString !== evento.fechaCreacionString && (
+                      <small>Actualizado: {evento.fechaActualizacionString}</small>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,18 +10,21 @@ Aplicación web para administrar eventos, usuarios y formularios de inscripción
 
 - **Gestión de Usuarios**: Crear, editar y eliminar usuarios con diferentes perfiles
 - **Administración de Eventos**: Crear y gestionar eventos con fechas y tipos de formulario
+- **Eventos Destacados**: Sistema de marcado de eventos importantes con visualización preferente
 - **Formularios Dinámicos**: Tres tipos de formularios personalizados:
   - Formulario para Socios
   - Formulario para Proveedores con Hotel
   - Formulario para Proveedores sin Hotel
 - **Autenticación**: Sistema de login seguro
 - **Base de datos en tiempo real**: Sincronización automática con Firebase
+- **Gestión de Imágenes**: Sistema simplificado exclusivamente con URLs externas
 
 ## 🛠️ Tecnologías
 
 - **Frontend**: React 18 + Vite
 - **Base de datos**: Firebase Firestore
 - **Autenticación**: Firebase Auth
+- **Imágenes**: URLs externas únicamente (ImgBB, Cloudinary, Unsplash)
 - **Styling**: CSS personalizado
 - **Hosting**: Firebase Hosting
 
@@ -32,6 +35,7 @@ Aplicación web para administrar eventos, usuarios y formularios de inscripción
 - Node.js (versión 16 o superior)
 - npm o yarn
 - Cuenta de Firebase
+- *(No requiere Firebase Storage)*
 
 ### Pasos de instalación
 
@@ -48,8 +52,9 @@ npm install
 
 3. **Configurar Firebase**
    - Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
-   - Habilitar Firestore Database
-   - Habilitar Authentication
+   - Habilitar **Firestore Database** únicamente
+   - Habilitar **Authentication**
+   - **NO es necesario habilitar Storage**
    - Obtener credenciales de configuración
 
 4. **Configurar variables de entorno**
@@ -102,6 +107,7 @@ src/
 │   │   └── FormularioProveedorSinHotel.jsx
 │   ├── AdminNavbar.jsx
 │   ├── AdminNavbar.css
+│   ├── EventosDestacados.jsx
 │   ├── Login.jsx
 │   ├── Login.css
 │   ├── UserManagement.jsx
@@ -109,7 +115,8 @@ src/
 │   ├── EventManagement.jsx
 │   ├── EventManagement.css
 │   ├── FormularioManagement.jsx
-│   └── FormularioManagement.css
+│   ├── FormularioManagement.css
+│   └── PersonalizacionFormularios.jsx
 ├── firebase/
 │   └── config.js
 ├── services/
@@ -126,8 +133,9 @@ src/
 
 ### Administrador
 - Gestión completa de usuarios
-- Administración de eventos
+- Administración de eventos y eventos destacados
 - Acceso a todos los formularios
+- Personalización de formularios
 
 ### Socios
 - Acceso al formulario específico para socios
@@ -143,113 +151,149 @@ src/
 - Campos de transporte propio
 - Información de alojamiento externo
 
+## 🖼️ Gestión de Imágenes con ImgBB Integrado
+
+La aplicación incluye **integración directa con ImgBB** para subir imágenes de forma automática y obtener URLs instantáneas.
+
+### 🚀 Funcionalidad de subida automática:
+
+#### **Subir imagen directamente a ImgBB:**
+1. **Hacer clic en "Subir imagen a ImgBB"**
+2. **Seleccionar archivo** desde tu dispositivo
+3. **Subida automática** - La imagen se sube a ImgBB
+4. **URL automática** - El campo se llena automáticamente
+5. **Preview instantáneo** - Ver la imagen inmediatamente
+
+### 🎯 Ventajas de la integración ImgBB:
+- ✅ **Un solo clic** - Proceso completamente automatizado
+- ✅ **Sin registro** - No necesitas cuenta en ImgBB
+- ✅ **URLs permanentes** - Las imágenes no se borran
+- ✅ **Hasta 32MB** - Límite generoso de tamaño
+- ✅ **CDN rápido** - Carga optimizada globalmente
+- ✅ **Gratuito ilimitado** - Sin restricciones de uso
+
+### 🔧 Características técnicas:
+- **API directa**: Integración con ImgBB API
+- **Subida asíncrona**: No bloquea la interfaz
+- **Validación automática**: Verifica tipos de archivo
+- **Gestión de errores**: Mensajes claros si hay problemas
+- **Indicador de progreso**: Muestra estado de subida
+- **Fallback manual**: Opción de URL manual siempre disponible
+
+### 📱 Opciones disponibles:
+
+1. **🚀 Subida automática a ImgBB** (Recomendado)
+   - Seleccionar archivo → Subida automática
+   - URL se genera automáticamente
+   - Preview instantáneo
+
+2. **✏️ URL manual**
+   - Pegar cualquier URL de imagen
+   - Funciona con cualquier servicio
+   - Validación automática
+
+3. **🌐 Servicios externos**
+   - Cloudinary para uso profesional
+   - Unsplash para imágenes stock
+   - Acceso directo desde la interfaz
+
+4. **🖼️ Galería de ejemplos**
+   - Imágenes temáticas pre-seleccionadas
+   - Un clic para usar
+   - Perfecto para testing
+
+### 📏 Especificaciones de ImgBB:
+- **Formatos soportados**: JPG, PNG, GIF, WebP, BMP
+- **Tamaño máximo**: 32MB por imagen
+- **URLs generadas**: Permanentes y sin caducidad
+- **CDN**: Distribución global para carga rápida
+- **Tiempo de subida**: Típicamente 2-5 segundos
+
+## ⭐ Sistema de Eventos Destacados
+
+### Funcionalidades:
+- **Marcado simple** con checkbox o botón estrella
+- **Visualización especial** con efectos dorados
+- **Filtrado automático** en página de inicio
+- **Toggle instantáneo** desde la lista
+- **Indicadores visuales** elegantes
+
 ## 🚀 Despliegue
 
-### Firebase Hosting
+### Firebase Hosting (Solo Firestore)
 
 1. **Instalar Firebase CLI**
 ```bash
 npm install -g firebase-tools
 ```
 
-2. **Iniciar sesión**
-```bash
-firebase login
-```
-
-3. **Inicializar proyecto**
+2. **Inicializar (solo Hosting)**
 ```bash
 firebase init hosting
+# Seleccionar solo "Hosting"
+# NO seleccionar "Storage"
 ```
 
-4. **Construir y desplegar**
+3. **Desplegar**
 ```bash
 npm run build
 firebase deploy
 ```
 
-## 🧪 Scripts disponibles
+## 🔧 Configuración mínima
 
-- `npm run dev` - Ejecutar en modo desarrollo
-- `npm run build` - Construir para producción
-- `npm run preview` - Previsualizar build de producción
-- `npm run lint` - Ejecutar linter
-
-## 📊 Formularios
-
-### Campos comunes
-- Datos de empresa (dirección, ciudad, web, código postal, rubro)
-- Datos personales (nombre, apellido, cargo, contacto, DNI)
-- Check-in/out (fechas y horas de llegada/salida)
-- Acreditaciones (días de evento)
-- Cena de cierre
-- Agenda de reuniones
-
-### Campos específicos
-
-**Proveedores con Hotel:**
-- Tipo de habitación
-- Cantidad de noches
-- Número de acompañantes
-
-**Proveedores sin Hotel:**
-- Transporte propio
-- Alojamiento externo
-
-## 🔧 Configuración de desarrollo
-
-### Variables de entorno requeridas
+### Variables de entorno (Storage no requerido)
 ```env
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
+# VITE_FIREBASE_STORAGE_BUCKET= # Opcional, no usado
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-### Reglas de Firestore para producción
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /usuarios/{userId} {
-      allow read, write: if request.auth != null;
-    }
-    match /eventos/{eventId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'Administrador';
-    }
-    match /formularios/{formularioId} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
-
 ## 🐛 Solución de problemas
 
-### Error: Firebase not initialized
-- Verificar que las variables de entorno estén configuradas
-- Comprobar que el archivo `.env` esté en la raíz del proyecto
-- Reiniciar el servidor de desarrollo
+### Problemas con imágenes (Solo URLs)
+- **Imagen no se muestra**: 
+  - ✅ Usar ImgBB para URLs directas
+  - ✅ Verificar que la URL sea accesible públicamente
+  - ✅ Probar con las URLs de ejemplo incluidas
+  
+- **Error de CORS**: 
+  - ✅ ImgBB no tiene restricciones CORS
+  - ✅ Evitar Google Drive o servicios privados
+  
+- **URL no válida**: 
+  - ✅ Usar los servicios recomendados (detección automática)
+  - ✅ Verificar que la URL funcione en el navegador
 
-### Error: Firestore rules
-- Verificar que las reglas de Firestore permitan acceso
-- Comprobar que la base de datos esté creada
+### Servicios recomendados por problema:
+- **Para desarrollo**: URLs de ejemplo incluidas
+- **Para producción**: ImgBB (gratuito) o Cloudinary (profesional)
+- **Para stock**: Unsplash con términos "construction", "architecture"
+- **Para máxima velocidad**: Cloudinary con CDN
 
-### Error: Invalid API key
-- Verificar que la API key sea correcta
-- Comprobar que el proyecto Firebase esté activo
+## 📝 Notas importantes
 
-## 📝 Licencia
+### ❌ Lo que NO se incluye:
+- Firebase Storage (eliminado completamente)
+- Subida de archivos locales
+- Gestión de permisos de Storage
+- Configuración de Storage
 
-Este proyecto es privado y pertenece a Red Acero.
+### ✅ Lo que SÍ incluye:
+- URLs externas exclusivamente
+- Herramientas integradas de hosting
+- Validación automática de URLs
+- Preview en tiempo real
+- Ejemplos temáticos listos
 
 ## 👨‍💻 Desarrollador
 
 Desarrollado para Red Acero - Sistema de gestión de eventos.
+
+**Versión actual**: Sistema simplificado sin Firebase Storage, usando exclusivamente URLs externas para máxima compatibilidad.
 
 ---
 

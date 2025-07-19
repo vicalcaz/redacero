@@ -1,11 +1,17 @@
 :root {
+  /* Paleta de colores CMYK convertida */
+  --color-azul-oscuro: #453796;  
+  --color-azul-medio:  #5754a4;  
+  --color-azul-claro:  #6b66ae;   
+  --color-naranja:     #f68b2a;  
+  --color-gris:        #e7e7e8;  
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: var(--color-azul-oscuro);
+  color: var(--color-azul-oscuro);
+  background-color: var(--color-gris);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,11 +21,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-azul-claro);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--color-azul-medio);
 }
 
 body {
@@ -28,6 +34,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-gris);
+  color: var(--color-azul-oscuro);
 }
 
 h1 {
@@ -56,8 +69,8 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: Var(--color-azul-claro);
+    background-color: Var(--color-gris);
   }
   a:hover {
     color: #747bff;
@@ -92,4 +105,113 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #f8f9fa;
+  background: var(--color-gris);
+  color: var(--color-azul-oscuro);
+}
+
+header, .header {
+  background: var(--color-azul-oscuro);
+  color: white;
+}
+
+nav, .menu {
+  background: var(--color-azul-medio);
+  color: white;
+}
+
+button, .btn-primario {
+  background: var(--color-naranja);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+}
+
+.btn-secundario {
+  background: var(--color-azul-claro);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+}
+
+.card, .opcion {
+  background: white;
+  border: 2px solid var(--color-azul-claro);
+  border-radius: 8px;
+  margin-bottom: 1em;
+  padding: 1em;
+}
+
+/* Formulario base para los tres formularios */
+.formulario-container {
+  background: var(--color-gris);
+  border: 2px solid var(--color-azul-claro);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(25, 13, 255, 0.08);
+  padding: 2rem;
+}
+
+.formulario-header {
+  background: var(--color-azul-oscuro);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  padding: 1rem;
+}
+
+.seccion-formulario {
+  background: white;
+  border: 2px solid var(--color-azul-medio);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+input, textarea, select {
+  border: 1px solid var(--color-azul-claro);
+  border-radius: 4px;
+  padding: 0.5em;
+  margin-bottom: 1em;
+  width: 100%;
+  font-size: 1em;
+}
+
+.gestion-eventos-container {
+  background: var(--color-gris);
+  border: 2px solid var(--color-azul-claro);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(25, 13, 255, 0.08);
+  padding: 2rem;
+}
+
+.gestion-eventos-header {
+  background: var(--color-azul-oscuro);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  padding: 1rem;
+}
+
+.gestion-eventos-card {
+  background: white;
+  border: 2px solid var(--color-azul-medio);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.gestion-eventos-btn,
+.gestion-eventos .btn-primario {
+  background: var(--color-naranja);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+}
+
+.gestion-eventos .btn-secundario {
+  background: var(--color-azul-claro);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
 }

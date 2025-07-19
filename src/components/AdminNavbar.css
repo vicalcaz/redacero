@@ -1,17 +1,18 @@
+
 .admin-navbar {
-  background: #2c3e50;
+  background: --color-azul-oscuro;
   color: white;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px var(--color-azul-oscuro);;
 }
 
 .navbar-brand h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #ecf0f1;
+  color: --color-gris;
 }
 
 .navbar-tabs {
@@ -21,7 +22,7 @@
 
 .navbar-tabs button {
   background: transparent;
-  border: 2px solid #34495e;
+  border: 2px solid var(--color-gris);;
   color: #ecf0f1;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -30,17 +31,18 @@
 }
 
 .navbar-tabs button:hover {
-  background: #34495e;
-  border-color: #3498db;
+  background: --color-azul-medio;
+  border-color: ---color-azul-claro;
 }
 
+
 .navbar-tabs button.active {
-  background: #3498db;
-  border-color: #3498db;
+  background: --color-azul-oscuro;
+  border-color: ---color-azul-claro
 }
 
 .logout-btn {
-  background: #e74c3c;
+  background: --color-naranja;
   border: none;
   color: white;
   padding: 0.5rem 1rem;
@@ -50,5 +52,5 @@
 }
 
 .logout-btn:hover {
-  background: #c0392b;
+  background: --color-naranja;
 }

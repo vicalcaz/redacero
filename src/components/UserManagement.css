@@ -10,12 +10,12 @@
 }
 
 .header h2 {
-  color: #2c3e50;
+  color: var(--color-azul-oscuro);
   margin: 0;
 }
 
 .btn-primary {
-  background: #3498db;
+  background: var(--color-azul-claro);;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -26,7 +26,7 @@
 }
 
 .btn-primary:hover {
-  background: #2980b9;
+  background: var(--color-azul-medio);;
 }
 
 .formulario-usuario {
@@ -50,7 +50,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #2c3e50;
+  color: var(--color-azul-oscuro);;
 }
 
 .form-group input,
@@ -94,7 +94,7 @@
 }
 
 .btn-secondary:hover {
-  background: #7f8c8d;
+  background: var(--color-gris);;
 }
 
 .tabla-usuarios {
@@ -110,7 +110,7 @@
 }
 
 .tabla-usuarios th {
-  background: #34495e;
+  background: var(--color-azul-gris);;
   color: white;
   padding: 1rem;
   text-align: left;
@@ -138,4 +138,537 @@
 
 .btn-danger:hover {
   background: #c0392b;
+}
+
+/* Botón de contraseña */
+.btn-password {
+  background: linear-gradient(135deg, #fdcb6e, #e17055);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  min-width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-password:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(253, 203, 110, 0.4);
+}
+
+/* Modal para contraseña */
+.password-modal-info {
+  background: rgba(116, 185, 255, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--primary-color);
+}
+
+.password-modal-info p {
+  margin: 0.25rem 0;
+  color: var(--dark-color);
+}
+
+.password-modal-info strong {
+  color: var(--primary-color);
+}
+
+/* Contenedor del campo de contraseña */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 3rem;
+  flex: 1;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #666;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Ayuda para contraseñas */
+.password-help {
+  background: rgba(0, 184, 148, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border-left: 4px solid var(--success-color);
+}
+
+.password-help p {
+  margin: 0.25rem 0;
+  color: var(--gray-color);
+  font-size: 0.9rem;
+}
+
+/* Texto de ayuda para campos */
+.field-help {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--gray-color);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Estados de error para inputs */
+input.error,
+select.error {
+  border-color: var(--danger-color);
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.error-text {
+  display: block;
+  color: var(--danger-color);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Mejorar los badges de rol */
+.rol-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rol-badge.admin {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+}
+
+.rol-badge.usuario {
+  background: linear-gradient(135deg, var(--gray-color), #555);
+  color: white;
+}
+
+/* Agregar estilos para los nuevos roles */
+.rol-badge.socio {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+.rol-badge.proveedor-con-hotel {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+}
+
+.rol-badge.proveedor-sin-hotel {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
+}
+
+/* Mejorar los badges de estado */
+.status-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.activo {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+.status-badge.inactivo {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+/* Badge para primer login */
+.primer-login-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.primer-login-badge.si {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+}
+
+.primer-login-badge.no {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+/* Botón para resetear contraseña */
+.btn-reset-password {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  min-width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-reset-password:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(230, 126, 34, 0.4);
+}
+
+/* Ajustar el ancho de la tabla para la nueva columna */
+.users-table th:nth-child(5),
+.users-table td:nth-child(5) {
+  width: 120px;
+  text-align: center;
+}
+
+/* Responsive: ocultar columna "Primera vez" en móviles */
+@media (max-width: 768px) {
+  .users-table th:nth-child(5),
+  .users-table td:nth-child(5) {
+    display: none;
+  }
+  
+  .users-table th:nth-child(6),
+  .users-table td:nth-child(6) {
+    display: none;
+  }
+}
+
+/* Responsive para modales */
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .password-modal-info {
+    padding: 0.75rem;
+  }
+  
+  .password-help {
+    padding: 0.75rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+/* Animaciones para los botones */
+.actions-buttons button {
+  transition: all 0.3s ease;
+}
+
+.actions-buttons button:hover {
+  transform: translateY(-1px);
+}
+
+.btn-password:active,
+.btn-edit:active,
+.btn-delete:active {
+  transform: translateY(0);
+}
+
+/* Botón toggle para estado activo/inactivo */
+.status-toggle {
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 90px;
+}
+
+.status-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.status-toggle.activo {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+.status-toggle.activo:hover {
+  background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+.status-toggle.inactivo {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.status-toggle.inactivo:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Ajustar responsive para mejor visualización */
+@media (max-width: 768px) {
+  .status-toggle {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    min-width: 80px;
+  }
+  
+  .users-table th:nth-child(4),
+  .users-table td:nth-child(4) {
+    width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-toggle {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 70px;
+  }
+}
+
+/* Agrandar el modal */
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 600px; /* Aumentado de 500px a 600px */
+  width: 100%;
+  max-height: 85vh; /* Reducido un poco para dar más espacio */
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalAppear 0.3s ease-out;
+}
+
+/* Mejorar el espaciado de los campos */
+.campo-grupo {
+  margin-bottom: 1.5rem;
+}
+
+.campo-grupo:last-of-type {
+  margin-bottom: 2rem;
+}
+
+/* Mejorar los checkbox labels */
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.3s ease;
+}
+
+.checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+  border-color: #74b9ff;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.checkbox-label:hover .checkbox-custom {
+  border-color: #74b9ff;
+}
+
+/* Mejorar el texto de ayuda */
+.field-help {
+  display: block;
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: normal;
+  line-height: 1.3;
+  padding-left: 0.25rem;
+}
+
+/* Específico para los checkbox */
+.checkbox-label + .field-help {
+  margin-left: 2.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Separador visual entre secciones */
+.campo-grupo.section-divider {
+  border-top: 1px solid #e9ecef;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Mejorar los botones del modal */
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.modal-actions button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+  color: white;
+  box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #636e72, #2d3436);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive para el modal agrandado */
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 1rem;
+    padding: 1.5rem;
+    max-width: calc(100vw - 2rem);
+    max-height: 90vh;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+  }
+  
+  .checkbox-label + .field-help {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .campo-grupo {
+    margin-bottom: 1rem;
+  }
+  
+  .modal-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+}
+
+/* Animación mejorada para el modal */
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Agregar estos estilos para las secciones: */
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section:not(:last-child) {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

@@ -1,0 +1,44 @@
+/* Agregar al final: */
+
+.dev-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  font-size: 0.9rem;
+}
+
+.dev-info p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #495057;
+}
+
+.dev-info ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.dev-info li {
+  margin-bottom: 0.25rem;
+  color: #6c757d;
+}
+
+.dev-info code {
+  background: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #495057;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+  border: 1px solid #f5c6cb;
+}
