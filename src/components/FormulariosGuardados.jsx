@@ -34,7 +34,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
       
       // Filtrar según el perfil del usuario
       let formulariosFiltrados = data;
-      if (userPerfil !== 'Administrador') {
+      if (userPerfil !== 'admin') {
         // Solo mostrar formularios del usuario actual
         formulariosFiltrados = data.filter(form => 
           form.usuarioCreador === userEmail
@@ -144,7 +144,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   };
 
   const eliminarFormulario = async (id) => {
-    if (userPerfil !== 'Administrador') {
+    if (userPerfil !== 'admin') {
       alert('Solo los administradores pueden eliminar formularios');
       return;
     }
@@ -167,7 +167,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   };
 
   const editarFormulario = (formulario) => {
-    if (userPerfil !== 'Administrador' && formulario.usuarioCreador !== userEmail) {
+    if (userPerfil !== 'admin' && formulario.usuarioCreador !== userEmail) {
       alert('Solo puedes editar tus propios formularios');
       return;
     }
@@ -194,7 +194,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
 
   // Usuarios no admin que no completaron formulario
   const usuariosSinFormulario = usuarios.filter(u =>
-    u.perfil !== 'Administrador' &&
+    u.perfil !== 'admin' &&
     !formularios.some(f => f.usuarioCreador === u.email)
   );
 
@@ -260,10 +260,10 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
               </option>
             ))}
           </select>
-          
-          {userPerfil === 'Administrador' && (
-            <button 
-              className="btn-export" 
+
+          {userPerfil === 'admin' && (
+            <button
+              className="btn-export"
               onClick={exportarAExcel}
               disabled={formulariosFiltrados.length === 0}
             >
@@ -315,7 +315,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                 <th>Tipo</th>
                 <th>Empresa</th>
                 <th>Personas</th>
-                {userPerfil === 'Administrador' && <th>Usuario</th>}
+                {userPerfil === 'admin' && <th>Usuario</th>}
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -330,7 +330,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                   </td>
                   <td>{formulario.datosEmpresa?.rubro || 'N/A'}</td>
                   <td>{formulario.personas?.length || 0}</td>
-                  {userPerfil === 'Administrador' && (
+                  {userPerfil === 'admin' && (
                     <td>{formulario.usuarioCreador || 'N/A'}</td>
                   )}
                   <td>
@@ -342,7 +342,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                       >
                         👁️
                       </button>
-                      {(userPerfil === 'Administrador' || formulario.usuarioCreador === userEmail) && (
+                      {(userPerfil === 'admin' || formulario.usuarioCreador === userEmail) && (
                         <button 
                           className="btn-editar" 
                           onClick={() => editarFormulario(formulario)}
@@ -351,7 +351,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                           ✏️
                         </button>
                       )}
-                      {userPerfil === 'Administrador' && (
+                      {userPerfil === 'admin' && (
                         <button 
                           className="btn-eliminar" 
                           onClick={() => eliminarFormulario(formulario.id)}

@@ -224,7 +224,7 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos }) {
 
   // Calcula los usuarios que no completaron el formulario (no admin)
   const usuariosSinFormulario = usuarios.filter(u =>
-    u.perfil !== 'Administrador' &&
+    u.perfil !== 'admin' &&
     !formularios.some(f => f.usuarioCreador === u.email)
   );
 

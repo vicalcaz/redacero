@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import SelectorEvento from '../SelectorEvento';
+import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
 function FormularioProveedorSinHotel({ user }) {
+  const { rolUsuario, eventoId } = useEventoDestacado();
+
+  console.log('🔎 Rol de usuario desde contexto:', rolUsuario, 'Evento destacado:', eventoId);
+
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [cargandoEventos, setCargandoEventos] = useState(true);
   
@@ -37,14 +42,24 @@ function FormularioProveedorSinHotel({ user }) {
   const [guardando, setGuardando] = useState(false);
 
   const [config, setConfig] = useState(null);
+  const [eventos, setEventos] = useState([]);
 
   // Cargar eventos al montar el componente
   useEffect(() => {
     const cargarEventos = async () => {
       try {
         setCargandoEventos(true);
-        const eventosData = await FirebaseService.obtenerEventosActivos();
+        let eventosData = await FirebaseService.obtenerEventosActivos();
+        if (rolUsuario !== 'admin') {
+          eventosData = eventosData.filter(ev => ev.id === eventoId);
+        }
         setEventos(eventosData);
+        console.log('rolUsuario:', rolUsuario, 'Evento ID:', eventoId, 'Eventos cargados:', eventosData);
+        // Seleccionar automáticamente el evento si no es admin y hay uno solo
+        if (rolUsuario !== 'admin' && eventosData.length === 1) {
+          setEventoSeleccionado(eventosData[0]);
+          console.log
+        }
       } catch (error) {
         console.error('Error cargando eventos:', error);
         alert('Error al cargar los eventos disponibles');
@@ -54,7 +69,7 @@ function FormularioProveedorSinHotel({ user }) {
     };
 
     cargarEventos();
-  }, []);
+  }, [rolUsuario, eventoId]);
 
   useEffect(() => {
     const cargarConfig = async () => {
@@ -163,6 +178,9 @@ function FormularioProveedorSinHotel({ user }) {
     }
   };
 
+  // Si el usuario no es admin, deshabilita el selector y selecciona el evento automáticamente
+  const selectorDisabled = rolUsuario !== 'admin';
+
   return (
     <div className="formulario-container">
       <div className="formulario-header" style={{ padding: 0, flexDirection: 'column', minHeight: 'unset' }}>
@@ -223,6 +241,8 @@ function FormularioProveedorSinHotel({ user }) {
           <SelectorEvento
             eventoSeleccionado={eventoSeleccionado}
             onEventoSeleccionado={setEventoSeleccionado}
+            eventos={eventos}
+            disabled={selectorDisabled}
           />
           {eventoSeleccionado && (
             <div style={{

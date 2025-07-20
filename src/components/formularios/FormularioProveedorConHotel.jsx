@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
+import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
 function FormularioProveedorConHotel({ user }) {
+  const { rolUsuario, eventoId } = useEventoDestacado();
+
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
     direccion: '',
@@ -48,10 +51,15 @@ function FormularioProveedorConHotel({ user }) {
       const todos = await FirebaseService.obtenerEventos();
       const activos = todos.filter(ev => ev.estado === 'planificado' || ev.estado === 'activo');
       setEventos(activos);
+
+      // Seleccionar por defecto el evento destacado si no es admin
+      if (rolUsuario !== 'admin' && eventoId) {
+        setEventoSeleccionado(eventoId);
+      }
       setEventosLoading(false);
     };
     cargarEventos();
-  }, []);
+  }, [rolUsuario, eventoId]);
 
   const agregarPersona = () => {
     const nuevaPersona = {
@@ -226,7 +234,7 @@ function FormularioProveedorConHotel({ user }) {
                 border: '1px solid #bbb',
                 fontSize: '1.1rem'
               }}
-              disabled={guardando}
+              disabled={rolUsuario !== 'admin' || guardando} // Solo admin puede modificar
             >
               <option value="">-- Seleccione un evento --</option>
               {eventos.map(ev => (
@@ -628,7 +636,7 @@ function FormularioProveedorConHotel({ user }) {
                     <div className="campo-grupo">
                       <label>Asiste Miércoles:</label>
                       <select
-                        value={persona.miercoles === true ? 'si' : persona.martes === false ? 'no' : ''}
+                        value={persona.miercoles === true ? 'si' : persona.miercoles === false ? 'no' : ''}
                         onChange={e => {
                           let val = e.target.value;
                           actualizarPersona(persona.id, 'miercoles', val === '' ? null : val === 'si');

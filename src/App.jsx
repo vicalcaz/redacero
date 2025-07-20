@@ -6,7 +6,8 @@ import FormularioSocio from './components/formularios/FormularioSocio';
 import FormularioProveedorConHotel from './components/formularios/FormularioProveedorConHotel';
 import FormularioProveedorSinHotel from './components/formularios/FormularioProveedorSinHotel';
 import CambiarPasswordModal from './components/CambiarPasswordModal';
-import { FirebaseService } from './services/FirebaseService';
+import { EventoDestacadoProvider, useEventoDestacado } from "./context/EventoDestacadoContext";
+import { FirebaseService } from "./services/FirebaseService";
 import './App.css';
 
 // Agregar esta línea para exposición global:
@@ -19,6 +20,10 @@ function App() {
   const [showCambiarPassword, setShowCambiarPassword] = useState(false);
   const [forzarCambioPassword, setForzarCambioPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { eventoId, nombre, fechaDesde, fechaHasta, rolUsuario, setEventoId, setNombre, setFechaDesde, setFechaHasta, setRolUsuario } = useEventoDestacado();
+
+  // Loguear siempre que App se renderiza
+  console.log('🌐 Variables globales evento:', { eventoId, nombre, fechaDesde, fechaHasta, rolUsuario });
 
   useEffect(() => {
     // Verificar si hay usuario logueado al iniciar
@@ -51,6 +56,7 @@ function App() {
     
     setUsuario(usuarioData);
     localStorage.setItem('usuario', JSON.stringify(usuarioData));
+    setRolUsuario(usuarioData.rol); // <-- Guarda el rol globalmente
     
     // ✅ SOLO usar passwordCambiado (que SÍ existe en la tabla)
     if (usuarioData.passwordCambiado === false || usuarioData.passwordCambiado === undefined) {
@@ -61,6 +67,28 @@ function App() {
       console.log('✅ App: Login exitoso, ir a eventos');
       setVistaActual('eventos');
     }
+
+    // Cargar evento destacado después de un login exitoso
+    FirebaseService.obtenerEventos().then(eventos => {
+      const destacado = eventos.find(ev => ev.destacado);
+      if (destacado) {
+        setEventoId(destacado.id);
+        setNombre(destacado.nombre);
+        setFechaDesde(destacado.fechaDesde);
+        setFechaHasta(destacado.fechaHasta);
+
+        // Loguear después de setear
+        console.log('✅ Evento destacado cargado:', {
+          id: destacado.id,
+          nombre: destacado.nombre,
+          fechaDesde: destacado.fechaDesde,
+          fechaHasta: destacado.fechaHasta,
+          rol: usuarioData.rol
+        });
+      } else {
+        alert("No hay evento destacado configurado.");
+      }
+    });
   };
 
   const handleLogout = () => {
@@ -375,4 +403,10 @@ function App() {
   return renderVistaActual();
 }
 
-export default App;
+export default function WrappedApp() {
+  return (
+    <EventoDestacadoProvider>
+      <App />
+    </EventoDestacadoProvider>
+  );
+}
