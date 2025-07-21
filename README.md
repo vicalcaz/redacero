@@ -105,8 +105,7 @@ src/
 │   │   ├── FormularioSocio.jsx
 │   │   ├── FormularioProveedorConHotel.jsx
 │   │   └── FormularioProveedorSinHotel.jsx
-│   ├── AdminNavbar.jsx
-│   ├── AdminNavbar.css
+│   ├── AdminNavBar.css
 │   ├── EventosDestacados.jsx
 │   ├── Login.jsx
 │   ├── Login.css

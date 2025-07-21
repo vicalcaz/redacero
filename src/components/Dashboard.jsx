@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import AdminNavbar from './AdminNavBar';
+import AdminNavBar from './AdminNavBar.css';
 import UserManagement from './UserManagement';
 import EventManagement from './EventManagement';
 import FormularioManagement from './FormularioManagement';
@@ -230,7 +230,7 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos }) {
 
   return (
     <div className="dashboard">
-      <AdminNavbar 
+      <AdminNavBar 
         currentView={vistaActual}
         onViewChange={handleViewChange}
         user={usuario}
