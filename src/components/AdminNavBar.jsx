@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import './AdminNavbar.css';
+import './AdminNavBar.css';
 
 function AdminNavbar({ currentView, onViewChange, user, onLogout }) {
   const menuItems = [
