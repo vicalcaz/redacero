@@ -1,3 +1,4 @@
+
 .admin-navbar {
   background: var(--color-azul-oscuro);
   color: white;
@@ -5,7 +6,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 10px var(--color-azul-oscuro);
+  box-shadow: 0 2px 10px var(--color-azul-oscuro);;
 }
 
 .navbar-brand h2 {
@@ -21,7 +22,7 @@
 
 .navbar-tabs button {
   background: transparent;
-  border: 2px solid var(--color-gris);
+  border: 2px solid var(--color-gris);;
   color: #ecf0f1;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -33,6 +34,7 @@
   background: var(--color-azul-medio);
   border-color: var(--color-azul-claro);
 }
+
 
 .navbar-tabs button.active {
   background: var(--color-azul-oscuro);
