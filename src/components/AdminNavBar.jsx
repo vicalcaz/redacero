@@ -1,6 +1,6 @@
-/* filepath: c:\Users\Public\RedAcero\redacero-eventos\src\components\AdminNavbar.jsx */
+
 import { useState } from 'react';
-import './AdminNavBar.css';
+import './AdminNavbar.css';
 
 function AdminNavbar({ currentView, onViewChange, user, onLogout }) {
   const menuItems = [

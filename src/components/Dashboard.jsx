@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import AdminNavBar from './AdminNavBar.css';
+import AdminNavbar from './AdminNavbar.css';
 import UserManagement from './UserManagement';
 import EventManagement from './EventManagement';
 import FormularioManagement from './FormularioManagement';
