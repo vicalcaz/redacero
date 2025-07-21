@@ -4,7 +4,7 @@ import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
   function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
-    const { rolUsuario, eventoId, setEvento } = useEventoDestacado();
+    const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
 
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
