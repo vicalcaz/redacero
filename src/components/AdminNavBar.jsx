@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import './AdminNavBar.css';
 
-function AdminNavBar({ currentView, onViewChange, user, onLogout }) {
+function AdminNavbar({ currentView, onViewChange, user, onLogout }) {
   const menuItems = [
     { key: 'inicio', label: 'Inicio', icon: '🏠' },
     { key: 'usuarios', label: 'Usuarios', icon: '👥' },
@@ -44,4 +44,4 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout }) {
   );
 }
 
-export default AdminNavBar;
+export default AdminNavbar;
