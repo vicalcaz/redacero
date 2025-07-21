@@ -5,6 +5,14 @@
   text-align: center;
 }
 
+:root {
+  --color-azul-oscuro: #453796;  
+  --color-azul-medio:  #5754a4;  
+  --color-azul-claro:  #6b66ae;
+  --color-naranja:     #f68b2a;  
+  --color-gris:        #e7e7e8;  
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -12,10 +20,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--color-azul-oscuro));
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em var(--color-azul-claro));
 }
 
 @keyframes logo-spin {
@@ -38,7 +46,7 @@
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--color-azul-oscuro);
 }
 
 .app {
@@ -87,32 +95,55 @@ body {
   font-weight: 500;
 }
 
-.btn-logout {
-  padding: 0.5rem 1rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: #c0392b;
-}
-
+.btn-logout,
 .btn-admin {
   padding: 0.5rem 1rem;
-  background: #3498db;
-  color: white;
+  background: var(--color-gris);
+  color: #222;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
+  font-weight: 500;
 }
 
+.btn-logout:hover,
 .btn-admin:hover {
-  background: #2980b9;
+  background: #d1d1d4;
+  color: #453796;
+}
+
+.logo-header {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo-header:hover {
+  filter: drop-shadow(0 0 2em var(--color-azul-oscuro));
+}
+.logo-header.react:hover {
+  filter: drop-shadow(0 0 2em var(--color-azul-claro));
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo-header {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.app-header {
+  background: var(--color-azul-claro);
+  /* Si quieres que el texto sea blanco: */
+  color: #fff;
 }

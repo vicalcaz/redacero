@@ -3,7 +3,8 @@
 }
 
 .header h2 {
-  color: #2c3e50;
+  color: var(--secundary-color);
+  background-color: var(--secundary-color);
   margin: 0 0 2rem 0;
 }
 

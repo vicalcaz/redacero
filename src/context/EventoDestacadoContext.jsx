@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const EventoDestacadoContext = createContext();
 
@@ -12,6 +12,12 @@ export function EventoDestacadoProvider({ children }) {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [rolUsuario, setRolUsuario] = useState("");
+  const [fechaLimiteEdicion, setFechaLimiteEdicion] = useState("");
+  const [evento, setEvento] = useState(null);
+
+  useEffect(() => {
+    console.log("Evento cargado en contexto:", evento);
+  }, [evento]);
 
   return (
     <EventoDestacadoContext.Provider value={{
@@ -19,7 +25,9 @@ export function EventoDestacadoProvider({ children }) {
       nombre, setNombre,
       fechaDesde, setFechaDesde,
       fechaHasta, setFechaHasta,
-      rolUsuario, setRolUsuario
+      rolUsuario, setRolUsuario,
+      fechaLimiteEdicion, setFechaLimiteEdicion,
+      evento, setEvento
     }}>
       {children}
     </EventoDestacadoContext.Provider>

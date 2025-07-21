@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-function FormularioProveedorConHotel({ user }) {
-  const { rolUsuario, eventoId } = useEventoDestacado();
+  function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
+    const { rolUsuario, eventoId, setEvento } = useEventoDestacado();
 
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
@@ -29,13 +29,13 @@ function FormularioProveedorConHotel({ user }) {
     horaLlegada: '',
     fechaSalida: '',
     horaSalida: '',
-    lunes: null,
-    martes: null,
-    miercoles: null,
-    asisteCena: null,
+    lunes: '',
+    martes: '',
+    miercoles: '',
+    asisteCena: '',
     menuEspecial: '',
-    atiendeReuniones: null,
-    tipoHabitacion: null,
+    atiendeReuniones: '',
+    tipoHabitacion: '',
     noches: 0
   }]);
 
@@ -44,22 +44,92 @@ function FormularioProveedorConHotel({ user }) {
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
   const [eventosLoading, setEventosLoading] = useState(true);
+  const [configProveedorConHotel, setConfigProveedorConHotel] = useState(null);
+  const [formularioExistente, setFormularioExistente] = useState(null);
+  const [edicionHabilitada, setEdicionHabilitada] = useState(true);
+
+  // Al montar, buscar si ya existe formulario para este usuario y evento
+  useEffect(() => {
+    const cargarFormularioExistente = async () => {
+      if (!eventoSeleccionado || !user?.email) return;
+      const existente = await FirebaseService.obtenerFormularioProveedorConHotelPorUsuarioYEvento(user.email, eventoSeleccionado);
+      if (existente) {
+        setFormularioExistente(existente);
+        setDatosEmpresa(existente.datosEmpresa || {});
+        setPersonas(existente.personas || []);
+        setComentarios(existente.comentarios || '');
+      } else {
+        setFormularioExistente(null);
+        setDatosEmpresa({
+          empresa: '',
+          direccion: '',
+          ciudad: '',
+          paginaWeb: '',
+          codigoPostal: '',
+          rubro: '',
+          cantidad_personas: 0
+        });
+        setPersonas([{
+          id: 1,
+          nombre: '',
+          apellido: '',
+          cargo: '',
+          celular: '',
+          telefono: '',
+          email: '',
+          dni: '',
+          fechaLlegada: '',
+          horaLlegada: '',
+          fechaSalida: '',
+          horaSalida: '',
+          lunes: '',
+          martes: '',
+          miercoles: '',
+          asisteCena: '',
+          menuEspecial: '',
+          atiendeReuniones: '',
+          tipoHabitacion: '',
+          noches: 0,
+        }]);
+        setComentarios('');
+      }
+    };
+    cargarFormularioExistente();
+  }, [eventoSeleccionado, user]);
+
+  // Controlar si la edición está habilitada según la fecha límite
+  useEffect(() => {
+    if (!evento) {
+      console.log("evento aún no está disponible");
+      return;
+    }
+    if (!evento.fechaLimiteEdicion) {
+      setEdicionHabilitada(true);
+      return;
+    }
+    const hoy = new Date();
+    const fechaLimite = new Date(evento.fechaLimiteEdicion);
+    setEdicionHabilitada(hoy <= fechaLimite);
+  }, [evento]);
 
   useEffect(() => {
     const cargarEventos = async () => {
       setEventosLoading(true);
-      const todos = await FirebaseService.obtenerEventos();
-      const activos = todos.filter(ev => ev.estado === 'planificado' || ev.estado === 'activo');
-      setEventos(activos);
-
-      // Seleccionar por defecto el evento destacado si no es admin
-      if (rolUsuario !== 'admin' && eventoId) {
-        setEventoSeleccionado(eventoId);
+      try {
+        const eventosObtenidos = await FirebaseService.obtenerEventos(); // Ajusta el método si es necesario
+        setEventos(eventosObtenidos);
+        // Si hay uno destacado, selecciónalo por defecto
+        if (eventosObtenidos.length > 0 && !eventoSeleccionado) {
+          setEventoSeleccionado(eventosObtenidos[0].id);
+        }
+      } catch (error) {
+        console.error("Error cargando eventos:", error);
+      } finally {
+        setEventosLoading(false);
       }
-      setEventosLoading(false);
     };
     cargarEventos();
-  }, [rolUsuario, eventoId]);
+  }, []);
 
   const agregarPersona = () => {
     const nuevaPersona = {
@@ -76,13 +146,13 @@ function FormularioProveedorConHotel({ user }) {
       horaLlegada: '',
       fechaSalida: '',
       horaSalida: '',
-      lunes: false,
-      martes: false,
-      miercoles: false,
-      asisteCena: false,
+      lunes: '',
+      martes: '',
+      miercoles: '',
+      asisteCena: '',
       menuEspecial: '',
-      atiendeReuniones: false,
-      tipoHabitacion: 'simple',
+      atiendeReuniones: '',
+      tipoHabitacion: '',
       noches: 1,
       acompanantes: 0
     };
@@ -107,12 +177,7 @@ function FormularioProveedorConHotel({ user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!eventoSeleccionado) {
-      alert('Debe seleccionar un evento');
-      return;
-    }
     setGuardando(true);
-
     try {
       // 1. Calcular cantidad de personas
       const cantidadPersonas = personas.length;
@@ -142,15 +207,14 @@ function FormularioProveedorConHotel({ user }) {
         personas: personasActualizadas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
-        usuarioCreador: user?.email || 'Anónimo'
+        usuarioCreador: user.email.toLowerCase().trim()
       };
 
       console.log('Enviando formulario Proveedor con Hotel:', formularioData);
 
-      const id = await FirebaseService.guardarFormularioProveedorConHotel(formularioData);
+      await FirebaseService.guardarFormularioProveedorConHotel(formularioData);
 
       alert('✅ Formulario de Proveedor con Hotel guardado exitosamente!');
-      console.log('Formulario guardado con ID:', id);
 
       // Limpiar formulario después de guardar
       setDatosEmpresa({
@@ -175,17 +239,28 @@ function FormularioProveedorConHotel({ user }) {
         horaLlegada: '',
         fechaSalida: '',
         horaSalida: '',
-        lunes: null,
-        martes: null,
-        miercoles: null,
-        asisteCena: null,
+        lunes: '',
+        martes: '',
+        miercoles: '',
+        asisteCena: '',
         menuEspecial: '',
-        atiendeReuniones: null,
-        tipoHabitacion: null,
+        atiendeReuniones: '',
+        tipoHabitacion: '',
         noches: 0,
       }]);
       setComentarios('');
 
+      // 🔄 Volver a consultar el formulario guardado
+      const existente = await FirebaseService.obtenerFormularioProveedorConHotelPorUsuarioYEvento(
+        user.email,
+        eventoSeleccionado
+      );
+      if (existente) {
+        setFormularioExistente(existente);
+        setDatosEmpresa(existente.datosEmpresa || {});
+        setPersonas(existente.personas || []);
+        setComentarios(existente.comentarios || '');
+      }
     } catch (error) {
       console.error('Error completo:', error);
       alert(`❌ Error al guardar el formulario: ${error.message}`);
@@ -194,6 +269,24 @@ function FormularioProveedorConHotel({ user }) {
     }
   };
 
+  function addDays(dateStr, days) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  const minFecha = addDays(evento?.fechaDesde, -2);
+  const maxFecha = addDays(evento?.fechaHasta, 2);
+
+  useEffect(() => {
+    if (!eventoSeleccionado || eventos.length === 0) return;
+    const ev = eventos.find(e => e.id === eventoSeleccionado);
+    if (ev && typeof setEvento === "function") {
+      setEvento(ev);
+    }
+  }, [eventoSeleccionado, eventos, setEvento]);
+
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
       <div className="formulario-header">
@@ -201,20 +294,46 @@ function FormularioProveedorConHotel({ user }) {
         <h2>📝 Formulario Proveedor con Hotel</h2>
       </div>
 
-      <div className="nota-importante superior">
-        <div className="nota-icon">🏨</div>
-        <div className="nota-content">
-          <h3>Información para Proveedores con Hotel</h3>
-          <ul>
-            <li><strong>Complete todos los campos obligatorios (*)</strong></li>
-            <li>Indique el tipo de habitación y número de acompañantes</li>
-            <li>Especifique las fechas exactas de alojamiento</li>
-            <li>Los datos de acompañantes son importantes para el registro</li>
-          </ul>
+      {!edicionHabilitada && (
+        <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 16 }}>
+          La edición del formulario ya no está permitida (fecha límite: {evento?.fechaLimiteEdicion}).
         </div>
-      </div>
-      
+      )}
+
+      {formularioExistente && (
+  <div style={{
+    background: '#fff3cd',
+    color: '#856404',
+    border: '1px solid #ffeeba',
+    borderRadius: 8,
+    padding: '1rem',
+    marginBottom: 24,
+    fontWeight: 500
+  }}>
+    Ya existe un formulario cargado para este evento y usuario. Puedes editarlo y volver a guardar si es necesario.
+  </div>
+)}
+
       <form className="formulario-form" onSubmit={handleSubmit}>
+        {/* Imagen de inicio */}
+        {configProveedorConHotel?.imageninicio && (
+          <div style={{ margin: '12px 0' }}>
+            <img
+              src={configProveedorConHotel.imageninicio}
+              alt="Imagen de inicio"
+              style={{ maxWidth: '100%', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
+                    borderRadius: '12px' }}
+            />
+          </div>
+        )}
+
+        {/* Nota de inicio */}
+        {configProveedorConHotel?.notainicio && (
+          <div className="nota-inicio-formulario">
+            {configProveedorConHotel.notainicio}
+          </div>
+        )}
+
         {/* Sección Selección de Evento - Color Amarillo */}
         {eventosLoading ? (
           <div style={{ marginBottom: 24 }}>Cargando eventos...</div>
@@ -263,7 +382,7 @@ function FormularioProveedorConHotel({ user }) {
                     onChange={(e) => actualizarDatosEmpresa('empresa', e.target.value)}
                     onInvalid={e => e.target.setCustomValidity('Por favor complete este campo.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
             <div className="campo-grupo"> {/* ✅ Cambio: campo-grupo en lugar de form-group */}
@@ -274,7 +393,7 @@ function FormularioProveedorConHotel({ user }) {
                 onChange={(e) => actualizarDatosEmpresa('direccion', e.target.value)}
                 placeholder="calle y número"
                 required
-                disabled={guardando}
+                disabled={guardando || !edicionHabilitada}
               />
             </div>
           </div>
@@ -287,7 +406,7 @@ function FormularioProveedorConHotel({ user }) {
                  onChange={(e) => actualizarDatosEmpresa('ciudad', e.target.value)}
                  placeholder="ej.: Buenos Aires"
                  required
-                 disabled={guardando}
+                 disabled={guardando || !edicionHabilitada}
                />
              </div>
              <div className="campo-grupo">
@@ -298,7 +417,7 @@ function FormularioProveedorConHotel({ user }) {
                  onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
                  placeholder="ej.: https://www.articulos_del_hogar.com.ar"
                  required
-                 disabled={guardando}
+                 disabled={guardando || !edicionHabilitada}
                />
              </div>
           </div>  
@@ -311,7 +430,7 @@ function FormularioProveedorConHotel({ user }) {
                 placeholder="ej.: 1234"
                 onChange={(e) => actualizarDatosEmpresa('codigoPostal', e.target.value)}
                 required  
-                disabled={guardando}
+                disabled={guardando || !edicionHabilitada}
                />
             </div>
             <div className="campo-grupo">
@@ -322,7 +441,7 @@ function FormularioProveedorConHotel({ user }) {
               onChange={(e) => actualizarDatosEmpresa('rubro', e.target.value)}
               placeholder="ej.: Artículos del Hogar"              
               required
-              disabled={guardando}
+              disabled={guardando || !edicionHabilitada}
               />
             </div>
           </div>  
@@ -374,7 +493,7 @@ function FormularioProveedorConHotel({ user }) {
                     value={persona.nombre}
                     onChange={(e) => actualizarPersona(persona.id, 'nombre', e.target.value)}
                     required
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
                 <div className="campo-grupo">
@@ -384,7 +503,7 @@ function FormularioProveedorConHotel({ user }) {
                     value={persona.apellido}
                     onChange={(e) => actualizarPersona(persona.id, 'apellido', e.target.value)}
                     required
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
               </div>
@@ -396,7 +515,7 @@ function FormularioProveedorConHotel({ user }) {
                     value={persona.cargo}
                     onChange={(e) => actualizarPersona(persona.id, 'cargo', e.target.value)}
                     required
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
                 <div className="campo-grupo">
@@ -409,7 +528,7 @@ function FormularioProveedorConHotel({ user }) {
                     required
                     onInput={e => e.target.setCustomValidity('')}
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese un email válido')}
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
               </div>
@@ -443,7 +562,7 @@ function FormularioProveedorConHotel({ user }) {
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular en formato internacional.')}
                     onInput={e => e.target.setCustomValidity('')}
                     required
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                   
                 </div>
@@ -468,7 +587,7 @@ function FormularioProveedorConHotel({ user }) {
                     placeholder="(011) 4567-8901"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
                     required
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
                 <div className="campo-grupo">
@@ -482,7 +601,7 @@ function FormularioProveedorConHotel({ user }) {
                       pattern="\d{7,8}"
                       onInvalid={e => e.target.setCustomValidity('El DNI debe tener 7 u 8 números, sin puntos.')}
                       onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando}
+                      disabled={guardando || !edicionHabilitada}
                     />
                 </div>
               </div>
@@ -504,7 +623,7 @@ function FormularioProveedorConHotel({ user }) {
                   required
                   onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
                   onInput={e => e.target.setCustomValidity('')}
-                  disabled={guardando}
+                  disabled={guardando || !edicionHabilitada}
                 >
                   <option value="">-- Seleccione --</option>
                   <option value="doble">Doble</option>
@@ -522,7 +641,7 @@ function FormularioProveedorConHotel({ user }) {
                     required
                     onInvalid={e => e.target.setCustomValidity('Por favor indique en caso de corresponder o no con quien comparte habitación o a quien reemplaza.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
 
@@ -533,11 +652,13 @@ function FormularioProveedorConHotel({ user }) {
                     <input
                       type="date"
                       value={persona.fechaLlegada}
+                      min={minFecha}
+                      max={maxFecha}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
                       required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando}
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                   <div className="campo-grupo">
@@ -549,7 +670,7 @@ function FormularioProveedorConHotel({ user }) {
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
                       required
-                      disabled={guardando}
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                 </div>
@@ -560,11 +681,13 @@ function FormularioProveedorConHotel({ user }) {
                     <input
                       type="date"
                       value={persona.fechaSalida}
+                      min={minFecha}
+                      max={maxFecha}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
                       required
-                      disabled={guardando}
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                   <div className="campo-grupo">
@@ -576,7 +699,7 @@ function FormularioProveedorConHotel({ user }) {
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de salida al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
                       required
-                      disabled={guardando}
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                 </div>
@@ -599,34 +722,30 @@ function FormularioProveedorConHotel({ user }) {
                     <div className="campo-grupo">
                       <label>Asiste Lunes:</label>
                       <select
-                        value={persona.lunes === true ? 'si' : persona.lunes === false ? 'no' : ''}
+                        value={persona.lunes || ''}
                         onChange={e => {
-                          let val = e.target.value;
-                          actualizarPersona(persona.id, 'lunes', val === '' ? null : val === 'si');
+                          actualizarPersona(persona.id, 'lunes', e.target.value === '' ? null : e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el lunes al evento.')}
-                        disabled={guardando}
+                        disabled={guardando || !edicionHabilitada}
                       >
-
-                         <option value="">-- Seleccione --</option>
+                        <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
-                     </select>
+                      </select>
                     </div>
                     <div className="campo-grupo">
                       <label>Asiste Martes:</label>
                       <select
-                        value={persona.martes === true ? 'si' : persona.martes === false ? 'no' : ''}
+                        value={persona.martes || ''}
                         onChange={e => {
-                          let val = e.target.value;
-                          actualizarPersona(persona.id, 'martes', val === '' ? null : val === 'si');
+                          actualizarPersona(persona.id, 'martes', e.target.value === '' ? null : e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el martes al evento.')}
-                        disabled={guardando}
+                        disabled={guardando || !edicionHabilitada}
                       >
-
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
@@ -636,14 +755,13 @@ function FormularioProveedorConHotel({ user }) {
                     <div className="campo-grupo">
                       <label>Asiste Miércoles:</label>
                       <select
-                        value={persona.miercoles === true ? 'si' : persona.miercoles === false ? 'no' : ''}
+                        value={persona.miercoles || ''}
                         onChange={e => {
-                          let val = e.target.value;
-                          actualizarPersona(persona.id, 'miercoles', val === '' ? null : val === 'si');
+                          actualizarPersona(persona.id, 'miercoles', e.target.value === '' ? null : e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el miércoles al evento.')}
-                        disabled={guardando}
+                        disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
@@ -654,14 +772,13 @@ function FormularioProveedorConHotel({ user }) {
                     <div className="campo-grupo">
                       <label>Asiste a la cena de cierre:</label>
                       <select
-                        value={persona.asisteCena  === true ? 'si' : persona.asisteCena === false ? 'no' : ''}
+                        value={persona.asisteCena || ''}
                         onChange={e => {
-                          let val = e.target.value;
-                          actualizarPersona(persona.id, 'asisteCena', val === '' ? null : val === 'si');
+                          actualizarPersona(persona.id, 'asisteCena', e.target.value === '' ? null : e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir a la cena de cierre del evento.')}
-                        disabled={guardando}
+                        disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
@@ -672,14 +789,13 @@ function FormularioProveedorConHotel({ user }) {
                     <div className="campo-grupo">
                       <label>Atiende agenda de reuniones:</label>
                       <select
-                        value={persona.atiendeReuniones  === true ? 'si' : persona.atiendeReuniones === false ? 'no' : ''}
+                        value={persona.atiendeReuniones || ''}
                         onChange={e => {
-                          let val = e.target.value;
-                          actualizarPersona(persona.id, 'atiendeReuniones', val === '' ? null : val === 'si');
+                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value === '' ? null : e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a gestionar la agenda de reuniones.')}
-                        disabled={guardando}
+                        disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
@@ -701,7 +817,7 @@ function FormularioProveedorConHotel({ user }) {
                   placeholder="Vegetariano, sin gluten, etc."
                   required
                   onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
-                  disabled={guardando}
+                  disabled={guardando || !edicionHabilitada}
                 />
               </div>            
             </div>
@@ -712,7 +828,7 @@ function FormularioProveedorConHotel({ user }) {
               type="button"
               className="btn-secundario"
               onClick={agregarPersona}
-              disabled={guardando}
+              disabled={guardando || !edicionHabilitada}
               style={{
                 background: 'linear-gradient(135deg, --color-azul-claro 0%, --color-azul-oscuro 100%)',
                 color: 'white',
@@ -745,9 +861,9 @@ function FormularioProveedorConHotel({ user }) {
           <div className="campo-grupo">
             <label>Comentarios adicionales:</label>
             <textarea
-              value={comentarios}
-              onChange={(e) => setComentarios(e.target.value)}
-              placeholder="Comentarios adicionales..."
+                value={comentarios}
+                onChange={(e) => setComentarios(e.target.value)}
+                placeholder="Comentarios adicionales..."
               disabled={guardando}
               rows="4"
             />
@@ -763,22 +879,40 @@ function FormularioProveedorConHotel({ user }) {
               <li>✅ Información de acompañantes completa</li>
               <li>✅ Datos de contacto actualizados</li>
             </ul>
-            <p><strong>La reserva se confirmará en las próximas 24 horas.</strong></p>
+            <p><strong>La reserva se confirmará en los próximos días.</strong></p>
           </div>
         </div>
 
-        <div className="formulario-acciones"> {/* ✅ Cambio: formulario-acciones */}
-          <button 
-            type="submit" 
+        <div className="formulario-acciones">
+          <button
+            type="submit"
             className="btn-primario"
-            disabled={guardando}
+            disabled={guardando || !edicionHabilitada}
           >
             {guardando ? '⏳ Guardando...' : '✅ Guardar Formulario'}
           </button>
+          <button
+            type="button"
+            className="btn-secundario"
+            onClick={onCancel}
+            style={{ marginLeft: '1rem' }}
+          >
+            ← Volver
+          </button>
         </div>
       </form>
+
+      {configProveedorConHotel?.notafin && (
+        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }}>
+          {configProveedorConHotel.notafin}
+        </div>
+      )}
+      <small>
+        Solo puedes elegir entre {minFecha} y {maxFecha}
+      </small>
     </div>
   );
 }
 
 export default FormularioProveedorConHotel;
+

@@ -8,7 +8,9 @@ function AdminNavbar({ currentView, onViewChange, user, onLogout }) {
     { key: 'usuarios', label: 'Usuarios', icon: '👥' },
     { key: 'eventos', label: 'Eventos', icon: '📅' },
     { key: 'formularios', label: 'Formularios', icon: '📝' },
-    { key: 'personalizacion', label: 'Personalizar', icon: '🎨' }
+    { key: 'personalizacion', label: 'Personalizar', icon: '🎨' },
+    { key: 'tablerocontrol', label: 'Tablero de Control', icon: '📊' },
+    { key: 'newsletter', label: 'Newsletter', icon: '�' }
   ];
 
   return (

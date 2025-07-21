@@ -21,6 +21,12 @@ function App() {
   const [forzarCambioPassword, setForzarCambioPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { eventoId, nombre, fechaDesde, fechaHasta, rolUsuario, setEventoId, setNombre, setFechaDesde, setFechaHasta, setRolUsuario } = useEventoDestacado();
+  const [vistaActiva, setVistaActiva] = useState('socio');
+  
+//   const handleProveedorConHotel = (evento) => {
+//   setVistaActiva('proveedor-con-hotel');
+//   setEventoSeleccionado(evento);
+// };
 
   // Loguear siempre que App se renderiza
   console.log('🌐 Variables globales evento:', { eventoId, nombre, fechaDesde, fechaHasta, rolUsuario });
@@ -144,46 +150,32 @@ function App() {
 
   // Funciones de navegación entre formularios
   const navegarAFormularioSocio = (evento) => {
-    console.log('🎯 App.jsx - navegarAFormularioSocio ejecutado');
-    console.log('📋 App.jsx - Evento recibido:', evento);
-    console.log('🔍 App.jsx - Propiedades del evento:', Object.keys(evento || {}));
-    
-    if (!evento || !evento.id) {
-      console.error('❌ App.jsx - Evento inválido:', evento);
-      alert('Error: No se pudo cargar el evento seleccionado');
-      return;
-    }
-
-    console.log('✅ App.jsx - Evento válido, guardando...');
-    setEventoSeleccionado(evento);
-    setVistaActual('formulario-socio');
-    console.log('🎭 App.jsx - Vista cambiada a formulario-socio');
-  };
-
-  const navegarAFormularioProveedorConHotel = (evento) => {
-    console.log('🔍 App.jsx - navegarAFormularioProveedorConHotel llamado');
-    console.log('📋 App.jsx - Evento recibido:', evento);
-    
     if (!evento || !evento.id) {
       console.error('❌ App.jsx - Evento inválido recibido:', evento);
       alert('Error: No se pudo cargar el evento seleccionado');
       return;
     }
+    setEventoSeleccionado(evento);
+    setVistaActual('formulario-socio');
+  };
 
+  const navegarAFormularioProveedorConHotel = (evento) => {
+    console.log('Llamando navegarAFormularioProveedorConHotel con evento:', evento);
+    if (!evento || !evento.id) {
+      console.error('❌ App.jsx - Evento inválido recibido:', evento);
+      alert('Error: No se pudo cargar el evento seleccionado');
+      return;
+    }
     setEventoSeleccionado(evento);
     setVistaActual('formulario-proveedor-con-hotel');
   };
 
   const navegarAFormularioProveedorSinHotel = (evento) => {
-    console.log('🔍 App.jsx - navegarAFormularioProveedorSinHotel llamado');
-    console.log('📋 App.jsx - Evento recibido:', evento);
-    
     if (!evento || !evento.id) {
       console.error('❌ App.jsx - Evento inválido recibido:', evento);
       alert('Error: No se pudo cargar el evento seleccionado');
       return;
     }
-
     setEventoSeleccionado(evento);
     setVistaActual('formulario-proveedor-sin-hotel');
   };
@@ -261,6 +253,10 @@ function App() {
     }
   };
 
+  const handleDetalleFormulario = (evento, tipo) => {
+    // lógica para mostrar el detalle del formulario
+  };
+
   // Si no hay usuario logueado, mostrar login
   if (!usuario) {
     return <Login onLogin={handleLogin} />;
@@ -328,7 +324,14 @@ function App() {
             {/* Header con información del usuario */}
             <header className="app-header">
               <div className="header-content">
-                <h1>🏠 RedAcero Eventos</h1>
+                <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                  <img
+                    src="/logo_redacero.svg"
+                    alt="Logo Red Acero"
+                    style={{ height: '2.2rem', verticalAlign: 'middle' }}
+                  />
+                  Red Acero Eventos
+                </h1>
                 <div className="header-actions">
                   <span>👤 {usuario.nombre || usuario.email}</span>
                   <button 
@@ -352,8 +355,9 @@ function App() {
             <main className="app-main">
               <EventosDestacados
                 onFormularioSocio={navegarAFormularioSocio}
-                onFormularioProveedorConHotel={navegarAFormularioProveedorConHotel}
+                onFormularioProveedorConHotel={navegarAFormularioProveedorConHotel} // <-- usa esta
                 onFormularioProveedorSinHotel={navegarAFormularioProveedorSinHotel}
+                onDetalleFormulario={handleDetalleFormulario}
               />
             </main>
           </div>
@@ -371,9 +375,10 @@ function App() {
       case 'formulario-proveedor-con-hotel':
         return (
           <FormularioProveedorConHotel
+            
             evento={eventoSeleccionado}
             onSubmit={handleFormularioSubmit}
-            onCancel={handleFormularioCancel}
+            onCancel={handleFormularioCancel} // <-- aquí pasas la función
           />
         );
 

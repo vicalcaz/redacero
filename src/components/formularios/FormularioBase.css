@@ -66,7 +66,7 @@
 
 .formulario-header h1 {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 300  ;
   margin-bottom: 0.5rem;
   text-shadow: 2px 2px 4px var(--color-azul-oscuro);
 }
@@ -121,8 +121,9 @@
 
 .nota-importante.inferior {
   margin-top: 3rem;
-  background: rgba(var(--success-color), 0.1);
+  background: #fff; /* Fondo blanco */
   border-color: var(--success-color);
+  color: var(--dark-color); /* Texto oscuro */
 }
 
 .nota-icon {
@@ -131,7 +132,8 @@
 }
 
 .nota-content {
-  flex: 1;
+  flex: 1; 
+  color: var(--light-gray)
 }
 
 .nota-content h3 {
@@ -139,19 +141,22 @@
   font-size: 1.2rem;
   margin-bottom: 1rem;
   font-weight: 600;
+  background: (var(--color-gris), 0.1);
 }
 
 .nota-content ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  background: (var(--color-gris), 0.1);
 }
 
 .nota-content li {
   padding: 0.3rem 0;
   color: var(--color-azul-oscuro);
-  position: relative;
+  /* position: relative; */
   padding-left: 1.5rem;
+  background: (var(--color-gris), 0.1);
 }
 
 .nota-content li::before {
@@ -677,4 +682,25 @@ button:disabled {
   height: 100%;
   background: var(--secondary-color);
   transition: width 0.3s ease;
+}
+
+.nota-inicio-formulario {
+  margin: 12px 0 24px 0;
+  color: var(--color-gris);
+  font-weight: 500;
+  text-align: left;
+}
+
+.imagen-inicio {
+  margin: 12px 0;
+  padding: 0;
+}
+
+.imagen-inicio img {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
 }

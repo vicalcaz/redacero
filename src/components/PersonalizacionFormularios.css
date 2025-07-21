@@ -393,6 +393,51 @@ select {
   100% { transform: rotate(360deg); }
 }
 
+/* Nueva animación para evento-imagen destacado-flash */
+.evento-imagen.destacado-flash {
+  animation: brillo-imagen 0.9s linear infinite alternate; /* más rápido */
+  box-shadow: 0 0 16px 4px #b39ddbcc; /* más oscuro (lila oscuro) */
+}
+
+@keyframes brillo-imagen {
+  0% {
+    box-shadow: 0 0 8px 2px #b39ddbcc, 0 0 0 0 #453796;
+    filter: brightness(0.95);
+  }
+  50% {
+    box-shadow: 0 0 32px 12px #453796cc, 0 0 16px 8px #b39ddb;
+    filter: brightness(1.18);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px #b39ddbcc, 0 0 0 0 #453796;
+    filter: brightness(0.95);
+  }
+}
+
+.info-item.fecha-brillante {
+  background: linear-gradient(90deg, #e6e0fa 60%, #b39ddb 100%);
+  color: #2a225c;
+  box-shadow: 0 0 8px 2px #45379699;
+  animation: brillo-fecha 0.7s infinite alternate; /* más rápido */
+}
+
+@keyframes brillo-fecha {
+  0% { filter: brightness(0.95); }
+  100% { filter: brightness(1.35); }
+}
+
+.info-item.hotel-brillante {
+  background: linear-gradient(90deg, #e6e0fa 60%, #b39ddb 100%);
+  color: #2a225c;
+  box-shadow: 0 0 8px 2px #45379699;
+  animation: brillo-hotel 0.7s infinite alternate; /* más rápido */
+}
+
+@keyframes brillo-hotel {
+  0% { filter: brightness(0.95); }
+  100% { filter: brightness(1.35); }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .personalizacion-container {

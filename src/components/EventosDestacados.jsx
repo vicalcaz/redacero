@@ -3,11 +3,22 @@ import { FirebaseService } from '../services/FirebaseService';
 import './EventosDestacados.css';
 import SubirImagen from '../components/SubirImagen';
 
-function EventosDestacados() {
+function EventosDestacados({
+  onFormularioSocio,
+  onFormularioProveedorConHotel,
+  onFormularioProveedorSinHotel,
+  onDetalleFormulario
+}) {
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
   const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [mailConfig, setMailConfig] = useState({
+    destinatario: '',
+    asunto: '',
+    cuerpo: ''
+  });
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -95,6 +106,22 @@ function EventosDestacados() {
     onFormularioProveedorSinHotel(evento);
   };
 
+  const guardarMailConfig = async () => {
+    try {
+      setGuardando(true);
+      await FirebaseService.guardarConfiguracionMailEvento(mailConfig);
+      alert('✅ Configuración de mail guardada exitosamente');
+    } catch (error) {
+      alert('❌ Error al guardar la configuración de mail: ' + error.message);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleDetalleFormulario = (evento, tipo) => {
+    // lógica para mostrar el detalle del formulario
+  };
+
   if (loading) {
     return (
       <div className="eventos-destacados">
@@ -111,21 +138,19 @@ function EventosDestacados() {
       <div className="eventos-destacados">
         <div className="page-header">
           <h1>🌟 Eventos Destacados</h1>
-          <p>Selecciona un evento y completa el formulario correspondiente a tu perfil</p>
-          
+          <p>Completa el formulario correspondiente a tu perfil</p>
+
           {/* INFO DE FILTRO ACTUALIZADA */}
           <div style={{
-            background: '#f0f8ff',
-            border: '1px solid #ddeeff',
-            borderRadius: '8px',
-            padding: '1rem',
-            margin: '1rem 0',
-            fontSize: '0.9rem'
-          }}>
-            <strong>🔍 Filtro actual:</strong><br/>
-            Eventos mostrados: <strong>{eventos.length}</strong><br/>
-            Condiciones: <code>destacado = true</code> Y (<code>estado = "planificado"</code> O <code>estado = "activo"</code>)
-          </div>
+             background: '#f0f8ff',
+             border: '1px solid #ddeeff',
+             borderRadius: '8px',
+             padding: '1rem',
+             margin: '1rem 0',  
+             fontSize: '0.9rem'
+           }}> 
+            
+           </div>
         </div>
 
         <div className="empty-state">
@@ -142,11 +167,7 @@ function EventosDestacados() {
             maxWidth: '600px',
             textAlign: 'left'
           }}>
-            <strong>🔧 Condiciones para mostrar eventos:</strong>
-            <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-              <li><code>destacado: true</code></li>
-              <li><strong>Y</strong> (<code>estado: "planificado"</code> <strong>O</strong> <code>estado: "activo"</code>)</li>
-            </ul>
+            
           </div>
 
           {/* BOTÓN PARA ACTIVAR EL EVENTO EXISTENTE CON ESTADO PLANIFICADO */}
@@ -249,6 +270,8 @@ function EventosDestacados() {
                     }}
                   />
                 </div>
+
+            
                 
                 <div className="modal-actions">
                   <button 
@@ -276,6 +299,7 @@ function EventosDestacados() {
                         const nombre = document.getElementById('nombreEvento').value;
                         const descripcion = document.getElementById('descripcionEvento').value;
                         const ubicacion = document.getElementById('ubicacionEvento').value;
+                        const estado = document.getElementById('estadoEvento').value; // <-- nuevo
                         
                         if (!nombre.trim()) {
                           alert('❌ El nombre del evento es obligatorio');
@@ -293,9 +317,9 @@ function EventosDestacados() {
                           capacidad: 200,
                           tipo: 'Encuentro Empresarial',
                           destacado: true,
-                          estado: 'planificado',
-                          activo: true,
-                          imagenBase64: imagenSeleccionada || null // ✅ IMAGEN EN BASE64
+                          estado, // <-- guardar el estado seleccionado
+                          activo: estado === 'activo',
+                          imagenBase64: imagenSeleccionada || null
                         };
                         
                         const id = await FirebaseService.crearEvento(nuevoEvento);
@@ -359,29 +383,40 @@ function EventosDestacados() {
     <div className="eventos-destacados">
       <div className="page-header">
         <h1>🌟 Eventos Destacados</h1>
-        <p>Selecciona un evento y completa el formulario correspondiente a tu perfil</p>
-        
-        {/* INFO DE FILTRO ACTUALIZADA */}
-        <div style={{
-          background: '#f0f8ff',
-          border: '1px solid #ddeeff',
-          borderRadius: '8px',
-          padding: '1rem',
-          margin: '1rem 0',
-          fontSize: '0.9rem'
-        }}>
-          <strong>🔍 Filtro actual:</strong><br/>
-          Eventos mostrados: <strong>{eventos.length}</strong><br/>
-          Condiciones: <code>destacado = true</code> Y (<code>estado = "planificado"</code> O <code>estado = "activo"</code>)
+        <p>Completa el formulario correspondiente a tu perfil</p>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+          <button
+            style={{
+              background: '#ff9800', // naranja
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.7rem 1.5rem',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)'
+            }}
+            onClick={() => window.location.href = '/dashboard'} // Cambia la acción según tu ruta
+          >
+            🛠️ Panel Adm.
+          </button>
         </div>
       </div>
 
       <div className="eventos-grid">
-        {eventos.map(evento => (
-          <div key={evento.id} className="evento-card">
+        {eventos.map(evento => {
+                    console.log('Evento: nnnn', evento); 
+                    
+                    console.log('Fechas:', {
+                      inicio: evento.fechaInicio,
+                      fin: evento.fechaFin
+                    });
+          return (
+            <div key={evento.id} className="evento-card">
             {/* MOSTRAR IMAGEN SI EXISTE */}
             {evento.imagenBase64 && (
-              <div className="evento-imagen">
+              <div className={`evento-imagen${evento.destacado ? ' destacado-flash' : ''}`}>
                 <img 
                   src={evento.imagenBase64} 
                   alt={evento.nombre}
@@ -393,6 +428,11 @@ function EventosDestacados() {
                     borderRadius: '12px 12px 0 0'
                   }}
                 />
+                {evento.destacado && (
+                  <div className="flash-overlay">
+                    <span>⭐ Evento Destacado</span>
+                  </div>
+                )}
               </div>
             )}
             
@@ -408,57 +448,21 @@ function EventosDestacados() {
                   <span>{evento.ubicacion}</span>
                 </div>
                 
-                <div className="info-item">
+                <div className="info-item fecha-brillante">
                   <span className="icon">📅</span>
                   <span>
-                    {new Date(evento.fechaInicio).toLocaleDateString('es-AR')} - 
-                    {new Date(evento.fechaFin).toLocaleDateString('es-AR')}
+                    {evento.fechaDesde?.split('-').reverse().join('/')} - 
+                    {evento.fechaHasta?.split('-').reverse().join('/')}
                   </span>
                 </div>
-                
-                <div className="info-item">
-                  <span className="icon">👥</span>
-                  <span>Capacidad: {evento.capacidad} personas</span>
-                </div>
-              </div>
-
-              {evento.descripcion && (
-                <div className="evento-descripcion">
-                  <p>{evento.descripcion}</p>
-                </div>
-              )}
-
-              <div className="evento-actions">
-                <button 
-                  onClick={() => handleFormularioSocio(evento)}
-                  className="btn-formulario socio"
-                  title="Formulario para socios"
-                >
-                  📝 Formulario Socio
-                </button>
-                
-                <button 
-                  onClick={() => handleFormularioProveedorConHotel(evento)}
-                  className="btn-formulario proveedor-hotel"
-                  title="Formulario para proveedores con hotel"
-                >
-                  🏨 Proveedor con Hotel
-                </button>
-                
-                <button 
-                  onClick={() => handleFormularioProveedorSinHotel(evento)}
-                  className="btn-formulario proveedor-sin-hotel"
-                  title="Formulario para proveedores sin hotel"
-                >
-                  🚗 Proveedor sin Hotel
-                </button>
               </div>
             </div>
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-};
+}
 
 export default EventosDestacados;

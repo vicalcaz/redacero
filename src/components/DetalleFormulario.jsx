@@ -52,6 +52,10 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
     setEditandoActivo(false);
   };
 
+  const handleFormularioSocio = (evento) => {
+    // lógica para mostrar el formulario de socio
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal-detalle">
@@ -191,13 +195,18 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
                     {['lunes', 'martes', 'miercoles'].map(dia => (
                       <label key={dia}>
                         {editandoActivo ? (
-                          <input
-                            type="checkbox"
-                            checked={formularioEditado.personas[index]?.[dia] || false}
-                            onChange={(e) => actualizarPersona(index, dia, e.target.checked)}
-                          />
+                          <select
+                            value={formularioEditado.personas[index]?.[dia] || ''}
+                            onChange={e => actualizarPersona(index, dia, e.target.value)}
+                          >
+                            <option value="">--</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                          </select>
                         ) : (
-                          <input type="checkbox" checked={persona[dia]} disabled />
+                          <span>
+                            {persona[dia] === 'si' ? 'Sí' : persona[dia] === 'no' ? 'No' : '--'}
+                          </span>
                         )}
                         {dia.charAt(0).toUpperCase() + dia.slice(1)}
                       </label>
@@ -291,3 +300,6 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
 }
 
 export default DetalleFormulario;
+
+// Ejemplo al abrir el modal:
+//setFormularioSeleccionado({ ...formulario }); // crea una copia

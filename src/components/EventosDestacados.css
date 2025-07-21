@@ -1,11 +1,13 @@
 /*Paleta de colores CMYK convertida
-#  --color-azul-oscuro: 
-#  --color-azul-medio:  
-#  --color-azul-claro:  
-#  --color-naranja:     
-#  --color-gris:        
+  --color-azul-oscuro: #453796;  
+  --color-azul-medio:  #5754a4;  
+  --color-azul-claro:  #6b66ae;   
+  --color-naranja:     #f68b2a;  
+  --color-gris:        #e7e7e8;      
 */
-  body {
+ 
+
+body {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
@@ -117,7 +119,8 @@
 
 /* Evento destacado */
 .evento-destacado {
-  background: white;
+  background: VAR(--color-gris);
+  border: 2px solid var(--color-azul-medio);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -130,7 +133,7 @@
 }
 
 .evento-destacado.principal {
-  border: 3px solid #fdcb6e;
+  border: 3px solid var(--color-naranja);
   position: relative;
 }
 
@@ -140,8 +143,8 @@
   top: 0;
   left: 0;
   right: 0;
-  background: #fdcb6e;
-  color: #2d3436;
+  background: VAR(--color-naranja);
+  color: VAR(--color-azul-oscuro  );
   padding: 0.5rem;
   text-align: center;
   font-weight: bold;
@@ -183,7 +186,7 @@
 .evento-imagen-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #ddd6fe 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--color-azul-claro) 0%, var(--color-azul-oscuro) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -222,18 +225,18 @@
 }
 
 .estado-badge.estado-planificado {
-  background: rgba(74, 144, 226, 0.9);
+  background: var(--color-azul-medio);
   color: white;
 }
 
 .estado-badge.estado-completado {
-  background: rgba(108, 92, 231, 0.9);
+  background: var(--color-azul-claro);
   color: white;
 }
 
 .destacado-badge {
-  background: rgba(253, 203, 110, 0.95);
-  color: #2d3436;
+  background: var(--color-naranja);
+  color: var(--color-azul-oscuro);
 }
 
 /* Información del evento */
@@ -244,7 +247,7 @@
 .evento-titulo {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2d3436;
+  color: var(--color-azul-oscuro);
   margin-bottom: 1.5rem;
   line-height: 1.3;
 }
@@ -259,7 +262,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0.8rem 0;
-  color: #636e72;
+  color: var(--color-gris);
   font-size: 1rem;
 }
 
@@ -274,7 +277,7 @@
 }
 
 .descripcion {
-  color: #636e72;
+  color: var(--color-gris);
   line-height: 1.6;
   font-size: 1rem;
 }
@@ -296,12 +299,12 @@
 }
 
 .tipo-badge {
-  background: #e17055;
+  background: VAR(--color-naranja);
   color: white;
 }
 
 .capacidad-badge {
-  background: #a29bfe;
+  background: VAR(--color-azul-claro);
   color: white;
 }
 
@@ -315,7 +318,7 @@
 }
 
 .evento-formularios h4 {
-  color: #2d3436;
+  color: VAR(--color-azul-oscuro);
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -324,7 +327,7 @@
 
 .formularios-descripcion {
   text-align: center;
-  color: #636e72;
+  color: var(--color-gris);
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
 }
@@ -358,18 +361,18 @@
 }
 
 .btn-formulario.socio {
-  background: linear-gradient(135deg, --color-azul-claro, --color-azul-oscuro);
-  color: white;
+  background: linear-gradient(135deg, var(--color-azul-claro), var(--color-azul-oscuro) );
+  color: var(--color-gris);
 }
 
 .btn-formulario.proveedor-hotel {
-  background: linear-gradient(135deg, #00b894, #00a085);
-  color: white;
+  background: linear-gradient(135deg, var(--color-azul-claro), var(--color-azul-oscuro));
+  color: var(--color-gris);
 }
 
 .btn-formulario.proveedor-sin-hotel {
-  background: linear-gradient(135deg, #fdcb6e, #e17055);
-  color: white;
+  background: linear-gradient(136deg, var(--color-azul-claro), var(--color-azul-oscuro));
+  color: var(--color-gris);  
 }
 
 .btn-icon {
@@ -396,14 +399,14 @@
 
 .formularios-nota {
   padding: 1rem;
-  background: rgba(116, 185, 255, 0.1);
+  background: VAR(--color-gris);
   border-radius: 8px;
-  border-left: 4px solid #74b9ff;
+  border-left: 4px solid var(--color-azul-claro);
 }
 
 .formularios-nota p {
   margin: 0;
-  color: #2d3436;
+  color: var(--color-azul-oscuro);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -424,7 +427,7 @@
 }
 
 .info-card h3 {
-  color: #2d3436;
+  color: var(--color-azul-oscuro);
   margin-bottom: 1rem;
   font-size: 1.3rem;
 }
@@ -436,7 +439,7 @@
 
 .info-card li {
   padding: 0.5rem 0;
-  color: #636e72;
+  color: var(--color-gris);
   border-bottom: 1px solid #eee;
 }
 
@@ -458,6 +461,76 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Efecto destacado para eventos principales */
+.evento-imagen.destacado-flash {
+  position: relative;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  animation: brillo-imagen 0.9s linear infinite alternate;
+  box-shadow: 0 0 32px 12px #b39ddbcc; /* más ancho */
+}
+
+@keyframes brillo-imagen {
+  0% {
+    box-shadow: 0 0 16px 4px #b39ddbcc, 0 0 0 0 #453796;
+    filter: brightness(0.95);
+  }
+  50% {
+    box-shadow: 0 0 64px 32px #453796cc, 0 0 32px 16px #b39ddb;
+    filter: brightness(1.18);
+  }
+  100% {
+    box-shadow: 0 0 16px 4px #b39ddbcc, 0 0 0 0 #453796;
+    filter: brightness(0.95);
+  }
+}
+
+.flash-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 215, 0, 0.92);
+  color: #222;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px #ffe066;
+  z-index: 2;
+  animation: flash-text 1.2s linear 1;
+}
+
+@keyframes flash-text {
+  0% { opacity: 0; transform: scale(0.8);}
+  40% { opacity: 1; transform: scale(1.1);}
+  100% { opacity: 1; transform: scale(1);}
+}
+
+/* Brillo para fechas y hoteles destacados */
+.info-item.fecha-brillante {
+  background: linear-gradient(90deg, #e6e0fa 60%, #b39ddb 100%);
+  color: #2a225c;
+  box-shadow: 0 0 24px 8px #45379699; /* más ancho */
+  animation: brillo-fecha 0.7s infinite alternate;
+}
+
+@keyframes brillo-fecha {
+  0% { filter: brightness(0.95); box-shadow: 0 0 24px 8px #45379699; }
+  100% { filter: brightness(1.35); box-shadow: 0 0 48px 24px #b39ddb99; }
+}
+
+.info-item.hotel-brillante {
+  background: linear-gradient(90deg, #e6e0fa 60%, #b39ddb 100%);
+  color: #2a225c;
+  box-shadow: 0 0 24px 8px #45379699; /* más ancho */
+  animation: brillo-hotel 0.7s infinite alternate;
+}
+
+@keyframes brillo-hotel {
+  0% { filter: brightness(0.95); box-shadow: 0 0 24px 8px #45379699; }
+  100% { filter: brightness(1.35); box-shadow: 0 0 48px 24px #b39ddb99; }
 }
 
 /* Responsive */

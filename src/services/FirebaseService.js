@@ -255,6 +255,7 @@ class FirebaseServiceClass {
         descripcion: eventoData.descripcion,
         fechaDesde: eventoData.fechaDesde,
         fechaHasta: eventoData.fechaHasta,
+        fechaLimiteEdicion: eventoData.fechaLimiteEdicion, // 👈 nueva propiedad
         ubicacion: eventoData.ubicacion,
         estado: eventoData.estado,
         destacado: eventoData.destacado,
@@ -285,6 +286,7 @@ class FirebaseServiceClass {
         descripcion: eventoData.descripcion,
         fechaDesde: eventoData.fechaDesde,
         fechaHasta: eventoData.fechaHasta,
+        fechaLimiteEdicion: eventoData.fechaLimiteEdicion,
         ubicacion: eventoData.ubicacion,
         estado: eventoData.estado,
         destacado: eventoData.destacado,
@@ -315,13 +317,15 @@ class FirebaseServiceClass {
           descripcion: doc.data().descripcion,
           fechaDesde: doc.data().fechaDesde,
           fechaHasta: doc.data().fechaHasta,
-          ubicacion: doc.data().ubicacion,
-          estado: doc.data().estado,
-          destacado: doc.data().destacado,
+          fechaLimiteEdicion: doc.data().fechaLimiteEdicion,
+          imagenBase64: doc.data().imagenBase64 || null,
+          destacado: doc.data().destacado || false, // 👈 AGREGA ESTA LÍNEA
+          ubicacion: doc.data().ubicacion || '',
+          estado: doc.data().estado || 'planificado',
           fechaCreacion: doc.data().fechaCreacion,
-          fechaInicio: doc.data().fechaDesde,
-          fechaFin: doc.data().fechaHasta,
-          imagenBase64: doc.data().imagenBase64 || null // 👈 leer imagen en base64
+          fechaCreacionString: doc.data().fechaCreacionString,
+          fechaActualizacion: doc.data().fechaActualizacion,
+          fechaActualizacionString: doc.data().fechaActualizacionString
         };
 
         eventos.push(eventoData);
@@ -332,6 +336,7 @@ class FirebaseServiceClass {
           destacado: eventoData.destacado,
           fechaDesde: eventoData.fechaDesde,
           fechaHasta: eventoData.fechaHasta,
+          fechaLimiteEdicion: eventoData.fechaLimiteEdicion,
           fechaCreacion: eventoData.fechaCreacion
         });
       });
@@ -366,7 +371,7 @@ class FirebaseServiceClass {
     try {
       console.log('🔥 FirebaseService: Guardando configuración de formularios');
       
-      const docRef = doc(db, 'configuraciones', 'formularios');
+      const docRef = doc(db, 'configuracion', 'eventos');
       await setDoc(docRef, {
         ...configuracion,
         fechaActualizacion: new Date().toISOString(),
@@ -385,7 +390,7 @@ class FirebaseServiceClass {
     try {
       console.log('🔥 FirebaseService: Obteniendo configuración de formularios');
       
-      const docRef = doc(db, 'configuraciones', 'formularios');
+      const docRef = doc(db, 'configuracion', 'eventos');
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -403,6 +408,7 @@ class FirebaseServiceClass {
   }
 
   // FORMULARIOS
+  
   async guardarFormularioSocio(formData) {
     try {
       console.log('🔥 FirebaseService: Guardando formulario de socio');
@@ -678,6 +684,7 @@ class FirebaseServiceClass {
       });
       
       console.log('✅ FirebaseService: Total formularios obtenidos:', formularios.length);
+      console.log('📝 Formularios obtenidos:', formularios); // <-- Agrega esta línea
       return formularios;
     } catch (error) {
       console.error('❌ FirebaseService: Error obteniendo formularios:', error);
@@ -703,13 +710,16 @@ class FirebaseServiceClass {
       querySnapshot.forEach((doc) => {
         const evento = { 
           id: doc.id, 
-          nombre: doc.data().nombre,           // ✅ Correcto: doc.data().nombre
+          nombre: doc.data().nombre,
           descripcion: doc.data().descripcion,
-          fechaDesde: doc.data().fechaDesde,   // ✅ Correcto: doc.data().fechaDesde
-          fechaHasta: doc.data().fechaHasta,   // ✅ Correcto: doc.data().fechaHasta
+          destacado: doc.data().destacado,
+          fechaDesde: doc.data().fechaDesde,
+          fechaHasta: doc.data().fechaHasta,
+          fechaLimiteEdicion: doc.data().fechaLimiteEdicion,
           ubicacion: doc.data().ubicacion,
-          estado: doc.data().estado,           // ✅ Correcto: doc.data().estado
+          estado: doc.data().estado,
           fechaCreacion: doc.data().fechaCreacion,
+      
           // Agregar alias para compatibilidad con el formulario
           fechaInicio: doc.data().fechaDesde,
           fechaFin: doc.data().fechaHasta
@@ -733,12 +743,15 @@ class FirebaseServiceClass {
         querySnapshot.forEach((doc) => {
           const evento = { 
             id: doc.id, 
-            nombre: doc.data().nombre,           // ✅ Correcto: doc.data().nombre
+            nombre: doc.data().nombre,
             descripcion: doc.data().descripcion,
-            fechaDesde: doc.data().fechaDesde,   // ✅ Correcto: doc.data().fechaDesde
-            fechaHasta: doc.data().fechaHasta,   // ✅ Correcto: doc.data().fechaHasta
+            fechaDesde: doc.data().fechaDesde,
+            fechaHasta: doc.data().fechaHasta,
+            destacado: doc.data().destacado,
+            imagenBase64: doc.data().imagenBase64 || null, // Leer imagen en base
+            fechaLimiteEdicion: doc.data().fechaLimiteEdicion,
             ubicacion: doc.data().ubicacion,
-            estado: doc.data().estado,           // ✅ Correcto: doc.data().estado
+            estado: doc.data().estado,
             fechaCreacion: doc.data().fechaCreacion,
             // Agregar alias para compatibilidad con el formulario
             fechaInicio: doc.data().fechaDesde,
@@ -767,6 +780,195 @@ class FirebaseServiceClass {
       }
     }
   }
+
+  // --- PERSONALIZACIÓN DE FORMULARIOS INDIVIDUALES ---
+
+  // Obtener todas las configuraciones de formularios individuales
+  async obtenerConfiguracionesFormulariosTipos() {
+    try {
+      console.log('🔥 FirebaseService: Obteniendo configuraciones de formularios individuales');
+      const colRef = collection(db, 'configuracionformularios');
+      const snap = await getDocs(colRef);
+      const configs = snap.docs.map(doc => doc.data());
+      console.log('✅ FirebaseService: Configuraciones obtenidas:', configs.length);
+      return configs;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo configuraciones de formularios individuales:', error);
+      throw error;
+    }
+  }
+
+  // Guardar la configuración de un tipo de formulario
+  async guardarConfiguracionFormularioTipo({ tipoformulario, notainicio, notafin, imageninicio }) {
+    try {
+      if (!tipoformulario) throw new Error('tipoformulario es requerido');
+      console.log('🔥 FirebaseService: Guardando configuración para tipo:', tipoformulario);
+      const docRef = doc(db, 'configuracionformularios', tipoformulario);
+      await setDoc(docRef, {
+        tipoformulario,
+        notainicio: notainicio || '',
+        notafin: notafin || '',
+        imageninicio: imageninicio || ''
+      }, { merge: true });
+      console.log('✅ FirebaseService: Configuración guardada para tipo:', tipoformulario);
+      return true;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error guardando configuración de formulario tipo:', error);
+      throw error;
+    }
+  }
+  // Obtener la configuración personalizada para "socio"
+  async obtenerConfiguracionFormularioSocio() {
+    try {
+      const docRef = doc(db, 'configuracionformularios', 'socio');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      } else {
+        // Si no existe, devuelve valores por defecto
+        return { notainicio: '', notafin: '', imageninicio: '' };
+      }
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo configuración de proveedor-con-hotel:', error);
+      throw error;
+    }
+  }
+
+// Obtener la configuración personalizada para "proveedor-sin-hotel"
+  async obtenerConfiguracionFormularioProveedorSinHotel() {
+    try {
+      const docRef = doc(db, 'configuracionformularios', 'proveedor-sin-hotel');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      } else {
+        // Si no existe, devuelve valores por defecto
+        return { notainicio: '', notafin: '', imageninicio: '' };
+      }
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo configuración de proveedor-con-hotel:', error);
+      throw error;
+    }
+  }
+  // Obtener la configuración personalizada para "proveedor-con-hotel"
+  async obtenerConfiguracionFormularioProveedorConHotel() {
+    try {
+      const docRef = doc(db, 'configuracionformularios', 'proveedor-con-hotel');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      } else {
+        // Si no existe, devuelve valores por defecto
+        return { notainicio: '', notafin: '', imageninicio: '' };
+      }
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo configuración de proveedor-con-hotel:', error);
+      throw error;
+    }
+  }
+
+  // Método para guardar configuración de correo electrónico para eventos
+  async guardarConfiguracionMailEvento(mailConfig) {
+    try {
+      console.log('🔥 FirebaseService: Guardando configuración de correo para eventos');
+      
+      const docRef = doc(db, 'configuracionMails', 'eventoActual');
+      await setDoc(docRef, mailConfig, { merge: true });
+      
+      console.log('✅ FirebaseService: Configuración de correo guardada exitosamente');
+      return true;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error guardando configuración de correo:', error);
+      throw error;
+    }
+  }
+
+
+ async obtenerFormularioSocioPorUsuarioYEvento(email, eventoId) {
+    try {
+      console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
+      if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
+      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+
+      const q = query(
+        collection(db, 'formularios-socios'),
+        where('usuarioCreador', '==', email.toLowerCase().trim()),
+        where('eventoId', '==', eventoId),
+        where('tipo', '==', 'socio'),
+        limit(1)
+      );
+      const querySnapshot = await getDocs(q);
+       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
+      if (querySnapshot.empty) {
+        console.log('ℹ️ No existe formulario proveedor con hotel para este usuario/evento');
+        return null;
+      }
+      const docSnap = querySnapshot.docs[0];
+      return { id: docSnap.id, ...docSnap.data() };
+    } catch (error) {
+      console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      throw error;
+    }
+  }
+    // Ejemplo típico de filtro en FirebaseService.js
+a
+  
+  async obtenerFormularioProveedorConHotelPorUsuarioYEvento(email, eventoId) {
+    try {
+      console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
+      if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
+      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+
+      const q = query(
+        collection(db, 'formularios-proveedores'),
+        where('usuarioCreador', '==', email.toLowerCase().trim()),
+        where('eventoId', '==', eventoId),
+        where('tipo', '==', 'proveedor-sin-hotel'),
+        limit(1)
+      );
+      const querySnapshot = await getDocs(q);
+       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
+      if (querySnapshot.empty) {
+        console.log('ℹ️ No existe formulario proveedor sin hotel para este usuario/evento');
+        return null;
+      }
+      const docSnap = querySnapshot.docs[0];
+      return { id: docSnap.id, ...docSnap.data() };
+    } catch (error) {
+      console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      throw error;
+    }
+  }
+  async obtenerFormularioProveedorSinHotelPorUsuarioYEvento(email, eventoId) {
+    try {
+      console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
+      if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
+      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+
+      const q = query(
+        collection(db, 'formularios-proveedores'),
+        where('usuarioCreador', '==', email.toLowerCase().trim()),
+        where('eventoId', '==', eventoId),
+        where('tipo', '==', 'proveedor-sin-hotel'),
+        limit(1)
+      );
+      const querySnapshot = await getDocs(q);
+       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
+      if (querySnapshot.empty) {
+        console.log('ℹ️ No existe formulario proveedor sin hotel para este usuario/evento');
+        return null;
+      }
+      const docSnap = querySnapshot.docs[0];
+      return { id: docSnap.id, ...docSnap.data() };
+    } catch (error) {
+      console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      throw error;
+    }
+  }
+
 }
 
 export const FirebaseService = new FirebaseServiceClass();

@@ -1,3 +1,12 @@
+ :root {
+  --color-azul-oscuro: #453796;  
+  --color-azul-medio:  #5754a4;  
+  --color-azul-claro:  #6b66ae;
+  --color-azul-claro:  #6b66ae;   
+  --color-naranja:     #f68b2a;  
+  --color-gris:        #e7e7e8;  
+}
+
 .login-container {
   display: flex;
   justify-content: center;
@@ -10,7 +19,7 @@
   background: white;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px var(--color-gris);
   width: 100%;
   max-width: 400px;
 }
@@ -21,7 +30,7 @@
 }
 
 .logo-section h1 {
-  color: #333;
+  color: var(--color-azul-oscuro);
   margin: 0;
   font-size: 1.8rem;
 }
@@ -33,7 +42,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--color-azul-oscuro);
   font-weight: 500;
 }
 
@@ -48,13 +57,13 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--color-azul-medio);
 }
 
 .login-card button {
   width: 100%;
   padding: 0.75rem;
-  background: #667eea;
+  background: var(--color-azul-medio);
   color: white;
   border: none;
   border-radius: 5px;
@@ -64,7 +73,7 @@
 }
 
 .login-card button:hover {
-  background: #5a6fd8;
+  background: var(--color-azul-claro);
 }
 
 .error {

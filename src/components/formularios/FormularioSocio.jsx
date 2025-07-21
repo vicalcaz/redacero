@@ -1,21 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
+import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-function FormularioSocio({ user }) {
+  function FormularioSocio({ user, evento, onSubmit, onCancel }) {
+    const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
+
   const [datosEmpresa, setDatosEmpresa] = useState({
+    empresa: '',
     direccion: '',
     ciudad: '',
     paginaWeb: '',
     codigoPostal: '',
-    rubro: ''
+    rubro: '',
+    cantidad_personas: 0
   });
 
   const [personas, setPersonas] = useState([{
     id: 1,
     nombre: '',
     apellido: '',
-    empresa: '',
     cargo: '',
     celular: '',
     telefono: '',
@@ -25,20 +29,108 @@ function FormularioSocio({ user }) {
     horaLlegada: '',
     fechaSalida: '',
     horaSalida: '',
-    lunes: false,
-    martes: false,
-    miercoles: false,
-    asisteCena: false,
+    lunes: '',
+    martes: '',
+    miercoles: '',
+    asisteCena: '',
     menuEspecial: '',
-    atendeReuniones: false,
-    tipoHabitacion: 'simple',
-    noches: 1,
-    acompanantes: 0
+    atiendeReuniones: '',
+    tipoHabitacion: '',
+    noches: 0
   }]);
 
   const [comentarios, setComentarios] = useState('');
   const [guardando, setGuardando] = useState(false);
-  const [config, setConfig] = useState(null);
+  const [eventos, setEventos] = useState([]);
+  const [eventoSeleccionado, setEventoSeleccionado] = useState('');
+  const [eventosLoading, setEventosLoading] = useState(true);
+  const [configProveedorConHotel, setConfigProveedorConHotel] = useState(null);
+  const [formularioExistente, setFormularioExistente] = useState(null);
+  const [edicionHabilitada, setEdicionHabilitada] = useState(true);
+  const [configSocio, setConfigSocio] = useState(null);
+
+  // Al montar, buscar si ya existe formulario para este usuario y evento
+  useEffect(() => {
+    const cargarFormularioExistente = async () => {
+      if (!eventoSeleccionado || !user?.email) return;
+      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(user.email, eventoSeleccionado);
+      if (existente) {
+        setFormularioExistente(existente);
+        setDatosEmpresa(existente.datosEmpresa || {});
+        setPersonas(existente.personas || []);
+        setComentarios(existente.comentarios || '');
+      } else {
+        setFormularioExistente(null);
+        setDatosEmpresa({
+          empresa: '',
+          direccion: '',
+          ciudad: '',
+          paginaWeb: '',
+          codigoPostal: '',
+          rubro: '',
+          cantidad_personas: 0
+        });
+        setPersonas([{
+          id: 1,
+          nombre: '',
+          apellido: '',
+          cargo: '',
+          celular: '',
+          telefono: '',
+          email: '',
+          dni: '',
+          fechaLlegada: '',
+          horaLlegada: '',
+          fechaSalida: '',
+          horaSalida: '',
+          lunes: '',
+          martes: '',
+          miercoles: '',
+          asisteCena: '',
+          menuEspecial: '',
+          atiendeReuniones: '',
+          tipoHabitacion: '',
+          noches: 0,
+        }]);
+        setComentarios('');
+      }
+    };
+    cargarFormularioExistente();
+  }, [eventoSeleccionado, user]);
+
+  // Controlar si la edición está habilitada según la fecha límite
+  useEffect(() => {
+    if (!evento) {
+      console.log("evento aún no está disponible");
+      return;
+    }
+    if (!evento.fechaLimiteEdicion) {
+      setEdicionHabilitada(true);
+      return;
+    }
+    const hoy = new Date();
+    const fechaLimite = new Date(evento.fechaLimiteEdicion);
+    setEdicionHabilitada(hoy <= fechaLimite);
+  }, [evento]);
+
+  useEffect(() => {
+    const cargarEventos = async () => {
+      setEventosLoading(true);
+      try {
+        const eventosObtenidos = await FirebaseService.obtenerEventos(); // Ajusta el método si es necesario
+        setEventos(eventosObtenidos);
+        // Si hay uno destacado, selecciónalo por defecto
+        if (eventosObtenidos.length > 0 && !eventoSeleccionado) {
+          setEventoSeleccionado(eventosObtenidos[0].id);
+        }
+      } catch (error) {
+        console.error("Error cargando eventos:", error);
+      } finally {
+        setEventosLoading(false);
+      }
+    };
+    cargarEventos();
+  }, []);
 
   const agregarPersona = () => {
     const nuevaPersona = {
@@ -55,13 +147,13 @@ function FormularioSocio({ user }) {
       horaLlegada: '',
       fechaSalida: '',
       horaSalida: '',
-      lunes: false,
-      martes: false,
-      miercoles: false,
-      asisteCena: false,
+      lunes: '',
+      martes: '',
+      miercoles: '',
+      asisteCena: '',
       menuEspecial: '',
-      atendeReuniones: false,
-      tipoHabitacion: 'simple',
+      atiendeReuniones: '',
+      tipoHabitacion: '',
       noches: 1,
       acompanantes: 0
     };
@@ -87,38 +179,58 @@ function FormularioSocio({ user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGuardando(true);
-
     try {
+      // 1. Calcular cantidad de personas
+      const cantidadPersonas = personas.length;
+
+      // 2. Calcular noches para cada persona
+      const personasActualizadas = personas.map(persona => {
+        let noches = 0;
+        if (persona.fechaLlegada && persona.fechaSalida) {
+          const fechaLlegada = new Date(persona.fechaLlegada);
+          const fechaSalida = new Date(persona.fechaSalida);
+          // Diferencia en milisegundos, luego a días
+          noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
+        }
+        return { ...persona, noches };
+      });
+
+      // 3. Guardar cantidad_personas en datosEmpresa
+      const datosEmpresaActualizados = {
+        ...datosEmpresa,
+        cantidad_personas: cantidadPersonas
+      };
+
       const formularioData = {
         tipo: 'Socio',
-        datosEmpresa,
-        personas,
+        eventoId: eventoSeleccionado,
+        datosEmpresa: datosEmpresaActualizados,
+        personas: personasActualizadas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
-        usuarioCreador: user?.email || 'Anónimo'
+        usuarioCreador: user.email.toLowerCase().trim()
       };
 
       console.log('Enviando formulario Socio:', formularioData);
-      
-      // Usar el método específico que existe en FirebaseService
-      const id = await FirebaseService.guardarFormularioSocio(formularioData);
-      
+
+      await FirebaseService.guardarFormularioSocio(formularioData);
+
       alert('✅ Formulario de Socio guardado exitosamente!');
-      console.log('Formulario guardado con ID:', id);
-      
+
       // Limpiar formulario después de guardar
       setDatosEmpresa({
+        empresa: '',
         direccion: '',
         ciudad: '',
         paginaWeb: '',
         codigoPostal: '',
-        rubro: ''
+        rubro: '',
+        cantidad_personas: 0
       });
       setPersonas([{
         id: 1,
         nombre: '',
         apellido: '',
-        empresa: '',
         cargo: '',
         celular: '',
         telefono: '',
@@ -128,181 +240,251 @@ function FormularioSocio({ user }) {
         horaLlegada: '',
         fechaSalida: '',
         horaSalida: '',
-        lunes: false,
-        martes: false,
-        miercoles: false,
-        asisteCena: false,
+        lunes: '',
+        martes: '',
+        miercoles: '',
+        asisteCena: '',
         menuEspecial: '',
-        atendeReuniones: false,
-        tipoHabitacion: 'doble',
-        noches: 1,
-        acompanantes: 0
+        atiendeReuniones: '',
+        tipoHabitacion: '',
+        noches: 0,
       }]);
       setComentarios('');
-      
+
+      // 🔄 Volver a consultar el formulario guardado
+      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(
+        user.email,
+        eventoSeleccionado
+      );
+      if (existente) {
+        setFormularioExistente(existente);
+        setDatosEmpresa(existente.datosEmpresa || {});
+        setPersonas(existente.personas || []);
+        setComentarios(existente.comentarios || '');
+      }
     } catch (error) {
       console.error('Error completo:', error);
-      console.error('FirebaseService disponible:', !!FirebaseService);
-      console.error('Métodos de FirebaseService:', Object.keys(FirebaseService || {}));
       alert(`❌ Error al guardar el formulario: ${error.message}`);
     } finally {
       setGuardando(false);
     }
   };
-return (
-    <div className="formulario-container">
-      <div className="formulario-header" style={{ padding: 0, flexDirection: 'column', minHeight: 'unset' }}>
-        {/* Imagen de fondo como banner */}
-        {config?.mostrarImagenFondo && config?.imagenFondo && (
-          <div
-            className="formulario-header-fondo"
-            style={{
-              width: '100%',
-              height: 180,
-              backgroundImage: `url(${config.imagenFondo})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              borderRadius: '12px 12px 0 0'
-            }}
-          />
-        )}
-        {/* Logo y títulos */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          background: config?.colorSecundario || 'var(--color-azul-oscuro)',
-          borderRadius: config?.mostrarImagenFondo && config?.imagenFondo ? '0 0 12px 12px' : '12px 12px 0 0',
-          padding: '1.5rem 2rem'
-        }}>
-          {config?.mostrarLogo && config?.logoEmpresa && (
-            <img
-              src={config.logoEmpresa}
-              alt="Logo empresa"
-              className="formulario-logo"
-            />
-          )}
-          <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
-            <div className="formulario-header">
-              <h1>Eventos Red Acero</h1>
-              <h2>📝 Formulario Socio</h2>
-            </div>
-            </div><div style={{ marginLeft: 24 }}>
-            <h2>{config?.textoEncabezado || 'Formulario Socio'}</h2>
-            <p>{config?.textoDescripcion || ''}</p>
-          </div> 
-          </div>
-        </div> 
-      <div className="nota-importante superior">
-        <div className="nota-icon">🏨</div>
-        <div className="nota-content">
-          <h3>Información para Socios</h3>
-          <ul>
-            <li><strong>Complete todos los campos obligatorios (*)</strong></li>
-            <li>Indique el tipo de habitación y número de acompañantes</li>
-            <li>Especifique las fechas exactas de alojamiento</li>
-            <li>Los datos de acompañantes son importantes para el registro</li>
-          </ul>
-        </div>
+
+  function addDays(dateStr, days) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  const minFecha = addDays(evento?.fechaDesde, -2);
+  const maxFecha = addDays(evento?.fechaHasta, 2);
+
+  useEffect(() => {
+    if (!eventoSeleccionado || eventos.length === 0) return;
+    const ev = eventos.find(e => e.id === eventoSeleccionado);
+    if (ev && typeof setEvento === "function") {
+      setEvento(ev);
+    }
+  }, [eventoSeleccionado, eventos, setEvento]);
+
+  useEffect(() => {
+    const cargarConfigSocio = async () => {
+      try {
+        const config = await FirebaseService.obtenerConfiguracionFormularioSocio();
+        setConfigSocio(config);
+      } catch (error) {
+        console.error("Error cargando configuración de socio:", error);
+      }
+    };
+    cargarConfigSocio();
+  }, []);
+
+  const onFormularioSocio = (evento) => {
+    // lógica para mostrar el formulario de socio
+};
+
+  return (
+    <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
+      <div className="formulario-header">
+        <h1>Eventos Red Acero</h1>
+        <h2>📝 Formulario Socio</h2>
       </div>
-      
+
+      {!edicionHabilitada && (
+        <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 16 }}>
+          La edición del formulario ya no está permitida (fecha límite: {evento?.fechaLimiteEdicion}).
+        </div>
+      )}
+
+      {formularioExistente && (
+  <div style={{
+    background: '#fff3cd',
+    color: '#856404',
+    border: '1px solid #ffeeba',
+    borderRadius: 8,
+    padding: '1rem',
+    marginBottom: 24,
+    fontWeight: 500
+  }}>
+    Ya existe un formulario cargado para este evento y usuario. Puedes editarlo y volver a guardar si es necesario.
+  </div>
+)}
+
       <form className="formulario-form" onSubmit={handleSubmit}>
+        {/* Imagen de inicio */}
+        {configSocio?.imageninicio && (
+          <div style={{ margin: '12px 0' }}>
+            <img
+              src={configSocio.imageninicio}
+              alt="Imagen de inicio"
+              style={{ maxWidth: '100%', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
+                    borderRadius: '12px' }}
+            />
+          </div>
+        )}
+
+        {/* Nota de inicio */}
+        {configSocio?.notainicio && (
+          <div className="nota-inicio-formulario">
+            {configSocio.notainicio}
+          </div>
+        )}
+
+        {/* Sección Selección de Evento - Color Amarillo */}
+        {eventosLoading ? (
+          <div style={{ marginBottom: 24 }}>Cargando eventos...</div>
+        ) : (
+          <div className="seccion-formulario" >
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
+              📅 Selección de Evento <span style={{ color: 'red' }}>*</span>
+            </h3>
+            <select
+              value={eventoSeleccionado}
+              onChange={e => setEventoSeleccionado(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: 8,
+                border: '1px solid #bbb',
+                fontSize: '1.1rem'
+              }}
+              disabled={rolUsuario !== 'admin' || guardando} // Solo admin puede modificar
+            >
+              <option value="">-- Seleccione un evento --</option>
+              {eventos.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.nombre} ({ev.fechaDesde?.split('-').reverse().join('/')} - {ev.fechaHasta?.split('-').reverse().join('/')})
+                </option>
+              ))}
+            </select>
+            {!eventoSeleccionado && (
+              <div style={{ color: 'red', marginTop: 8, fontSize: '0.95rem' }}>
+                Debe seleccionar un evento para continuar.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Sección Datos de la Empresa - Color Azul */}
-        <div className="seccion-formulario" style={{
-          background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-          border: '2px solid #2196f3',
-          borderRadius: '12px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(33, 150, 243, 0.15)'
-        }}>
-          <h3 style={{ color: '#1976d2', marginBottom: '1.5rem', fontSize: '1.4rem' }}>
-            🏢 Datos de la Empresa
-          </h3>
+        <div className="seccion-formulario">
+          <h3>   🏢 Datos de la Empresa    </h3>
           <div className="campo-fila"> {/* ✅ Cambio: campo-fila en lugar de form-grid */}
+            <div className="campo-grupo">
+                  <label>Empresa: (Razón Social)</label>
+                  <input
+                    type="text"
+                    value={datosEmpresa.empresa}
+                    onChange={(e) => actualizarDatosEmpresa('empresa', e.target.value)}
+                    onInvalid={e => e.target.setCustomValidity('Por favor complete este campo.')}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada}
+                  />
+                </div>
             <div className="campo-grupo"> {/* ✅ Cambio: campo-grupo en lugar de form-group */}
               <label>Dirección:</label>
               <input
                 type="text"
                 value={datosEmpresa.direccion}
                 onChange={(e) => actualizarDatosEmpresa('direccion', e.target.value)}
-                disabled={guardando}
-              />
-            </div>
-            <div className="campo-grupo">
-              <label>Ciudad:</label>
-              <input
-                type="text"
-                value={datosEmpresa.ciudad}
-                onChange={(e) => actualizarDatosEmpresa('ciudad', e.target.value)}
-                disabled={guardando}
+                placeholder="calle y número"
+                required
+                disabled={guardando || !edicionHabilitada}
               />
             </div>
           </div>
-          
-          <div className="campo-fila">
-            <div className="campo-grupo">
-              <label>Página Web:</label>
-              <input
-                type="url"
-                value={datosEmpresa.paginaWeb}
-                onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
-                placeholder="ej.: https://www.articulos_del_hogar.com.ar"
-                disabled={guardando}
-              />
-            </div>
+          <div className="campo-fila"> 
+             <div className="campo-grupo">
+               <label>Ciudad:</label>
+               <input
+                 type="text"
+                 value={datosEmpresa.ciudad}
+                 onChange={(e) => actualizarDatosEmpresa('ciudad', e.target.value)}
+                 placeholder="ej.: Buenos Aires"
+                 required
+                 disabled={guardando || !edicionHabilitada}
+               />
+             </div>
+             <div className="campo-grupo">
+               <label>Página Web:</label>
+               <input
+                 type="url"
+                 value={datosEmpresa.paginaWeb}
+                 onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
+                 placeholder="ej.: https://www.articulos_del_hogar.com.ar"
+                 required
+                 disabled={guardando || !edicionHabilitada}
+               />
+             </div>
+          </div>  
+          <div className="campo-fila"> 
             <div className="campo-grupo">
               <label>Código Postal:</label>
-              <input
-                type="text"
+                <input
+                type="text" 
                 value={datosEmpresa.codigoPostal}
+                placeholder="ej.: 1234"
                 onChange={(e) => actualizarDatosEmpresa('codigoPostal', e.target.value)}
-                disabled={guardando}
-              />
+                required  
+                disabled={guardando || !edicionHabilitada}
+               />
             </div>
-          </div>
-          
-          <div className="campo-grupo">
-            <label>Rubro:</label>
-            <input
+            <div className="campo-grupo">
+              <label>Rubro:</label>
+              <input
               type="text"
               value={datosEmpresa.rubro}
               onChange={(e) => actualizarDatosEmpresa('rubro', e.target.value)}
-              disabled={guardando}
-            />
-          </div>
+              placeholder="ej.: Artículos del Hogar"              
+              required
+              disabled={guardando || !edicionHabilitada}
+              />
+            </div>
+          </div>  
         </div>
-
-        {/* Sección Personas - Color Verde */}
+        
         <div className="seccion-formulario" style={{
-          background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
-          border: '2px solid #4caf50',
+          border: '2px solid --color-azul-oscuro',
           borderRadius: '12px',
           padding: '2rem',
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
-          <h3 style={{ color: '#388e3c', marginBottom: '1.5rem', fontSize: '1.4rem' }}>
+          <h3>
             👥 Personas que asistirán
           </h3>
           {personas.map((persona, index) => (
-            <div key={persona.id} className="persona-card" style={{
-              background: 'white',
-              border: '1px solid #81c784',
-              borderRadius: 'var(--radius-medium)',
-              padding: '1.5rem',
-              marginBottom: '1.5rem',
-              boxShadow: '0 2px 8px rgba(76, 175, 80, 0.1)'
-            }}>
+            <div key={persona.id} >
               <div className="persona-header" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1rem',
                 paddingBottom: '0.5rem',
-                borderBottom: '1px solid #81c784'
+                borderBottom: '1px solid --color-gris'
               }}>
-                <h5 style={{ color: '#388e3c' }}>Persona {index + 1}</h5>
+                <h5>Persona {index + 1}</h5>
                 {personas.length > 1 && (
                   <button
                     type="button"
@@ -327,7 +509,8 @@ return (
                     type="text"
                     value={persona.nombre}
                     onChange={(e) => actualizarPersona(persona.id, 'nombre', e.target.value)}
-                    disabled={guardando}
+                    required
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
                 <div className="campo-grupo">
@@ -336,70 +519,70 @@ return (
                     type="text"
                     value={persona.apellido}
                     onChange={(e) => actualizarPersona(persona.id, 'apellido', e.target.value)}
-                    disabled={guardando}
+                    required
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
               </div>
-              
               <div className="campo-fila">
-                <div className="campo-grupo">
-                  <label>Empresa: (Razón Social)</label>
-                  <input
-                    type="text"
-                    value={persona.empresa}
-                    onChange={(e) => actualizarPersona(persona.id, 'empresa', e.target.value)}
-                    disabled={guardando}
-                  />
-                </div>
                 <div className="campo-grupo">
                   <label>Cargo:</label>
                   <input
                     type="text"
                     value={persona.cargo}
                     onChange={(e) => actualizarPersona(persona.id, 'cargo', e.target.value)}
-                    disabled={guardando}
+                    required
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
-              </div>
-              
-              <div className="campo-fila">
                 <div className="campo-grupo">
                   <label>Email:</label>
                   <input
                     type="email"
                     value={persona.email}
                     onChange={(e) => actualizarPersona(persona.id, 'email', e.target.value)}
-                    disabled={guardando}
+                    placeholder="ejemplo@dominio.com"
+                    required
+                    onInput={e => e.target.setCustomValidity('')}
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese un email válido')}
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
+              </div>
+              <div className="campo-fila">
                 <div className="campo-grupo">
                   <label>Celular:</label>
                   <input
                     type="tel"
                     value={persona.celular}
-                    onChange={(e) => {
-                      // Máscara para celular: (011) 15-6789-0123
+                    onChange={e => {
                       let valor = e.target.value.replace(/\D/g, '');
-                      if (valor.length <= 13) {
-                        if (valor.length >= 3) {
-                          valor = `(${valor.slice(0, 3)}) ${valor.slice(3)}`;
-                        }
-                        if (valor.length >= 8) {
-                          valor = valor.replace(/(\(\d{3}\) )(\d{2})/, '$1$2-');
-                        }
-                        if (valor.length >= 13) {
-                          valor = valor.replace(/(\(\d{3}\) \d{2}-\d{4})(\d{4})/, '$1-$2');
-                        }
-                        actualizarPersona(persona.id, 'celular', valor);
+
+                      // Empieza con +54 9
+                      let resultado = '+54 9 ';
+                      if (valor.startsWith('549')) {
+                        valor = valor.slice(3);
+                      } else if (valor.startsWith('54')) {
+                        valor = valor.slice(2);
+                      } else if (valor.startsWith('9')) {
+                        valor = valor.slice(1);
                       }
+
+                      // Código de área (2 a 4 dígitos)
+                      if (valor.length > 0) resultado += valor.slice(0, 4);
+                      if (valor.length > 4) resultado += ' ' + valor.slice(4, 7);
+                      if (valor.length > 7) resultado += ' ' + valor.slice(7, 11);
+
+                      actualizarPersona(persona.id, 'celular', resultado.trim());
                     }}
-                    placeholder="(011) 15-6789-0123"
-                    disabled={guardando}
+                    placeholder="+54 9 11 6789 0123"
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular en formato internacional.')}
+                    onInput={e => e.target.setCustomValidity('')}
+                    required
+                    disabled={guardando || !edicionHabilitada}
                   />
+                  
                 </div>
-              </div>
-              
-              <div className="campo-fila">
                 <div className="campo-grupo">
                   <label>Teléfono:</label>
                   <input
@@ -408,7 +591,7 @@ return (
                     onChange={(e) => {
                       // Máscara para teléfono fijo: (011) 4567-8901
                       let valor = e.target.value.replace(/\D/g, '');
-                      if (valor.length <= 10) {
+                      if (valor.length <= 12) {
                         if (valor.length >= 3) {
                           valor = `(${valor.slice(0, 3)}) ${valor.slice(3)}`;
                         }
@@ -419,31 +602,31 @@ return (
                       }
                     }}
                     placeholder="(011) 4567-8901"
-                    disabled={guardando}
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
+                    required
+                    disabled={guardando || !edicionHabilitada}
                   />
                 </div>
                 <div className="campo-grupo">
                   <label>DNI:</label>
                   <input
-                    type="text"
-                    value={persona.dni}
-                    onChange={(e) => actualizarPersona(persona.id, 'dni', e.target.value)}
-                    disabled={guardando}
-                  />
+                      type="text"
+                      value={persona.dni}
+                      onChange={e => actualizarPersona(persona.id, 'dni', e.target.value)}
+                      placeholder="Cargue su documento sin puntos."
+                      required
+                      pattern="\d{7,8}"
+                      onInvalid={e => e.target.setCustomValidity('El DNI debe tener 7 u 8 números, sin puntos.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      disabled={guardando || !edicionHabilitada}
+                    />
                 </div>
               </div>
 
               {/* Información de Hotel */}
-              <div style={{
-                background: 'linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%)',
-                border: '1px solid #ff9800',
-                borderRadius: '8px',
-                padding: '1.5rem',
-                marginTop: '1.5rem'
-              }}>
+              <div>
                 <h5 style={{ 
                   marginTop: '0', 
-                  color: '#f57c00', 
                   marginBottom: '1rem',
                   fontSize: '1.2rem'
                 }}>
@@ -451,14 +634,32 @@ return (
                 </h5>
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
-                  <select
-                    value={persona.tipoHabitacion}
-                    onChange={(e) => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
-                    disabled={guardando}
-                  >
-                    <option value="doble">Doble</option>
-                    <option value="matrimonial">Matrimonial</option>
-                  </select>
+                 <select
+                  value={persona.tipoHabitacion || ''}
+                  onChange={e => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
+                  required
+                  onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
+                  onInput={e => e.target.setCustomValidity('')}
+                  disabled={guardando || !edicionHabilitada}
+                >
+                  <option value="">-- Seleccione --</option>
+                  <option value="doble">Doble</option>
+                  <option value="matrimonial">Matrimonial</option>
+                  </select> 
+                </div>
+                {/* Ca  mpo Comentario */}
+                <div className="campo-grupo">
+                  <label>Comentario sobre tipo de habitación seleccionada:</label>
+                  <input
+                    type="text"
+                    value={persona.comentario || ''}
+                    onChange={e => actualizarPersona(persona.id, 'comentario', e.target.value)}
+                    placeholder="Ej: Indique con quién comparte habitación o a quién reemplaza"
+                    required
+                    onInvalid={e => e.target.setCustomValidity('Por favor indique en caso de corresponder o no con quien comparte habitación o a quien reemplaza.')}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada}
+                  />
                 </div>
 
                 {/* Fechas y Horas */}
@@ -468,8 +669,13 @@ return (
                     <input
                       type="date"
                       value={persona.fechaLlegada}
+                      min={minFecha}
+                      max={maxFecha}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
-                      disabled={guardando}
+                      required
+                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                   <div className="campo-grupo">
@@ -478,7 +684,10 @@ return (
                       type="time"
                       value={persona.horaLlegada}
                       onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
-                      disabled={guardando}
+                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      required
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                 </div>
@@ -489,8 +698,13 @@ return (
                     <input
                       type="date"
                       value={persona.fechaSalida}
+                      min={minFecha}
+                      max={maxFecha}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
-                      disabled={guardando}
+                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      required
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                   <div className="campo-grupo">
@@ -499,24 +713,20 @@ return (
                       type="time"
                       value={persona.horaSalida}
                       onChange={(e) => actualizarPersona(persona.id, 'horaSalida', e.target.value)}
-                      disabled={guardando}
+                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de salida al hotel.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      required
+                      disabled={guardando || !edicionHabilitada}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Subsección Actividades - Color Púrpura */}
-              <div style={{
-                background: 'linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%)',
-                border: '1px solid #9c27b0',
-                borderRadius: '8px',
-                padding: '1.5rem',
-                marginTop: '1.5rem'
-              }}>
+              <div >
                 <div className="checkbox-section" style={{ marginTop: '0' }}>
                   <h6 style={{ 
                     marginBottom: '0.75rem', 
-                    color: '#7b1fa2',
                     fontSize: '1.1rem'
                   }}>
                     📅 Días de asistencia y actividades:
@@ -526,95 +736,90 @@ return (
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
                     gap: '0.75rem' 
                   }}>
-                    <label className="checkbox-container" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-small)',
-                      transition: 'background-color 0.2s ease'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={persona.lunes}
-                        onChange={(e) => actualizarPersona(persona.id, 'lunes', e.target.checked)}
-                        disabled={guardando}
-                        style={{ marginRight: '0.5rem' }}
-                      />
-                      <span>📅 Asiste Lunes</span>
-                    </label>
-                    
-                    <label className="checkbox-container" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-small)',
-                      transition: 'background-color 0.2s ease'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={persona.martes}
-                        onChange={(e) => actualizarPersona(persona.id, 'martes', e.target.checked)}
-                        disabled={guardando}
-                        style={{ marginRight: '0.5rem' }}
-                      />
-                      <span>📅 Asiste Martes</span>
-                    </label>
-                    
-                    <label className="checkbox-container" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-small)',
-                      transition: 'background-color 0.2s ease'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={persona.miercoles}
-                        onChange={(e) => actualizarPersona(persona.id, 'miercoles', e.target.checked)}
-                        disabled={guardando}
-                        style={{ marginRight: '0.5rem' }}
-                      />
-                      <span>📅 Asiste Miércoles</span>
-                    </label>
-                    
-                    <label className="checkbox-container" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-small)',
-                      transition: 'background-color 0.2s ease'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={persona.asisteCena}
-                        onChange={(e) => actualizarPersona(persona.id, 'asisteCena', e.target.checked)}
-                        disabled={guardando}
-                        style={{ marginRight: '0.5rem' }}
-                      />
-                      <span>🍽️ Asiste a la cena de cierre</span>
-                    </label>
-                    
-                    <label className="checkbox-container" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-small)',
-                      transition: 'background-color 0.2s ease'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={persona.atendeReuniones}
-                        onChange={(e) => actualizarPersona(persona.id, 'atendeReuniones', e.target.checked)}
-                        disabled={guardando}
-                        style={{ marginRight: '0.5rem' }}
-                      />
-                      <span>🤝 Atiende agenda de reuniones</span>
-                    </label>
+                    <div className="campo-grupo">
+                      <label>Asiste Lunes:</label>
+                      <select
+                        value={persona.lunes || ''}
+                        onChange={e => {
+                          actualizarPersona(persona.id, 'lunes', e.target.value === '' ? null : e.target.value);
+                        }}
+                        required
+                        onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el lunes al evento.')}
+                        disabled={guardando || !edicionHabilitada}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+                      </select>
+                    </div>
+                    <div className="campo-grupo">
+                      <label>Asiste Martes:</label>
+                      <select
+                        value={persona.martes || ''}
+                        onChange={e => {
+                          actualizarPersona(persona.id, 'martes', e.target.value === '' ? null : e.target.value);
+                        }}
+                        required
+                        onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el martes al evento.')}
+                        disabled={guardando || !edicionHabilitada}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+               
+                     </select>
+                    </div>
+                    <div className="campo-grupo">
+                      <label>Asiste Miércoles:</label>
+                      <select
+                        value={persona.miercoles || ''}
+                        onChange={e => {
+                          actualizarPersona(persona.id, 'miercoles', e.target.value === '' ? null : e.target.value);
+                        }}
+                        required
+                        onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el miércoles al evento.')}
+                        disabled={guardando || !edicionHabilitada}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+               
+                     </select>
+                    </div>
+                    <div className="campo-grupo">
+                      <label>Asiste a la cena de cierre:</label>
+                      <select
+                        value={persona.asisteCena || ''}
+                        onChange={e => {
+                          actualizarPersona(persona.id, 'asisteCena', e.target.value === '' ? null : e.target.value);
+                        }}
+                        required
+                        onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir a la cena de cierre del evento.')}
+                        disabled={guardando || !edicionHabilitada}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+               
+                     </select>
+                    </div>                    
+                    <div className="campo-grupo">
+                      <label>Atiende agenda de reuniones:</label>
+                      <select
+                        value={persona.atiendeReuniones || ''}
+                        onChange={e => {
+                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value === '' ? null : e.target.value);
+                        }}
+                        required
+                        onInvalid={e => e.target.setCustomValidity('Por favor indique si va a gestionar la agenda de reuniones.')}
+                        disabled={guardando || !edicionHabilitada}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+               
+                     </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -627,9 +832,11 @@ return (
                   value={persona.menuEspecial}
                   onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
                   placeholder="Vegetariano, sin gluten, etc."
-                  disabled={guardando}
+                  required
+                  onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
+                  disabled={guardando || !edicionHabilitada}
                 />
-              </div>
+              </div>            
             </div>
           ))}
           
@@ -638,9 +845,9 @@ return (
               type="button"
               className="btn-secundario"
               onClick={agregarPersona}
-              disabled={guardando}
+              disabled={guardando || !edicionHabilitada}
               style={{
-                background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+                background: 'linear-gradient(135deg, --color-azul-claro 0%, --color-azul-oscuro 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '0.75rem 1.5rem',
@@ -671,9 +878,9 @@ return (
           <div className="campo-grupo">
             <label>Comentarios adicionales:</label>
             <textarea
-              value={comentarios}
-              onChange={(e) => setComentarios(e.target.value)}
-              placeholder="Comentarios adicionales..."
+                value={comentarios}
+                onChange={(e) => setComentarios(e.target.value)}
+                placeholder="Comentarios adicionales..."
               disabled={guardando}
               rows="4"
             />
@@ -689,22 +896,40 @@ return (
               <li>✅ Información de acompañantes completa</li>
               <li>✅ Datos de contacto actualizados</li>
             </ul>
-            <p><strong>La reserva se confirmará en las próximas 24 horas.</strong></p>
+            <p><strong>La reserva se confirmará en los próximos días.</strong></p>
           </div>
         </div>
 
-        <div className="formulario-acciones"> {/* ✅ Cambio: formulario-acciones */}
-          <button 
-            type="submit" 
+        <div className="formulario-acciones">
+          <button
+            type="submit"
             className="btn-primario"
-            disabled={guardando}
+            disabled={guardando || !edicionHabilitada}
           >
             {guardando ? '⏳ Guardando...' : '✅ Guardar Formulario'}
           </button>
+          <button
+            type="button"
+            className="btn-secundario"
+            onClick={onCancel}
+            style={{ marginLeft: '1rem' }}
+          >
+            ← Volver
+          </button>
         </div>
       </form>
+
+      {configSocio?.notafin && (
+        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }}>
+          {configSocio.notafin}
+        </div>
+      )}
+      <small>
+        Solo puedes elegir entre {minFecha} y {maxFecha}
+      </small>
     </div>
   );
 }
 
 export default FormularioSocio;
+
