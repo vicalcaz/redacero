@@ -3,8 +3,8 @@ import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-  function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
-    const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
+function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
+  const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
 
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
@@ -47,6 +47,22 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
   const [configProveedorConHotel, setConfigProveedorConHotel] = useState(null);
   const [formularioExistente, setFormularioExistente] = useState(null);
   const [edicionHabilitada, setEdicionHabilitada] = useState(true);
+
+// ...existing code...
+
+  // Cargar configuración de formulario proveedor-con-hotel (imageninicio, notainicio, notafin)
+  useEffect(() => {
+    const cargarConfig = async () => {
+      try {
+        const config = await FirebaseService.obtenerConfiguracionFormularioProveedorConHotel();
+        setConfigProveedorConHotel(config);
+      } catch (error) {
+        console.error("Error cargando configuración proveedor con hotel:", error);
+      }
+    };
+    cargarConfig();
+  }, []);
+// ...existing code...
 
   // Al montar, buscar si ya existe formulario para este usuario y evento
   useEffect(() => {
@@ -915,4 +931,5 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 }
 
 export default FormularioProveedorConHotel;
+
 

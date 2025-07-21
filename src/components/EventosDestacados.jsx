@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+
+// Obtener la fecha límite de carga desde variables de entorno (.env)
+const FECHA_LIMITE_CARGA_DEFAULT = import.meta.env.VITE_FECHA_LIMITE_CARGA || '';
 import { FirebaseService } from '../services/FirebaseService';
 import './EventosDestacados.css';
 import SubirImagen from '../components/SubirImagen';
@@ -379,29 +382,51 @@ function EventosDestacados({
   }
 
   return (
-    <div className="eventos-destacados">
-      <div className="page-header">
-        <h1>🌟 Eventos Destacados</h1>
-        <p>Completa el formulario correspondiente a tu perfil</p>
+    <div className="eventos-destacados" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 2px 12px #e0e0e0', padding: '2rem 1.5rem' }}>
+      <div className="page-header" style={{ marginBottom: '2.5rem', padding: '1.5rem 0 1.2rem 0' }}>
+        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 8 }}>🌟 Eventos Destacados</h1>
+        <p style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1a237e', letterSpacing: '0.01em', margin: 0, textShadow: '0 1px 6px #e3e6f3' }}>
+          Completa el formulario correspondiente a tu perfil
+        </p>
         {/* Botón Panel Adm. eliminado por solicitud */}
       </div>
 
       <div className="eventos-grid">
         {eventos.map(evento => {
           return (
-            <div key={evento.id} className="evento-card">
+            <div key={evento.id} className="evento-card" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', maxHeight: 440, minHeight: 280, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {/* MOSTRAR IMAGEN SI EXISTE */}
               {evento.imagenBase64 && (
-                <div className={`evento-imagen${evento.destacado ? ' destacado-flash' : ''}`}>
+                <div className={`evento-imagen${evento.destacado ? ' destacado-fuego' : ''}`} style={{ position: 'relative' }}>
+                  {/* Llamas animadas por fuera */}
+                  {evento.destacado && (
+                    <div className="llamas-fuego">
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                      <div className="llama"></div>
+                    </div>
+                  )}
                   <img 
                     src={evento.imagenBase64} 
                     alt={evento.nombre}
                     className="evento-img"
                     style={{
                       width: '100%',
-                      height: '200px',
-                      objectFit: 'cover',
-                      borderRadius: '12px 12px 0 0'
+                      height: 'auto',
+                      maxHeight: '220px',
+                      objectFit: 'contain',
+                      borderRadius: '12px 12px 0 0',
+                      display: 'block',
+                      margin: '0 auto',
+                      position: 'relative',
+                      zIndex: 2
                     }}
                   />
                   {evento.destacado && (
@@ -411,11 +436,33 @@ function EventosDestacados({
                   )}
                 </div>
               )}
-              <div className="evento-content" style={{ padding: '1.5rem' }}>
+              <div className="evento-content" style={{ background: 'var(--color-gris, #f5f5f5)', padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '0 0 12px 12px' }}>
                 <div className="evento-header">
-                  <h3>{evento.nombre}</h3>
-                  <span className="evento-tipo">{evento.tipo}</span>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: 4 }}>{evento.nombre}</h3>
+                  <span className="evento-tipo" style={{ fontSize: '0.95rem' }}>{evento.tipo}</span>
                 </div>
+                {/* Mostrar descripción del evento */}
+                {/* Fecha límite de carga como alarma visual SIEMPRE visible */}
+                <div className="alarma-fecha">
+                  <span className="alarma-ico" role="img" aria-label="alarma">⏰</span>
+                  Fecha límite de carga: {
+                    (() => {
+                      const raw = evento.fechaLimiteEdicion || FECHA_LIMITE_CARGA_DEFAULT;
+                      if (!raw) return 'No definida';
+                      // Soporta formatos ISO y yyyy-mm-dd
+                      let d = raw;
+                      if (typeof d === 'string' && d.includes('T')) d = d.split('T')[0];
+                      const [y, m, day] = d.split('-');
+                      if (y && m && day) return `${day.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+                      return raw;
+                    })()
+                  }
+                </div>
+                {evento.descripcion && (
+                  <div className="evento-descripcion" style={{ margin: '0.5rem 0 0.7rem 0', color: '#333', fontSize: '0.98rem', lineHeight: 1.4, maxHeight: 38, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {evento.descripcion}
+                  </div>
+                )}
                 <div className="evento-info">
                   <div className="info-item">
                     <span className="icon">📍</span>

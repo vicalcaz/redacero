@@ -1,3 +1,93 @@
+.alarma-fecha .alarma-ico {
+  display: inline-block;
+  animation: alarmaJump 0.7s infinite cubic-bezier(.36,1.56,.64,1);
+  font-size: 1.25em;
+  margin-right: 0.3em;
+}
+
+@keyframes alarmaJump {
+  0% { transform: translateY(0) scale(1) rotate(-10deg); }
+  20% { transform: translateY(-6px) scale(1.15) rotate(10deg); }
+  40% { transform: translateY(-2px) scale(1.1) rotate(-8deg); }
+  60% { transform: translateY(-8px) scale(1.18) rotate(12deg); }
+  80% { transform: translateY(-2px) scale(1.1) rotate(-8deg); }
+  100% { transform: translateY(0) scale(1) rotate(-10deg); }
+}
+
+/* Efecto de llamas animadas por fuera del borde */
+.evento-imagen.destacado-fuego {
+  position: relative;
+  border-radius: 12px 12px 0 0;
+  overflow: visible;
+  z-index: 1;
+}
+
+.llamas-fuego {
+  pointer-events: none;
+  position: absolute;
+  left: -12px;
+  top: -18px;
+  width: calc(100% + 24px);
+  height: 38px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.llama {
+  width: 22px;
+  height: 38px;
+  background: radial-gradient(ellipse at 50% 80%, #ffd700 0%, #ff9800 60%, #ff5722 100%);
+  border-radius: 50% 50% 40% 40% / 60% 60% 100% 100%;
+  opacity: 0.85;
+  animation: llamaAnim 1.2s infinite alternate;
+  box-shadow: 0 0 12px 2px #ff9800cc;
+  margin: 0 2px;
+}
+.llama:nth-child(2n) {
+  background: radial-gradient(ellipse at 60% 90%, #fffbe0 0%, #ffd700 50%, #ff9800 100%);
+  animation-delay: 0.3s;
+  opacity: 0.7;
+}
+.llama:nth-child(3n) {
+  background: radial-gradient(ellipse at 40% 80%, #fffbe0 0%, #ffd700 40%, #ff9800 100%);
+  animation-delay: 0.6s;
+  opacity: 0.6;
+}
+.llama:nth-child(4n) {
+  background: radial-gradient(ellipse at 50% 100%, #ffd700 0%, #ff9800 60%, #ff5722 100%);
+  animation-delay: 0.9s;
+  opacity: 0.8;
+}
+
+@keyframes llamaAnim {
+  0% { transform: scaleY(1) translateY(0); filter: brightness(1.1); }
+  40% { transform: scaleY(1.25) translateY(-8px) scaleX(0.95); filter: brightness(1.3); }
+  70% { transform: scaleY(0.9) translateY(-3px) scaleX(1.05); filter: brightness(1.15); }
+  100% { transform: scaleY(1) translateY(0); filter: brightness(1.1); }
+}
+
+.alarma-fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-naranja);
+  color: #fff;
+  font-weight: bold;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  box-shadow: 0 2px 12px #ff980088;
+  margin: 0.7rem 0 0.5rem 0;
+  animation: alarmaPulse 1.1s infinite alternate;
+}
+
+@keyframes alarmaPulse {
+  0% { filter: brightness(1.1) drop-shadow(0 0 8px #ffd700); }
+  60% { filter: brightness(1.3) drop-shadow(0 0 16px #ff5722); }
+  100% { filter: brightness(1.1) drop-shadow(0 0 8px #ffd700); }
+}
 :root {
   --color-azul-oscuro: #453796;  
   --color-azul-medio:  #5754a4;  
@@ -465,12 +555,29 @@ body {
 
 /* Efecto destacado para eventos principales */
 
-.evento-imagen.destacado-flash {
+
+.evento-imagen.destacado-fuego {
   position: relative;
   border-radius: 12px 12px 0 0;
   overflow: hidden;
-  animation: flash-giro-imagen 1.2s cubic-bezier(0.4, 0.2, 0.2, 1) 1;
-  box-shadow: 0 0 32px 12px #b39ddbcc; /* más ancho */
+  animation: fuegoGlow 1.5s infinite alternate;
+  box-shadow: 0 0 32px 12px #ff9800cc, 0 0 64px 24px #ff572288;
+  background: radial-gradient(circle at 60% 80%, #ff9800 0%, #ff5722 60%, transparent 100%);
+}
+
+@keyframes fuegoGlow {
+  0% {
+    box-shadow: 0 0 16px 4px #ff9800cc, 0 0 0 0 #ff572288;
+    filter: brightness(1.05) saturate(1.1);
+  }
+  60% {
+    box-shadow: 0 0 64px 24px #ff9800cc, 0 0 32px 16px #ff572288;
+    filter: brightness(1.18) saturate(1.25);
+  }
+  100% {
+    box-shadow: 0 0 32px 12px #ff9800cc, 0 0 64px 24px #ff572288;
+    filter: brightness(1.22) saturate(1.35);
+  }
 }
 
 @keyframes flash-giro-imagen {

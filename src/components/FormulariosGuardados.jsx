@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 import DetalleFormulario from './DetalleFormulario';
+import DetalleUsuariosSinFormulario from './DetalleUsuariosSinFormulario';
 import './FormulariosGuardados.css';
 import * as XLSX from 'xlsx';
 
@@ -13,6 +14,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   const [usuarios, setUsuarios] = useState([]);
   const [filtroRol, setFiltroRol] = useState('todos');
   const [seleccionados, setSeleccionados] = useState([]);
+  const [mostrarDetalleSinFormulario, setMostrarDetalleSinFormulario] = useState(false);
 
   const tiposFormulario = ['todos', 'socio', 'proveedor-con-hotel', 'proveedor-sin-hotel'];
 
@@ -289,6 +291,11 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
             {formulariosFiltrados.filter(f => f.tipo === 'proveedor-sin-hotel').length}
           </span>
         </div>
+        <div className="stat-card" style={{ cursor: 'pointer', background: '#fff3cd', border: '1px solid #ffeeba' }} onClick={() => setMostrarDetalleSinFormulario(true)}>
+          <h4>Usuarios sin formulario</h4>
+          <span className="stat-number">{usuariosSinFormulario.length}</span>
+          <div style={{ fontSize: '0.9rem', color: '#856404', marginTop: 4 }}>Ver listado</div>
+        </div>
       </div>
 
       <div className="tabla-formularios">
@@ -418,7 +425,14 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
           </table>
         )}
       </div>
-    </div>
+    {/* Modal para usuarios sin formulario */}
+    {mostrarDetalleSinFormulario && (
+      <DetalleUsuariosSinFormulario
+        usuarios={usuariosSinFormulario}
+        onClose={() => setMostrarDetalleSinFormulario(false)}
+      />
+    )}
+  </div>
   );
 }
 

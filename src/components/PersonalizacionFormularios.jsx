@@ -23,15 +23,17 @@ const TIPOS_FORMULARIO = [
 ];
 
 function PersonalizacionFormularios({ user }) {
-  const [loading, setLoading] = useState(true);
+  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [subiendoLogo, setSubiendoLogo] = useState(false);
   const [subiendoFondo, setSubiendoFondo] = useState(false);
-  const [tab, setTab] = useState('eventos'); // 'eventos' o 'formularios'
+  const [pestania, setPestania] = useState('eventos'); // 'eventos', 'formularios' o 'correos'
   const [formularioSeleccionado, setFormularioSeleccionado] = useState(TIPOS_FORMULARIO[0].value);
-  const [editorReady, setEditorReady] = useState(false);
+  const [editorListo, setEditorListo] = useState(false);
+  // Pestañas principales para formularios (Socios, Proveedores con hotel, Proveedores sin hotel)
+  const [pestaniaFormulario, setPestaniaFormulario] = useState('socio');
 
-  // Configuración de eventos (como ya tienes)
+  // Configuración de eventos
   const [configuracion, setConfiguracion] = useState({
     logoEmpresa: '',
     logoInfo: null,
@@ -53,7 +55,7 @@ function PersonalizacionFormularios({ user }) {
   });
 
   // Configuración de mails
-  const [mailConfig, setMailConfig] = useState({
+  const [configCorreo, setConfigCorreo] = useState({
     remitente: user.email,
     asunto: '',
     cuerpo: ''
@@ -66,18 +68,18 @@ function PersonalizacionFormularios({ user }) {
   }, []);
 
   useEffect(() => {
-    setEditorReady(true);
+    setEditorListo(true);
   }, []);
 
   const cargarConfiguracion = async () => {
     try {
-      setLoading(true);
+      setCargando(true);
       const config = await FirebaseService.obtenerConfiguracionFormularios();
       if (config) setConfiguracion(config);
     } catch (error) {
       console.error('Error cargando configuración:', error);
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
   };
 
@@ -242,7 +244,7 @@ function PersonalizacionFormularios({ user }) {
     }
   };
 
-  if (loading) {
+  if (cargando) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -261,42 +263,68 @@ function PersonalizacionFormularios({ user }) {
     ]
   };
 
+  const TABS_FORM = [
+    { value: 'socio', label: 'Socios' },
+    { value: 'proveedor-con-hotel', label: 'Proveedores con hotel' },
+    { value: 'proveedor-sin-hotel', label: 'Proveedores sin hotel' }
+  ];
+
   return (
     <div className="personalizacion-formularios">
       <div className="page-header">
         <h1>🎨 Personalizar</h1>
         <div className="tabs">
           <button
-            className={tab === 'eventos' ? 'active' : ''}
-            onClick={() => setTab('eventos')}
+            className={pestania === 'eventos' ? 'active' : ''}
+            onClick={() => setPestania('eventos')}
           >
             Eventos
           </button>
           <button
-            className={tab === 'formularios' ? 'active' : ''}
-            onClick={() => setTab('formularios')}
+            className={pestania === 'formularios' ? 'active' : ''}
+            onClick={() => setPestania('formularios')}
           >
             Formularios
           </button>
+          <button
+            className={pestania === 'correos' ? 'active' : ''}
+            onClick={() => setPestania('correos')}
+          >
+            Correos
+          </button>
         </div>
+        {/* Si está en Formularios, mostrar pestañas secundarias */}
+        {pestania === 'formularios' && (
+          <div className="tabs tabs-formularios" style={{ marginTop: 16 }}>
+            {TABS_FORM.map(t => (
+              <button
+                key={t.value}
+                className={`color-gris${pestaniaFormulario === t.value ? ' active' : ''}`}
+                onClick={() => setPestaniaFormulario(t.value)}
+                type="button"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {tab === 'eventos' && (
+
+      {pestania === 'eventos' && (
         <form onSubmit={handleSubmitEventos} className="config-form">
           {/* Sección de imágenes */}
           <div className="config-section">
             <h2>🖼️ Imágenes</h2>
-            
             {/* Logo de empresa */}
             <div className="image-upload-section">
               <div className="section-header">
-                <h3>📋 Logo de Empresa</h3>
+                <h3>🏢 Logo de Empresa</h3>
                 <div className="section-badges">
                   <span className="badge info">Base64</span>
-                  <span className="badge success">Sin servidor</span>
+                  <span className="badge warning">Recomendado</span>
                 </div>
               </div>
-              
               <div className="upload-controls">
                 <input
                   type="file"
@@ -306,9 +334,8 @@ function PersonalizacionFormularios({ user }) {
                   id="logo-upload"
                   className="file-input-hidden"
                 />
-                
-                <label 
-                  htmlFor="logo-upload" 
+                <label
+                  htmlFor="logo-upload"
                   className={`btn-upload primary ${subiendoLogo ? 'loading' : ''}`}
                 >
                   {subiendoLogo ? (
@@ -323,10 +350,9 @@ function PersonalizacionFormularios({ user }) {
                     </>
                   )}
                 </label>
-
                 {configuracion.logoEmpresa && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={eliminarLogo}
                     className="btn-delete"
                     disabled={guardando}
@@ -336,18 +362,16 @@ function PersonalizacionFormularios({ user }) {
                   </button>
                 )}
               </div>
-
               {/* Preview del logo */}
               {configuracion.logoEmpresa && (
                 <div className="image-preview">
                   <div className="preview-container">
-                    <img 
-                      src={configuracion.logoEmpresa} 
+                    <img
+                      src={configuracion.logoEmpresa}
                       alt="Logo de empresa"
                       className="logo-preview"
                     />
                   </div>
-                  
                   {configuracion.logoInfo && (
                     <div className="image-info">
                       <div className="info-grid">
@@ -372,7 +396,6 @@ function PersonalizacionFormularios({ user }) {
                   )}
                 </div>
               )}
-
               <div className="upload-info">
                 <div className="info-card">
                   <div className="info-icon">💡</div>
@@ -383,7 +406,6 @@ function PersonalizacionFormularios({ user }) {
                 </div>
               </div>
             </div>
-
             {/* Imagen de fondo */}
             <div className="image-upload-section">
               <div className="section-header">
@@ -393,7 +415,6 @@ function PersonalizacionFormularios({ user }) {
                   <span className="badge warning">Opcional</span>
                 </div>
               </div>
-              
               <div className="upload-controls">
                 <input
                   type="file"
@@ -403,9 +424,8 @@ function PersonalizacionFormularios({ user }) {
                   id="fondo-upload"
                   className="file-input-hidden"
                 />
-                
-                <label 
-                  htmlFor="fondo-upload" 
+                <label
+                  htmlFor="fondo-upload"
                   className={`btn-upload secondary ${subiendoFondo ? 'loading' : ''}`}
                 >
                   {subiendoFondo ? (
@@ -420,10 +440,9 @@ function PersonalizacionFormularios({ user }) {
                     </>
                   )}
                 </label>
-
                 {configuracion.imagenFondo && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={eliminarFondo}
                     className="btn-delete"
                     disabled={guardando}
@@ -433,18 +452,16 @@ function PersonalizacionFormularios({ user }) {
                   </button>
                 )}
               </div>
-
               {/* Preview de imagen de fondo */}
               {configuracion.imagenFondo && (
                 <div className="image-preview">
                   <div className="preview-container fondo">
-                    <img 
-                      src={configuracion.imagenFondo} 
+                    <img
+                      src={configuracion.imagenFondo}
                       alt="Imagen de fondo"
                       className="fondo-preview"
                     />
                   </div>
-                  
                   {configuracion.fondoInfo && (
                     <div className="image-info">
                       <div className="info-grid">
@@ -469,7 +486,6 @@ function PersonalizacionFormularios({ user }) {
                   )}
                 </div>
               )}
-
               <div className="upload-info">
                 <div className="info-card warning">
                   <div className="info-icon">⚠️</div>
@@ -481,166 +497,48 @@ function PersonalizacionFormularios({ user }) {
               </div>
             </div>
           </div>
-
-          {/* Resto de configuraciones */}
-          <div className="config-section">
-            <h2>🎨 Colores y Textos</h2>
---color-azul-oscuro: #453796;  
---color-azul-medio:  #5754a4;  
---color-azul-claro:  #6b66ae;   
---color-naranja:     #f68b2a;  
---color-gris:        #e7e7e8;  
-
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="colorPrimario">Color Primario</label>
-                <div className="color-input-group">
-                  <input
-                    type="color"
-                    id="colorPrimario"
-                    value={configuracion.colorPrimario}
-                    onChange={(e) => setConfiguracion(prev => ({ ...prev, colorPrimario: e.target.value }))}
-                    className="color-picker"
-                  />
-                  <input
-                    type="text"
-                    value={configuracion.colorPrimario}
-                    onChange={(e) => setConfiguracion(prev => ({ ...prev, colorPrimario: e.target.value }))}
-                    className="color-text"
-                    placeholder="#3498db"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="colorSecundario">Color Secundario</label>
-                <div className="color-input-group">
-                  <input
-                    type="color"
-                    id="colorSecundario"
-                    value={configuracion.colorSecundario}
-                    onChange={(e) => setConfiguracion(prev => ({ ...prev, colorSecundario: e.target.value }))}
-                    className="color-picker"
-                  />
-                  <input
-                    type="text"
-                    value={configuracion.colorSecundario}
-                    onChange={(e) => setConfiguracion(prev => ({ ...prev, colorSecundario: e.target.value }))}
-                    className="color-text"
-                    placeholder="#2c3e50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="textoEncabezado">Texto del Encabezado</label>
-              <input
-                type="text"
-                id="textoEncabezado"
-                value={configuracion.textoEncabezado}
-                onChange={(e) => setConfiguracion(prev => ({ ...prev, textoEncabezado: e.target.value }))}
-                placeholder="Red Acero - Registro de Eventos"
-                className="text-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="textoDescripcion">Texto de Descripción</label>
-              <input
-                type="text"
-                id="textoDescripcion"
-                value={configuracion.textoDescripcion}
-                onChange={(e) => setConfiguracion(prev => ({ ...prev, textoDescripcion: e.target.value }))}
-                placeholder="Complete el formulario con sus datos"
-                className="text-input"
-              />
-            </div>
-
-            <div className="checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={configuracion.mostrarLogo}
-                  onChange={(e) => setConfiguracion(prev => ({ ...prev, mostrarLogo: e.target.checked }))}
-                />
-                <span className="checkbox-custom"></span>
-                <span className="checkbox-label-text">Mostrar Logo en el Formulario</span>
-              </label>
-            </div>
-
-            <div className="checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={configuracion.mostrarImagenFondo}
-                  onChange={(e) => setConfiguracion(prev => ({ ...prev, mostrarImagenFondo: e.target.checked }))}
-                />
-                <span className="checkbox-custom"></span>
-                <span className="checkbox-label-text">Mostrar Imagen de Fondo en el Formulario</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button 
-              type="submit" 
-              disabled={guardando} 
-              className="btn-primary"
-            >
-              {guardando ? 'Guardando...' : 'Guardar Configuración'}
-            </button>
-          </div>
         </form>
       )}
 
-      {tab === 'formularios' && (
+      {pestania === 'formularios' && (
         <form onSubmit={handleSubmitFormulario} className="config-form">
           <div className="config-section">
             <h2>📝 Personalización de Formularios</h2>
-            <div className="form-group">
-              <label>Tipo de Formulario</label>
-              <select
-                value={formularioSeleccionado}
-                onChange={e => setFormularioSeleccionado(e.target.value)}
-                disabled={guardando}
-              >
-                {TIPOS_FORMULARIO.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
+            {/* Tabs secundarios reemplazan el select */}
+            {/* Renderiza el formulario correspondiente al tabForm */}
             <div className="form-group">
               <label>Nota de Inicio</label>
               <textarea
-                value={configFormularios[formularioSeleccionado]?.notainicio || ''}
+                value={configFormularios[pestaniaFormulario]?.notainicio || ''}
                 onChange={e =>
                   setConfigFormularios(prev => ({
                     ...prev,
-                    [formularioSeleccionado]: {
-                      ...prev[formularioSeleccionado],
+                    [pestaniaFormulario]: {
+                      ...prev[pestaniaFormulario],
                       notainicio: e.target.value
                     }
                   }))
                 }
-                rows={3}
+                rows={8}
+                style={{ minHeight: 120, fontSize: '1.1rem' }}
                 disabled={guardando}
               />
             </div>
             <div className="form-group">
               <label>Nota de Fin</label>
               <textarea
-                value={configFormularios[formularioSeleccionado]?.notafin || ''}
+                value={configFormularios[pestaniaFormulario]?.notafin || ''}
                 onChange={e =>
                   setConfigFormularios(prev => ({
                     ...prev,
-                    [formularioSeleccionado]: {
-                      ...prev[formularioSeleccionado],
+                    [pestaniaFormulario]: {
+                      ...prev[pestaniaFormulario],
                       notafin: e.target.value
                     }
                   }))
                 }
-                rows={3}
+                rows={8}
+                style={{ minHeight: 120, fontSize: '1.1rem' }}
                 disabled={guardando}
               />
             </div>
@@ -652,20 +550,20 @@ function PersonalizacionFormularios({ user }) {
                 onChange={handleImagenInicioUpload}
                 disabled={guardando}
               />
-              {configFormularios[formularioSeleccionado]?.imageninicio && (
+              {configFormularios[pestaniaFormulario]?.imageninicio && (
                 <div className="image-preview">
                   <img
-                    src={configFormularios[formularioSeleccionado].imageninicio}
+                    src={configFormularios[pestaniaFormulario].imageninicio}
                     alt="Imagen de inicio"
-                    style={{ maxWidth: 200, maxHeight: 100, marginTop: 8 }}
+                    style={{ maxWidth: 400, maxHeight: 220, marginTop: 8, borderRadius: 10, boxShadow: '0 2px 8px #b0b0b0' }}
                   />
                   <button
                     type="button"
                     onClick={() =>
                       setConfigFormularios(prev => ({
                         ...prev,
-                        [formularioSeleccionado]: {
-                          ...prev[formularioSeleccionado],
+                        [pestaniaFormulario]: {
+                          ...prev[pestaniaFormulario],
                           imageninicio: ''
                         }
                       }))
@@ -691,51 +589,53 @@ function PersonalizacionFormularios({ user }) {
         </form>
       )}
 
-      <div className="seccion-formulario" style={{ marginTop: '2rem' }}>
-        <h3>✉️ Configuración de Mails para el Evento</h3>
-        <div className="campo-grupo">
-          <label>Remitente</label>
-          <input
-            type="email"
-            value={mailConfig.remitente || user.email}
-            onChange={e => setMailConfig({ ...mailConfig, remitente: e.target.value })}
-            placeholder="Remitente"
-            required
-          />
-          <small>Por defecto es tu email de usuario.</small>
-        </div>
-        <div className="campo-grupo">
-          <label>Asunto</label>
-          <input
-            type="text"
-            value={mailConfig.asunto || ''}
-            onChange={e => setMailConfig({ ...mailConfig, asunto: e.target.value })}
-            placeholder="Asunto del mail"
-            required
-          />
-        </div>
-        <div className="campo-grupo">
-          <label>Cuerpo del Mail</label>
-          {editorReady && (
-            <ReactQuill
-              value={mailConfig.cuerpo || ''}
-              onChange={value => setMailConfig({ ...mailConfig, cuerpo: value })}
-              theme="snow"
-              modules={modules}
-              style={{ background: 'white', minHeight: 180 }}
+      {pestania === 'correos' && (
+        <div className="seccion-formulario" style={{ marginTop: '2rem' }}>
+          <h3>✉️ Configuración de Correos para el Evento</h3>
+          <div className="campo-grupo">
+            <label>Remitente</label>
+            <input
+              type="email"
+              value={configCorreo.remitente || user.email}
+              onChange={e => setConfigCorreo({ ...configCorreo, remitente: e.target.value })}
+              placeholder="Remitente"
+              required
             />
-          )}
-          <small>Puedes escribir texto, pegar URLs o insertar imágenes (usa el botón de imagen del editor).</small>
+            <small>Por defecto es tu correo de usuario.</small>
+          </div>
+          <div className="campo-grupo">
+            <label>Asunto</label>
+            <input
+              type="text"
+              value={configCorreo.asunto || ''}
+              onChange={e => setConfigCorreo({ ...configCorreo, asunto: e.target.value })}
+              placeholder="Asunto del correo"
+              required
+            />
+          </div>
+          <div className="campo-grupo">
+            <label>Cuerpo del Correo</label>
+            {editorListo && (
+              <ReactQuill
+                value={configCorreo.cuerpo || ''}
+                onChange={value => setConfigCorreo({ ...configCorreo, cuerpo: value })}
+                theme="snow"
+                modules={modules}
+                style={{ background: 'white', minHeight: 180 }}
+              />
+            )}
+            <small>Puedes escribir texto, pegar URLs o insertar imágenes (usa el botón de imagen del editor).</small>
+          </div>
+          <button
+            className="btn-primario"
+            onClick={guardarMailConfig}
+            type="button"
+            style={{ marginTop: '1rem' }}
+          >
+            Guardar configuración de correo
+          </button>
         </div>
-        <button
-          className="btn-primario"
-          onClick={guardarMailConfig}
-          type="button"
-          style={{ marginTop: '1rem' }}
-        >
-          Guardar configuración de mail
-        </button>
-      </div>
+      )}
     </div>
   );
 }
