@@ -310,13 +310,15 @@ function App() {
         return <Login onLogin={handleLogin} />;
 
       case 'dashboard':
-        return (
-          <Dashboard 
-            usuario={usuario}
-            onLogout={handleLogout}
-            onNavigateToEventos={navegarAEventos}
-          />
-        );
+      return (
+        <Dashboard 
+          usuario={usuario} 
+          onLogout={handleLogout} 
+          onNavigateToEventos={navegarAEventos}
+          onNavigateToDashboard={navegarADashboard}
+          onNavigateToInicio={navegarAEventos}
+        />
+      );
 
       case 'eventos':
         return (

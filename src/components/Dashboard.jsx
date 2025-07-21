@@ -9,7 +9,7 @@ import EventosDestacados from './EventosDestacados';
 import { FirebaseService } from '../services/FirebaseService';
 import './Dashboard.css';
 
-function Dashboard({ usuario, onLogout, onNavigateToEventos }) {
+function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboard, onNavigateToInicio }) {
   const [vistaActual, setVistaActual] = useState('inicio');
   const [estadisticas, setEstadisticas] = useState({
     totalUsuarios: 0,
@@ -52,6 +52,15 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos }) {
   };
 
   const handleViewChange = (vista) => {
+    if (vista === 'tablerocontrol') {
+      setVistaActual('inicio'); // Mostrar el dashboard principal
+      if (onNavigateToDashboard) onNavigateToDashboard();
+      return;
+    }
+    if (vista === 'inicio') {
+      if (onNavigateToInicio) onNavigateToInicio();
+      return;
+    }
     setVistaActual(vista);
   };
 
@@ -74,7 +83,6 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos }) {
                 <h1>¡Bienvenido al Panel de Administración!</h1>
                 <p>Gestiona eventos, usuarios y formularios de Red Acero</p>
               </div>
-              
               <div className="user-info-card">
                 <div className="user-avatar">👤</div>
                 <div className="user-details">

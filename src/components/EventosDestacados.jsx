@@ -34,6 +34,7 @@ function EventosDestacados({
         
         // Mostrar el estado de cada evento para debugging
         eventosDestacados.forEach(evento => {
+
           const esDestacado = evento.destacado === true;
           const esPlanificado = evento.estado === 'planificado';
           const esActivo = evento.estado === 'activo' || evento.activo === true;
@@ -98,10 +99,8 @@ function EventosDestacados({
     
     if (!evento || !evento.id) {
       console.error('❌ EventosDestacados: Evento inválido:', evento);
-      alert('Error: Evento inválido seleccionado');
       return;
     }
-    
     console.log('✅ EventosDestacados: Llamando onFormularioProveedorSinHotel con evento:', evento);
     onFormularioProveedorSinHotel(evento);
   };
@@ -384,85 +383,139 @@ function EventosDestacados({
       <div className="page-header">
         <h1>🌟 Eventos Destacados</h1>
         <p>Completa el formulario correspondiente a tu perfil</p>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-          <button
-            style={{
-              background: '#ff9800', // naranja
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '0.7rem 1.5rem',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)'
-            }}
-            onClick={() => window.location.href = '/dashboard'} // Cambia la acción según tu ruta
-          >
-            🛠️ Panel Adm.
-          </button>
-        </div>
+        {/* Botón Panel Adm. eliminado por solicitud */}
       </div>
 
       <div className="eventos-grid">
         {eventos.map(evento => {
-                    console.log('Evento: nnnn', evento); 
-                    
-                    console.log('Fechas:', {
-                      inicio: evento.fechaInicio,
-                      fin: evento.fechaFin
-                    });
           return (
             <div key={evento.id} className="evento-card">
-            {/* MOSTRAR IMAGEN SI EXISTE */}
-            {evento.imagenBase64 && (
-              <div className={`evento-imagen${evento.destacado ? ' destacado-flash' : ''}`}>
-                <img 
-                  src={evento.imagenBase64} 
-                  alt={evento.nombre}
-                  className="evento-img"
-                  style={{
-                    width: '100%',
-                    height: '200px',
-                    objectFit: 'cover',
-                    borderRadius: '12px 12px 0 0'
-                  }}
-                />
-                {evento.destacado && (
-                  <div className="flash-overlay">
-                    <span>⭐ Evento Destacado</span>
+              {/* MOSTRAR IMAGEN SI EXISTE */}
+              {evento.imagenBase64 && (
+                <div className={`evento-imagen${evento.destacado ? ' destacado-flash' : ''}`}>
+                  <img 
+                    src={evento.imagenBase64} 
+                    alt={evento.nombre}
+                    className="evento-img"
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '12px 12px 0 0'
+                    }}
+                  />
+                  {evento.destacado && (
+                    <div className="flash-overlay">
+                      <span>⭐ Evento Destacado</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="evento-content" style={{ padding: '1.5rem' }}>
+                <div className="evento-header">
+                  <h3>{evento.nombre}</h3>
+                  <span className="evento-tipo">{evento.tipo}</span>
+                </div>
+                <div className="evento-info">
+                  <div className="info-item">
+                    <span className="icon">📍</span>
+                    <span>{evento.ubicacion}</span>
                   </div>
-                )}
-              </div>
-            )}
-            
-            <div className="evento-content" style={{ padding: '1.5rem' }}>
-              <div className="evento-header">
-                <h3>{evento.nombre}</h3>
-                <span className="evento-tipo">{evento.tipo}</span>
-              </div>
-              
-              <div className="evento-info">
-                <div className="info-item">
-                  <span className="icon">📍</span>
-                  <span>{evento.ubicacion}</span>
-                </div>
-                
-                <div className="info-item fecha-brillante">
-                  <span className="icon">📅</span>
-                  <span>
-                    {evento.fechaDesde?.split('-').reverse().join('/')} - 
-                    {evento.fechaHasta?.split('-').reverse().join('/')}
-                  </span>
+                  <div className="info-item fecha-brillante">
+                    <span className="icon">📅</span>
+                    <span>
+                      {evento.fechaDesde?.split('-').reverse().join('/')} - 
+                      {evento.fechaHasta?.split('-').reverse().join('/')}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
           );
         })}
       </div>
+
+      {/* Botones de acceso a los tres formularios debajo del evento destacado */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '2rem',
+        margin: '2.5rem 0 2rem 0',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          className="form-btn socio"
+          style={{
+            background: 'var(--color-azul-oscuro)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '1.2rem 2.5rem',
+            fontWeight: 'bold',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(69, 55, 150, 0.15)'
+          }}
+          onClick={() => {
+            if (eventos.length > 0) handleFormularioSocio(eventos[0]);
+          }}
+        >
+          🧑‍💼 Formulario Socio
+        </button>
+        <button
+          className="form-btn proveedor-hotel"
+          style={{
+            background: 'var(--color-azul-medio)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '1.2rem 2.5rem',
+            fontWeight: 'bold',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(87, 84, 164, 0.15)'
+          }}
+          onClick={() => {
+            if (eventos.length > 0) handleFormularioProveedorConHotel(eventos[0]);
+          }}
+        >
+          🏨 Formulario Proveedor con Hotel
+        </button>
+        <button
+          className="form-btn proveedor-sin-hotel"
+          style={{
+            background: 'var(--color-azul-claro)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '1.2rem 2.5rem',
+            fontWeight: 'bold',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(107, 102, 174, 0.15)'
+          }}
+          onClick={() => {
+            if (eventos.length > 0) handleFormularioProveedorSinHotel(eventos[0]);
+          }}
+        >
+          🏢 Formulario Proveedor sin Hotel
+        </button>
+      </div>
     </div>
   );
+// Wrapper para obtener datos de usuario desde localStorage y pasar a FormulariosGuardados
+function FormularioGuardadosWrapper() {
+  let userPerfil = 'usuario';
+  let userEmail = '';
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuario'));
+    if (usuario) {
+      userPerfil = usuario.perfil || usuario.rol || 'usuario';
+      userEmail = usuario.email || '';
+    }
+  } catch {}
+  return <FormulariosGuardados userPerfil={userPerfil} userEmail={userEmail} />;
+}
 }
 
 export default EventosDestacados;

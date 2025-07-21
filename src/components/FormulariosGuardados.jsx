@@ -32,20 +32,9 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
       setLoading(true);
       const data = await FirebaseService.obtenerFormularios();
       
-      // Filtrar según el perfil del usuario
-      let formulariosFiltrados = data;
-      if (userPerfil !== 'admin') {
-        // Solo mostrar formularios del usuario actual
-        formulariosFiltrados = data.filter(form => 
-          form.usuarioCreador === userEmail
-        );
-      }
-      
-      console.log('Formularios cargados:', formulariosFiltrados.length);
-      console.log('Usuario actual:', userEmail);
-      console.log('Perfil:', userPerfil);
-      
-      setFormularios(formulariosFiltrados);
+      // Mostrar todos los formularios, sin filtrar por usuario ni rol
+      console.log('Formularios cargados:', data.length);
+      setFormularios(data);
     } catch (error) {
       console.error('Error cargando formularios:', error);
       alert('Error al cargar formularios');

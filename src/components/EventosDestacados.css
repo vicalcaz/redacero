@@ -1,11 +1,11 @@
-/*Paleta de colores CMYK convertida
+:root {
   --color-azul-oscuro: #453796;  
   --color-azul-medio:  #5754a4;  
-  --color-azul-claro:  #6b66ae;   
+  --color-azul-claro:  #6b66ae;
   --color-naranja:     #f68b2a;  
-  --color-gris:        #e7e7e8;      
-*/
- 
+  --color-gris:        #e7e7e8;  
+}
+
 
 body {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -23,7 +23,7 @@ body {
 
 .eventos-destacados {
   min-height: 100vh;
-  background: linear-gradient(135deg, --color-azul-claro 0%, --color-azul-oscuro 100%);
+  background: linear-gradient(135deg, var(--color-azul-claro) 0%, var(--color-azul-oscuro) 100%);
   padding: 2rem 1rem;
 }
 
@@ -464,25 +464,48 @@ body {
 }
 
 /* Efecto destacado para eventos principales */
+
 .evento-imagen.destacado-flash {
   position: relative;
   border-radius: 12px 12px 0 0;
   overflow: hidden;
-  animation: brillo-imagen 0.9s linear infinite alternate;
+  animation: flash-giro-imagen 1.2s cubic-bezier(0.4, 0.2, 0.2, 1) 1;
   box-shadow: 0 0 32px 12px #b39ddbcc; /* más ancho */
+}
+
+@keyframes flash-giro-imagen {
+  0% {
+    transform: scale(0.2) rotate(-180deg);
+    filter: brightness(0.7);
+    opacity: 0.2;
+  }
+  60% {
+    transform: scale(1.15) rotate(20deg);
+    filter: brightness(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.97) rotate(-8deg);
+    filter: brightness(1.1);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+    opacity: 1;
+  }
 }
 
 @keyframes brillo-imagen {
   0% {
-    box-shadow: 0 0 16px 4px #b39ddbcc, 0 0 0 0 #453796;
+    box-shadow: 0 0 16px 4px var(--color-naranja), 0 0 0 0 var(--color-naranja);
     filter: brightness(0.95);
   }
   50% {
-    box-shadow: 0 0 64px 32px #453796cc, 0 0 32px 16px #b39ddb;
+    box-shadow: 0 0 64px 32px var(--color-naranja), 0 0 32px 16px var(--color-naranja);
     filter: brightness(1.18);
   }
   100% {
-    box-shadow: 0 0 16px 4px #b39ddbcc, 0 0 0 0 #453796;
+    box-shadow: 0 0 16px 4px var(--color-naranja), 0 0 0 0 var(--color-naranja);
     filter: brightness(0.95);
   }
 }
@@ -523,14 +546,14 @@ body {
 
 .info-item.hotel-brillante {
   background: linear-gradient(90deg, #e6e0fa 60%, #b39ddb 100%);
-  color: #2a225c;
+  color: var(--color-azul-medio);
   box-shadow: 0 0 24px 8px #45379699; /* más ancho */
   animation: brillo-hotel 0.7s infinite alternate;
 }
 
 @keyframes brillo-hotel {
-  0% { filter: brightness(0.95); box-shadow: 0 0 24px 8px #45379699; }
-  100% { filter: brightness(1.35); box-shadow: 0 0 48px 24px #b39ddb99; }
+  0% { filter: brightness(0.95); box-shadow: 0 0 24px 8px var(--color-azul-claro), 0 0 0 0 var(--color-azul-oscuro); }
+  100% { filter: brightness(1.35); box-shadow: 0 0 48px 24px var(--color-gris) 0 0 0 0 #b39ddb99; }
 }
 
 /* Responsive */
