@@ -1,6 +1,6 @@
 
 .admin-navbar {
-  background: --color-azul-oscuro;
+  background: var(--color-azul-oscuro);
   color: white;
   padding: 1rem 2rem;
   display: flex;
@@ -31,18 +31,18 @@
 }
 
 .navbar-tabs button:hover {
-  background: --color-azul-medio;
-  border-color: ---color-azul-claro;
+  background: var(--color-azul-medio);
+  border-color: var(--color-azul-claro);
 }
 
 
 .navbar-tabs button.active {
-  background: --color-azul-oscuro;
-  border-color: ---color-azul-claro
+  background: var(--color-azul-oscuro);
+  border-color: var(--color-azul-claro);
 }
 
 .logout-btn {
-  background: --color-naranja;
+  background: var(--color-naranja);
   border: none;
   color: white;
   padding: 0.5rem 1rem;
@@ -52,5 +52,5 @@
 }
 
 .logout-btn:hover {
-  background: --color-naranja;
+  background: var(--color-naranja);
 }
