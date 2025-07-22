@@ -15,11 +15,39 @@
 }
 
 /* Efecto de llamas animadas por fuera del borde */
-.evento-imagen.destacado-fuego {
+
+/* Brillo animado para el contenedor naranja */
+.evento-imagen.destacado-brillo-naranja {
   position: relative;
   border-radius: 12px 12px 0 0;
-  overflow: visible;
+  overflow: hidden;
   z-index: 1;
+  background: var(--color-naranja);
+  animation: brilloNaranjaCont 2.2s infinite cubic-bezier(.4,1.6,.6,1) alternate;
+  box-shadow: 0 0 32px 8px #ff9800cc, 0 0 64px 24px #ff980088;
+}
+
+@keyframes brilloNaranjaCont {
+  0% {
+    box-shadow: 0 0 12px 2px #ff9800cc, 0 0 0 0 #ffd70088;
+    filter: brightness(1.05) saturate(1.1);
+    transform: scale(1) translateY(0);
+  }
+  40% {
+    box-shadow: 0 0 64px 32px #ffd700cc, 0 0 32px 16px #ff980088;
+    filter: brightness(1.18) saturate(1.25);
+    transform: scale(1.04) translateY(-4px);
+  }
+  70% {
+    box-shadow: 0 0 48px 16px #ff9800cc, 0 0 64px 24px #ffd70088;
+    filter: brightness(1.22) saturate(1.35);
+    transform: scale(1.07) translateY(-2px);
+  }
+  100% {
+    box-shadow: 0 0 24px 8px #ff9800cc, 0 0 32px 12px #ffd70088;
+    filter: brightness(1.12) saturate(1.18);
+    transform: scale(1) translateY(0);
+  }
 }
 
 .llamas-fuego {
@@ -241,21 +269,26 @@ body {
   font-size: 0.9rem;
   z-index: 2;
 }
-
 /* Imagen del evento */
 .evento-imagen {
   width: 100%;
-  height: 200px;
+  height: 320px;
+  min-height: 220px;
   overflow: hidden;
-  border-radius: 12px 12px 0 0;
+  border-radius: 16px 16px 0 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .evento-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
 }
 
 .evento-card:hover .evento-img {
@@ -265,8 +298,10 @@ body {
 .evento-imagen img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
 }
 
 .evento-destacado:hover .evento-imagen img {
@@ -367,9 +402,12 @@ body {
 }
 
 .descripcion {
-  color: var(--color-gris);
+  color: var(--color-azul-claro);
+  font-weight: bold;
   line-height: 1.6;
-  font-size: 1rem;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 6px #b39ddb55;
 }
 
 /* Extras del evento */
@@ -556,14 +594,8 @@ body {
 /* Efecto destacado para eventos principales */
 
 
-.evento-imagen.destacado-fuego {
-  position: relative;
-  border-radius: 12px 12px 0 0;
-  overflow: hidden;
-  animation: fuegoGlow 1.5s infinite alternate;
-  box-shadow: 0 0 32px 12px #ff9800cc, 0 0 64px 24px #ff572288;
-  background: radial-gradient(circle at 60% 80%, #ff9800 0%, #ff5722 60%, transparent 100%);
-}
+
+/* Eliminar fondo radial y box-shadow de fuegoGlow, solo brillo */
 
 @keyframes fuegoGlow {
   0% {

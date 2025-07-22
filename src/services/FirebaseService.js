@@ -27,15 +27,12 @@ class FirebaseServiceClass {
         console.log('👤 No hay usuarios, creando admin por defecto...');
         
         // Crear usuario admin por defecto SOLO si no hay usuarios
-        await this.crearUsuario({
-          nombre: 'Administrador',
-          email: 'admin@redacero.com',
-          password: 'reacero',
-          rol: 'admin',
-          activo: true,
-          passwordCambiado: false, // Deberá cambiar en primer login
-          fechaCreacion: new Date().toISOString()
-        });
+await this.crearUsuario({
+  rol: 'admin',
+  activo: true,
+  passwordCambiado: false, // Deberá cambiar en primer login
+  fechaCreacion: new Date().toISOString()
+});
         
         console.log('✅ Usuario admin por defecto creado: admin@redacero.com / reacero');
       } else {
@@ -281,6 +278,8 @@ class FirebaseServiceClass {
       }
 
       const eventoRef = doc(db, 'eventos', id);
+      // Si estado es undefined, asignar 'planificado' por defecto
+      const estadoSeguro = eventoData.estado !== undefined ? eventoData.estado : 'planificado';
       await updateDoc(eventoRef, {
         nombre: eventoData.nombre,
         descripcion: eventoData.descripcion,
@@ -288,7 +287,7 @@ class FirebaseServiceClass {
         fechaHasta: eventoData.fechaHasta,
         fechaLimiteEdicion: eventoData.fechaLimiteEdicion,
         ubicacion: eventoData.ubicacion,
-        estado: eventoData.estado,
+        estado: estadoSeguro,
         destacado: eventoData.destacado,
         imagenBase64: eventoData.imagenBase64 || null, // 👈 actualizar imagen en base64
         fechaActualizacion: new Date().toISOString(),
@@ -871,14 +870,46 @@ class FirebaseServiceClass {
   async guardarConfiguracionMailEvento(mailConfig) {
     try {
       console.log('🔥 FirebaseService: Guardando configuración de correo para eventos');
-      
-      const docRef = doc(db, 'configuracionMails', 'eventoActual');
-      await setDoc(docRef, mailConfig, { merge: true });
-      
-      console.log('✅ FirebaseService: Configuración de correo guardada exitosamente');
-      return true;
+      if (mailConfig.id) {
+        // Editar mail existente
+        const docRef = doc(db, 'configuracionMails', mailConfig.id);
+        const { id, ...dataSinId } = mailConfig;
+        await setDoc(docRef, {
+          ...dataSinId,
+          fechaActualizacion: new Date().toISOString(),
+          fechaActualizacionString: new Date().toLocaleString('es-AR')
+        }, { merge: true });
+        console.log('✅ FirebaseService: Mail actualizado:', mailConfig.id);
+        return mailConfig.id;
+      } else {
+        // Crear nuevo mail
+        const docRef = await addDoc(collection(db, 'configuracionMails'), {
+          ...mailConfig,
+          fechaCreacion: new Date().toISOString(),
+          fechaCreacionString: new Date().toLocaleString('es-AR')
+        });
+        console.log('✅ FirebaseService: Nuevo mail creado con ID:', docRef.id);
+        return docRef.id;
+      }
     } catch (error) {
       console.error('❌ FirebaseService: Error guardando configuración de correo:', error);
+      throw error;
+    }
+  }
+
+  // Método para obtener todos los mails configurados
+  async obtenerMailsConfigurados() {
+    try {
+      console.log('🔥 FirebaseService: Obteniendo mails configurados...');
+      const querySnapshot = await getDocs(collection(db, 'configuracionMails'));
+      const mails = [];
+      querySnapshot.forEach((doc) => {
+        mails.push({ id: doc.id, ...doc.data() });
+      });
+      console.log('✅ FirebaseService: Mails configurados obtenidos:', mails.length);
+      return mails;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo mails configurados:', error);
       throw error;
     }
   }

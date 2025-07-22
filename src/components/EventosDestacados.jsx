@@ -27,36 +27,8 @@ function EventosDestacados({
     const cargarEventos = async () => {
       try {
         setLoading(true);
-        console.log('🔄 EventosDestacados: Cargando eventos...');
-        
         const todos = await FirebaseService.obtenerEventos();
-        // Filtrar solo los destacados
         const eventosDestacados = todos.filter(ev => ev.destacado);
-        
-        console.log('📅 EventosDestacados: Eventos obtenidos:', eventosDestacados);
-        
-        // Mostrar el estado de cada evento para debugging
-        eventosDestacados.forEach(evento => {
-
-          const esDestacado = evento.destacado === true;
-          const esPlanificado = evento.estado === 'planificado';
-          const esActivo = evento.estado === 'activo' || evento.activo === true;
-          const pasaFiltro = esDestacado && (esPlanificado || esActivo);
-          
-          console.log(`📊 Evento "${evento.nombre}":`, {
-            destacado: evento.destacado,
-            estado: evento.estado,
-            activo: evento.activo,
-            esDestacado,
-            esPlanificado,
-            esActivo,
-            pasaFiltro
-          });
-        });
-        
-        console.log('✅ EventosDestacados: Eventos que pasaron el filtro:', eventosDestacados);
-        console.log('📊 EventosDestacados: Total filtrados:', eventosDestacados.length);
-        
         setEventos(eventosDestacados);
       } catch (error) {
         console.error('❌ EventosDestacados: Error cargando eventos:', error);
@@ -394,27 +366,24 @@ function EventosDestacados({
       <div className="eventos-grid">
         {eventos.map(evento => {
           return (
-            <div key={evento.id} className="evento-card" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', maxHeight: 440, minHeight: 280, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div key={evento.id} className="evento-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', maxHeight: 600, minHeight: 380, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {/* MOSTRAR IMAGEN SI EXISTE */}
               {evento.imagenBase64 && (
-                <div className={`evento-imagen${evento.destacado ? ' destacado-fuego' : ''}`} style={{ position: 'relative' }}>
-                  {/* Llamas animadas por fuera */}
-                  {evento.destacado && (
-                    <div className="llamas-fuego">
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                      <div className="llama"></div>
-                    </div>
-                  )}
-                  <img 
-                    src={evento.imagenBase64} 
+                <div
+                  className={`evento-imagen${evento.destacado ? ' destacado-brillo-naranja' : ''}`}
+                  style={{
+                    position: 'relative',
+                    background: evento.destacado ? 'var(--color-naranja)' : undefined,
+                    overflow: 'hidden',
+                    height: '320px',
+                    minHeight: '220px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <img
+                    src={evento.imagenBase64}
                     alt={evento.nombre}
                     className="evento-img"
                     style={{
@@ -426,7 +395,8 @@ function EventosDestacados({
                       display: 'block',
                       margin: '0 auto',
                       position: 'relative',
-                      zIndex: 2
+                      zIndex: 2,
+                      background: 'transparent',
                     }}
                   />
                   {evento.destacado && (
@@ -459,7 +429,7 @@ function EventosDestacados({
                   }
                 </div>
                 {evento.descripcion && (
-                  <div className="evento-descripcion" style={{ margin: '0.5rem 0 0.7rem 0', color: '#333', fontSize: '0.98rem', lineHeight: 1.4, maxHeight: 38, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="descripcion descripcion-evento" style={{ margin: '0.5rem 0 0.7rem 0' }}>
                     {evento.descripcion}
                   </div>
                 )}

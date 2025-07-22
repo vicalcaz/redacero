@@ -1,3 +1,33 @@
+/* Badge de estado de evento */
+.status-badge {
+  display: inline-block;
+  padding: 0.3em 1em;
+  border-radius: 20px;
+  font-size: 0.95em;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  letter-spacing: 0.5px;
+}
+.status-badge.status-planificado {
+  background: #3498db;
+  color: #fff;
+}
+.status-badge.status-activo {
+  background: #27ae60;
+  color: #fff;
+}
+.status-badge.status-finalizado {
+  background: #7f8c8d;
+  color: #fff;
+}
+.status-badge.status-cancelado {
+  background: #e74c3c;
+  color: #fff;
+  border: 2px solid #c0392b;
+  box-shadow: 0 0 8px 0 #e74c3c44;
+}
 .event-management {
   padding: 2rem;
 }

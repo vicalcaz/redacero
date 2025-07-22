@@ -54,18 +54,43 @@ function PersonalizacionFormularios({ user }) {
     'proveedor-sin-hotel': { notainicio: '', notafin: '', imageninicio: '' }
   });
 
+
   // Configuración de mails
   const [configCorreo, setConfigCorreo] = useState({
+    nombre: '',
+    descripcion: '',
     remitente: user.email,
     asunto: '',
-    cuerpo: ''
+    cuerpo: '',
+    estado: 'activo'
   });
+  const [mailsGuardados, setMailsGuardados] = useState([]);
+  const [mailSeleccionado, setMailSeleccionado] = useState('nuevo');
+
 
   // Cargar configuración existente
   useEffect(() => {
     cargarConfiguracion();
     cargarConfigFormularios();
+    cargarMailsGuardados();
   }, []);
+
+  // Recargar mails guardados cada vez que se cambia a la pestaña de correos
+  useEffect(() => {
+    if (pestania === 'correos') {
+      cargarMailsGuardados();
+    }
+  }, [pestania]);
+
+  // Cargar mails guardados
+  const cargarMailsGuardados = async () => {
+    try {
+      const mails = await FirebaseService.obtenerMailsConfigurados?.();
+      if (Array.isArray(mails)) setMailsGuardados(mails);
+    } catch (error) {
+      console.error('Error cargando mails guardados:', error);
+    }
+  };
 
   useEffect(() => {
     setEditorListo(true);
@@ -233,9 +258,18 @@ function PersonalizacionFormularios({ user }) {
   const guardarMailConfig = async () => {
     try {
       setGuardando(true);
-      console.log('mailConfig a guardar:', mailConfig); // <-- Verifica el objeto
-      await FirebaseService.guardarConfiguracionMailEvento(mailConfig);
+      let datosMail = { ...configCorreo };
+      // Si es nuevo, no enviar id
+      if (mailSeleccionado === 'nuevo') {
+        if (datosMail.id) delete datosMail.id;
+      } else {
+        // Si es uno existente, agregar el id
+        datosMail.id = mailSeleccionado;
+      }
+      console.log('configCorreo a guardar:', datosMail); // <-- Verifica el objeto
+      await FirebaseService.guardarConfiguracionMailEvento(datosMail);
       alert('✅ Configuración de mail guardada exitosamente');
+      await cargarMailsGuardados(); // Refresca la lista tras guardar
     } catch (error) {
       console.error('Error al guardar la configuración de mail:', error); // <-- Log detallado
       alert('❌ Error al guardar la configuración de mail: ' + (error.message || error));
@@ -592,6 +626,79 @@ function PersonalizacionFormularios({ user }) {
       {pestania === 'correos' && (
         <div className="seccion-formulario" style={{ marginTop: '2rem' }}>
           <h3>✉️ Configuración de Correos para el Evento</h3>
+          {/* Selector de mails guardados */}
+          <div className="campo-grupo">
+            <label>Seleccionar mail guardado</label>
+            <select
+              value={mailSeleccionado}
+              onChange={e => {
+                const val = e.target.value;
+                setMailSeleccionado(val);
+                if (val === 'nuevo') {
+                  setConfigCorreo({
+                    nombre: '',
+                    descripcion: '',
+                    remitente: user.email,
+                    asunto: '',
+                    cuerpo: '',
+                    estado: 'activo'
+                  });
+                } else {
+                  const mail = mailsGuardados.find(m => m.id === val);
+                  if (mail) setConfigCorreo({
+                    nombre: mail.nombre || '',
+                    descripcion: mail.descripcion || '',
+                    remitente: mail.remitente || user.email,
+                    asunto: mail.asunto || '',
+                    cuerpo: mail.cuerpo || '',
+                    estado: mail.estado || 'activo'
+                  });
+                }
+              }}
+              style={{ marginBottom: 12 }}
+            >
+              <option value="nuevo">➕ Crear nuevo mail</option>
+              {mailsGuardados.map(m => (
+                <option
+                  key={m.id}
+                  value={m.id}
+                  style={m.estado === 'inactivo' ? { color: 'red', fontWeight: 'bold' } : {}}
+                >
+                  {`${m.nombre || m.asunto || m.id} - ${m.descripcion ? m.descripcion : ''} [${m.estado === 'inactivo' ? 'Inactivo' : 'Activo'}]`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="campo-grupo">
+            <label>Nombre</label>
+            <input
+              type="text"
+              value={configCorreo.nombre || ''}
+              onChange={e => setConfigCorreo({ ...configCorreo, nombre: e.target.value })}
+              placeholder="Nombre identificador del mail"
+              required
+            />
+          </div>
+          <div className="campo-grupo">
+            <label>Descripción</label>
+            <input
+              type="text"
+              value={configCorreo.descripcion || ''}
+              onChange={e => setConfigCorreo({ ...configCorreo, descripcion: e.target.value })}
+              placeholder="Descripción breve del mail"
+            />
+          </div>
+          <div className="campo-grupo">
+            <label>Estado</label>
+            <select
+              value={configCorreo.estado || 'activo'}
+              onChange={e => setConfigCorreo({ ...configCorreo, estado: e.target.value })}
+              style={{ maxWidth: 180, marginBottom: 8 }}
+            >
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
           <div className="campo-grupo">
             <label>Remitente</label>
             <input
@@ -626,14 +733,33 @@ function PersonalizacionFormularios({ user }) {
             )}
             <small>Puedes escribir texto, pegar URLs o insertar imágenes (usa el botón de imagen del editor).</small>
           </div>
-          <button
-            className="btn-primario"
-            onClick={guardarMailConfig}
-            type="button"
-            style={{ marginTop: '1rem' }}
-          >
-            Guardar configuración de correo
-          </button>
+          <div style={{ display: 'flex', gap: 12, marginTop: '1rem' }}>
+            <button
+              className="btn-primario"
+              onClick={guardarMailConfig}
+              type="button"
+            >
+              Guardar configuración de correo
+            </button>
+            <button
+              className="btn-secundario"
+              type="button"
+              onClick={() => {
+                setMailSeleccionado('nuevo');
+                setConfigCorreo({
+                  nombre: '',
+                  descripcion: '',
+                  remitente: user.email,
+                  asunto: '',
+                  cuerpo: '',
+                  estado: 'activo'
+                  // No incluir id
+                });
+              }}
+            >
+              Nuevo correo
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -209,6 +209,7 @@ function EventManagement() {
   }
 
   return (
+
     <div className="gestion-eventos-container">
       <div className="gestion-eventos-header">
         <h1>Gestión de Eventos</h1>
@@ -218,8 +219,9 @@ function EventManagement() {
       <div className="gestion-eventos-card">
         <h2>{editando ? 'Editar Evento' : 'Crear Nuevo Evento'}</h2>
         <form onSubmit={handleSubmit} className="event-form">
+          {/* Fila 1: Nombre y Ubicación */}
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group" style={{ flex: 1, minWidth: 180 }}>
               <label htmlFor="nombre">Nombre *</label>
               <input
                 type="text"
@@ -229,7 +231,7 @@ function EventManagement() {
                 required
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ flex: 1, minWidth: 180 }}>
               <label htmlFor="ubicacion">Ubicación</label>
               <input
                 type="text"
@@ -240,6 +242,7 @@ function EventManagement() {
             </div>
           </div>
 
+          {/* Fila 2: Fechas */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="fechaDesde">Fecha Desde</label>
@@ -268,6 +271,35 @@ function EventManagement() {
                 onChange={(e) => actualizarCampo('fechaLimiteEdicion', e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Fila 3: Estado centrado */}
+          <div className="form-row" style={{ justifyContent: 'center', marginTop: '10px' }}>
+            <div className="form-group" style={{ minWidth: 200, textAlign: 'center' }}>
+              <label htmlFor="estado"><strong>Estado del Evento</strong></label>
+              <select
+                id="estado"
+                value={nuevoEvento.estado}
+                onChange={e => actualizarCampo('estado', e.target.value)}
+                style={{ textAlign: 'center', fontWeight: 'bold' }}
+              >
+                <option value="planificado">Planificado</option>
+                <option value="activo">Activo</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Fila 4: Descripción */}
+          <div className="form-group">
+            <label htmlFor="descripcion">Descripción</label>
+            <textarea
+              id="descripcion"
+              value={nuevoEvento.descripcion}
+              onChange={(e) => actualizarCampo('descripcion', e.target.value)}
+              rows="2"
+            />
           </div>
 
           <div className="form-group">
