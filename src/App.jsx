@@ -6,6 +6,7 @@ import FormularioSocio from './components/formularios/FormularioSocio';
 import FormularioProveedorConHotel from './components/formularios/FormularioProveedorConHotel';
 import FormularioProveedorSinHotel from './components/formularios/FormularioProveedorSinHotel';
 import CambiarPasswordModal from './components/CambiarPasswordModal';
+import Newsletter from './components/Newsletter';
 import { EventoDestacadoProvider, useEventoDestacado } from "./context/EventoDestacadoContext";
 import { FirebaseService } from "./services/FirebaseService";
 import './App.css';
@@ -392,6 +393,9 @@ function App() {
             onCancel={handleFormularioCancel}
           />
         );
+
+      case 'newsletter':
+        return <Newsletter />;
 
       default:
         console.log('⚠️ App: Vista no reconocida, ir a eventos');

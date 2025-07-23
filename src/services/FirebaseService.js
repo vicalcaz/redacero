@@ -1,20 +1,34 @@
+
 import { db } from '../firebase/config';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
   deleteDoc,
   getDoc,
   setDoc,
   query,
   orderBy,
   where,
-  limit 
+  limit
 } from 'firebase/firestore';
 
 class FirebaseServiceClass {
+  // --- Newsletter: Asociación mail-usuario ---
+  async asociarMailAUsuario(usuarioId, mailId) {
+    // Guarda o actualiza la asociación en la colección 'mailUsuarioAsociado'
+    const ref = doc(db, 'mailUsuarioAsociado', usuarioId);
+    await setDoc(ref, { usuarioId, mailId }, { merge: true });
+    return true;
+  }
+
+  async obtenerAsociacionesMailUsuarios() {
+    // Devuelve [{usuarioId, mailId}]
+    const snap = await getDocs(collection(db, 'mailUsuarioAsociado'));
+    return snap.docs.map(d => d.data());
+  }
   // Inicializar datos por defecto
   async inicializarDatos() {
     try {
@@ -34,18 +48,17 @@ await this.crearUsuario({
   fechaCreacion: new Date().toISOString()
 });
         
-        console.log('✅ Usuario admin por defecto creado: admin@redacero.com / reacero');
-      } else {
-        console.log('👥 Ya existen usuarios en la base de datos. No se crea admin automático.');
-      }
-      
-      console.log('✅ FirebaseService: Inicialización completada');
-      return true;
-    } catch (error) {
-      console.error('❌ FirebaseService: Error inicializando datos:', error);
-      throw error;
+      console.log('✅ Usuario admin por defecto creado: admin@redacero.com / reacero');
+    } else {
+      console.log('👥 Ya existen usuarios en la base de datos. No se crea admin automático.');
     }
+    
+    console.log('✅ FirebaseService: Inicialización completada');
+  } catch (error) {
+    console.error('❌ FirebaseService: Error inicializando datos:', error);
+    throw error;
   }
+}
 
   // MÉTODOS DE USUARIOS
   async crearUsuario(userData) {
@@ -789,6 +802,9 @@ await this.crearUsuario({
       const colRef = collection(db, 'configuracionformularios');
       const snap = await getDocs(colRef);
       const configs = snap.docs.map(doc => doc.data());
+      configs.forEach(cfg => {
+        console.log('Leído de Firestore:', cfg.tipoformulario, 'notainicio:', cfg.notainicio, 'notafin:', cfg.notafin);
+      });
       console.log('✅ FirebaseService: Configuraciones obtenidas:', configs.length);
       return configs;
     } catch (error) {
@@ -802,6 +818,8 @@ await this.crearUsuario({
     try {
       if (!tipoformulario) throw new Error('tipoformulario es requerido');
       console.log('🔥 FirebaseService: Guardando configuración para tipo:', tipoformulario);
+      console.log('notainicio HTML:', notainicio);
+      console.log('notafin HTML:', notafin);
       const docRef = doc(db, 'configuracionformularios', tipoformulario);
       await setDoc(docRef, {
         tipoformulario,
@@ -996,6 +1014,82 @@ a
       return { id: docSnap.id, ...docSnap.data() };
     } catch (error) {
       console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      throw error;
+    }
+  }
+
+  // --- NEWSLETTER FIRESTORE REAL ---
+
+  // Obtener todos los usuarios para newsletter (ya existe, pero aquí versión real)
+  async obtenerUsuariosParaNewsletter() {
+    try {
+      const q = query(collection(db, 'usuarios'), orderBy('nombre', 'asc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('❌ Error obteniendo usuarios para newsletter:', error);
+      throw error;
+    }
+  }
+
+  // Obtener todos los mails configurados (ya existe, pero aquí versión real)
+  async obtenerMailsConfigurados() {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'configuracionMails'));
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('❌ Error obteniendo mails configurados:', error);
+      throw error;
+    }
+  }
+
+  // Guardar mail enviado (uno por usuario)
+  async guardarMailEnviado({ eventoDestacadoId, fechaEnvio, idConfiguracionMail, usuarioId, mail, asunto, cuerpo }) {
+    try {
+      const docRef = await addDoc(collection(db, 'mailsEnviados'), {
+        eventoDestacadoId,
+        fechaEnvio: fechaEnvio || new Date().toISOString(),
+        idConfiguracionMail,
+        usuarioId,
+        mail,
+        asunto,
+        cuerpo,
+        mailenviado: true,
+        leido: false
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error guardando mail enviado:', error);
+      throw error;
+    }
+  }
+
+  // Endpoint especial para marcar mail como leído
+  async marcarMailLeido(mailEnviadoId) {
+    try {
+      const mailRef = doc(db, 'mailsEnviados', mailEnviadoId);
+      await updateDoc(mailRef, {
+        leido: true,
+        fechaLeido: new Date().toISOString()
+      });
+      return true;
+    } catch (error) {
+      console.error('❌ Error marcando mail como leído:', error);
+      throw error;
+    }
+  }
+
+  // Obtener historial de mails enviados por evento (opcional)
+  async obtenerMailsEnviadosPorEvento(eventoDestacadoId) {
+    try {
+      const q = query(
+        collection(db, 'mailsEnviados'),
+        where('eventoDestacadoId', '==', eventoDestacadoId)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('❌ Error obteniendo mails enviados por evento:', error);
       throw error;
     }
   }

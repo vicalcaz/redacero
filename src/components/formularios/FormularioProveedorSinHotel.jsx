@@ -312,9 +312,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
         {/* Nota de inicio */}
         {configProveedorSinHotel?.notainicio && (
-          <div className="nota-inicio-formulario">
-            {configProveedorSinHotel.notainicio}
-          </div>
+          <div className="nota-inicio-formulario" dangerouslySetInnerHTML={{ __html: configProveedorSinHotel.notainicio }} />
         )}
 
         {/* Sección Selección de Evento - Color Amarillo */}
@@ -788,9 +786,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
       </form>
 
       {configProveedorSinHotel?.notafin && (
-        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }}>
-          {configProveedorSinHotel.notafin}
-        </div>
+        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configProveedorSinHotel.notafin }} />
       )}
       <small>
         Solo puedes elegir entre {minFecha} y {maxFecha}

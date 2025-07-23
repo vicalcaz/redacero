@@ -1,0 +1,77 @@
+.newsletter-table-sm th, .newsletter-table-sm td, .newsletter-table-sm, .th-sm, .tbody-sm {
+  font-size: 0.85em !important;
+  padding: 2px 4px !important;
+  line-height: 1.2 !important;
+}
+
+.btn-sm {
+  font-size: 0.8em !important;
+  padding: 1px 6px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  border-radius: 4px !important;
+}
+.newsletter-container {
+  padding: 2rem;
+}
+.newsletter-panel {
+  display: flex;
+  gap: 2rem;
+}
+.usuarios-panel {
+  min-width: 260px;
+  max-width: 320px;
+}
+.usuarios-lista {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fafbfc;
+}
+.usuarios-lista li {
+  margin-bottom: 6px;
+}
+.mail-panel {
+  flex: 1;
+  min-width: 320px;
+}
+.newsletter-preview-modal {
+  position: fixed;
+  top: 10vh;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px #0002;
+  padding: 2rem;
+  z-index: 1000;
+  min-width: 340px;
+}
+.enviados-panel {
+  margin-top: 2rem;
+}
+.enviados-panel ul {
+  list-style: none;
+  padding: 0;
+}
+.enviados-panel li {
+  margin-bottom: 4px;
+  font-size: 0.98em;
+}
+.newsletter-table th, .newsletter-table td {
+  padding: 6px 6px;
+  border-bottom: 1px solid #eee;
+}
+.newsletter-table-sm th, .newsletter-table-sm td {
+  font-size: 0.95em;
+  padding: 4px 6px;
+}
+.btn-sm {
+  font-size: 0.85em !important;
+  padding: 2px 6px !important;
+  height: 24px;
+  min-width: 24px;
+}

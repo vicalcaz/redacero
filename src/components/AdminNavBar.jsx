@@ -1,6 +1,7 @@
-
 import { useState } from 'react';
 import './AdminNavbar.css';
+import Newsletter from './Newsletter';
+import { Link } from 'react-router-dom';
 
 function AdminNavBar({ currentView, onViewChange, user, onLogout }) {
   const menuItems = [
@@ -10,7 +11,7 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout }) {
     { key: 'formularios', label: 'Formularios', icon: '📝' },
     { key: 'personalizacion', label: 'Personalizar', icon: '🎨' },
     { key: 'tablerocontrol', label: 'Tablero de Control', icon: '📊' },
-    { key: 'newsletter', label: 'Newsletter', icon: '�' }
+    { key: 'newsletter', label: 'Newsletter', icon: '📧' },
   ];
 
   return (

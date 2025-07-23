@@ -7,6 +7,7 @@ import FormularioManagement from './FormularioManagement';
 import PersonalizacionFormularios from './PersonalizacionFormularios';
 import EventosDestacados from './EventosDestacados';
 import { FirebaseService } from '../services/FirebaseService';
+import Newsletter from './Newsletter';
 import './Dashboard.css';
 
 function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboard, onNavigateToInicio }) {
@@ -64,6 +65,12 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
     setVistaActual(vista);
   };
 
+  // Calcula los usuarios que no completaron el formulario (no admin)
+  const usuariosSinFormulario = usuarios.filter(u =>
+    u.perfil !== 'admin' &&
+    !formularios.some(f => f.usuarioCreador === u.email)
+  );
+
   const renderVistaActual = () => {
     switch (vistaActual) {
       case 'usuarios':
@@ -74,6 +81,8 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         return <FormularioManagement user={usuario} />;
       case 'personalizacion':
         return <PersonalizacionFormularios user={usuario} />;
+      case 'newsletter':
+        return <Newsletter />;
       case 'inicio':
       default:
         return (
@@ -230,12 +239,6 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         );
     }
   };
-
-  // Calcula los usuarios que no completaron el formulario (no admin)
-  const usuariosSinFormulario = usuarios.filter(u =>
-    u.perfil !== 'admin' &&
-    !formularios.some(f => f.usuarioCreador === u.email)
-  );
 
   return (
     <div className="dashboard">

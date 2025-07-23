@@ -345,9 +345,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
 
         {/* Nota de inicio */}
         {configProveedorConHotel?.notainicio && (
-          <div className="nota-inicio-formulario">
-            {configProveedorConHotel.notainicio}
-          </div>
+          <div className="nota-inicio-formulario" dangerouslySetInnerHTML={{ __html: configProveedorConHotel.notainicio }} />
         )}
 
         {/* Sección Selección de Evento - Color Amarillo */}
@@ -919,9 +917,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       </form>
 
       {configProveedorConHotel?.notafin && (
-        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }}>
-          {configProveedorConHotel.notafin}
-        </div>
+        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configProveedorConHotel.notafin }} />
       )}
       <small>
         Solo puedes elegir entre {minFecha} y {maxFecha}

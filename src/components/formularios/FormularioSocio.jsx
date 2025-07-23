@@ -346,9 +346,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
         {/* Nota de inicio */}
         {configSocio?.notainicio && (
-          <div className="nota-inicio-formulario">
-            {configSocio.notainicio}
-          </div>
+          <div className="nota-inicio-formulario" dangerouslySetInnerHTML={{ __html: configSocio.notainicio }} />
         )}
 
         {/* Sección Selección de Evento - Color Amarillo */}
@@ -920,9 +918,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
       </form>
 
       {configSocio?.notafin && (
-        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }}>
-          {configSocio.notafin}
-        </div>
+        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configSocio.notafin }} />
       )}
       <small>
         Solo puedes elegir entre {minFecha} y {maxFecha}

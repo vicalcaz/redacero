@@ -9,7 +9,7 @@ export class Usuario {
     this.email = email;
     this.password = password;
     this.nombre = nombre;
-    this.rol = rol; // "admin", "usuario", "proveedor", "socio"
+    this.rol = rol; //"admin", "socio", "proveedor-con-hotel", "proveedor-sin-hotel"
     this.activo = true;
     this.passwordCambiado = passwordCambiado; // ✅ Campo correcto
     this.fechaCreacion = new Date().toISOString();

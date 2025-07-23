@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { FirebaseService } from '../services/FirebaseService';
 import './PersonalizacionFormularios.css';
 import ReactQuill, { Quill } from 'react-quill';
@@ -278,6 +279,28 @@ function PersonalizacionFormularios({ user }) {
     }
   };
 
+  // Exportar mails guardados a Excel
+  const exportarMailsAExcel = () => {
+    if (!mailsGuardados.length) {
+      alert('No hay mails guardados para exportar.');
+      return;
+    }
+    // Prepara los datos para exportar
+    const datos = mailsGuardados.map(m => ({
+      ID: m.id,
+      Nombre: m.nombre,
+      Descripción: m.descripcion,
+      Remitente: m.remitente,
+      Asunto: m.asunto,
+      Estado: m.estado,
+      'Última modificación': m.ultimaModificacion || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(datos);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'MailsGuardados');
+    XLSX.writeFile(wb, 'mails_guardados.xlsx');
+  };
+
   if (cargando) {
     return (
       <div className="loading-container">
@@ -291,6 +314,7 @@ function PersonalizacionFormularios({ user }) {
     toolbar: [
       [{ 'header': [1, 2, false] }],
       ['bold', 'italic', 'underline'],
+      [{ 'color': [] }, { 'background': [] }],
       ['link', 'image'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       ['clean']
@@ -542,39 +566,47 @@ function PersonalizacionFormularios({ user }) {
             {/* Renderiza el formulario correspondiente al tabForm */}
             <div className="form-group">
               <label>Nota de Inicio</label>
-              <textarea
-                value={configFormularios[pestaniaFormulario]?.notainicio || ''}
-                onChange={e =>
-                  setConfigFormularios(prev => ({
-                    ...prev,
-                    [pestaniaFormulario]: {
-                      ...prev[pestaniaFormulario],
-                      notainicio: e.target.value
-                    }
-                  }))
-                }
-                rows={8}
-                style={{ minHeight: 120, fontSize: '1.1rem' }}
-                disabled={guardando}
-              />
+              {editorListo && (
+                <ReactQuill
+                  value={configFormularios[pestaniaFormulario]?.notainicio || ''}
+                  onChange={value =>
+                    setConfigFormularios(prev => ({
+                      ...prev,
+                      [pestaniaFormulario]: {
+                        ...prev[pestaniaFormulario],
+                        notainicio: value
+                      }
+                    }))
+                  }
+                  theme="snow"
+                  modules={modules}
+                  style={{ background: 'white', minHeight: 120 }}
+                  readOnly={guardando}
+                />
+              )}
+              <small>Puedes usar formato, listas, colores, imágenes, etc.</small>
             </div>
             <div className="form-group">
               <label>Nota de Fin</label>
-              <textarea
-                value={configFormularios[pestaniaFormulario]?.notafin || ''}
-                onChange={e =>
-                  setConfigFormularios(prev => ({
-                    ...prev,
-                    [pestaniaFormulario]: {
-                      ...prev[pestaniaFormulario],
-                      notafin: e.target.value
-                    }
-                  }))
-                }
-                rows={8}
-                style={{ minHeight: 120, fontSize: '1.1rem' }}
-                disabled={guardando}
-              />
+              {editorListo && (
+                <ReactQuill
+                  value={configFormularios[pestaniaFormulario]?.notafin || ''}
+                  onChange={value =>
+                    setConfigFormularios(prev => ({
+                      ...prev,
+                      [pestaniaFormulario]: {
+                        ...prev[pestaniaFormulario],
+                        notafin: value
+                      }
+                    }))
+                  }
+                  theme="snow"
+                  modules={modules}
+                  style={{ background: 'white', minHeight: 120 }}
+                  readOnly={guardando}
+                />
+              )}
+              <small>Puedes usar formato, listas, colores, imágenes, etc.</small>
             </div>
             <div className="form-group">
               <label>Imagen de Inicio</label>
@@ -627,6 +659,16 @@ function PersonalizacionFormularios({ user }) {
         <div className="seccion-formulario" style={{ marginTop: '2rem' }}>
           <h3>✉️ Configuración de Correos para el Evento</h3>
           {/* Selector de mails guardados */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              type="button"
+              className="btn-secundario"
+              onClick={exportarMailsAExcel}
+              style={{ minWidth: 180 }}
+            >
+              📤 Exportar lista a Excel
+            </button>
+          </div>
           <div className="campo-grupo">
             <label>Seleccionar mail guardado</label>
             <select
