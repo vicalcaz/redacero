@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.BREVO_USER,
+      from: process.env.BREVO_FROM || process.env.BREVO_USER,
       to,
       subject,
       html,
