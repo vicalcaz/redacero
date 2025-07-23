@@ -3,7 +3,7 @@
 // 1. Instala nodemailer: npm install nodemailer
 // 2. Crea variables de entorno en Vercel: BREVO_USER, BREVO_PASS
 
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

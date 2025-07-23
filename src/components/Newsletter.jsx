@@ -8,7 +8,14 @@ async function sendMailViaApi({ to, subject, html }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, html })
   });
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    // Si la respuesta no es JSON, intenta leer como texto
+    const text = await res.text();
+    throw new Error(text || 'Error enviando mail (respuesta no JSON)');
+  }
   if (!res.ok) throw new Error(data.error || 'Error enviando mail');
   return data;
 }
