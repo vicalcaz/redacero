@@ -32,7 +32,6 @@ function Newsletter() {
   const [previewMail, setPreviewMail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [mailsEnviados, setMailsEnviados] = useState([]);
   const [formularios, setFormularios] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
@@ -65,21 +64,20 @@ function Newsletter() {
   const cargarDatos = async (eventoId) => {
     setLoading(true);
     try {
-      const [usuariosDB, mailsDB, asociacionesDB, mailsEnviadosDB, formulariosDB] = await Promise.all([
+      const [usuariosDB, mailsDB, asociacionesDB, formulariosDB] = await Promise.all([
         FirebaseService.obtenerUsuariosParaNewsletter?.(),
         FirebaseService.obtenerMailsConfigurados?.(),
-        FirebaseService.obtenerAsociacionesMailUsuarios?.(),
-        FirebaseService.obtenerMailsEnviadosPorEvento?.(eventoId),
+        FirebaseService.obtenerAsociacionesMailUsuarioEvento?.(eventoId),
         FirebaseService.obtenerFormulariosPorEvento?.(eventoId)
       ]);
       setUsuarios(usuariosDB || []);
       setMails(mailsDB || []);
+      // Mapear por usuarioId para acceso rápido
       const map = {};
       (asociacionesDB || []).forEach(a => {
-        map[a.usuarioId] = a.mailId;
+        map[a.usuarioId] = a;
       });
       setAsociaciones(map);
-      setMailsEnviados(mailsEnviadosDB || []);
       setFormularios(formulariosDB || []);
     } catch (e) {
       alert('Error cargando datos de newsletter');
@@ -95,8 +93,15 @@ function Newsletter() {
     }
     setGuardando(true);
     try {
-      await FirebaseService.asociarMailAUsuario?.(usuarioId, mailSeleccionado);
-      setAsociaciones(prev => ({ ...prev, [usuarioId]: mailSeleccionado }));
+      const usuario = usuarios.find(u => u.id === usuarioId);
+      await FirebaseService.asociarMailAUsuarioEvento?.({
+        usuarioId,
+        mailId: mailSeleccionado,
+        eventoId: eventoSeleccionado,
+        usuario: usuario?.nombre || '',
+        mail: usuario?.email || ''
+      });
+      await cargarDatos(eventoSeleccionado);
     } catch (e) {
       alert('Error asociando mail');
     } finally {
@@ -105,34 +110,27 @@ function Newsletter() {
   };
 
   const handleEnviarMail = async (usuarioId) => {
-    const mailId = asociaciones[usuarioId];
-    if (!mailId) {
+    const asociacion = asociaciones[usuarioId];
+    if (!asociacion || !asociacion.mailId) {
       alert('No hay mail asociado para este usuario.');
       return;
     }
     const usuario = usuarios.find(u => u.id === usuarioId);
-    const mail = mails.find(m => m.id === mailId);
+    const mail = mails.find(m => m.id === asociacion.mailId);
     if (!usuario || !mail) {
       alert('No se encontró el usuario o el mail.');
       return;
     }
     setGuardando(true);
     try {
-      // Llama a la API de Vercel para enviar el mail real
       await sendMailViaApi({
         to: usuario.email,
         subject: mail.asunto || mail.nombre || 'Newsletter',
         html: mail.cuerpo || ''
       });
-      // Marca como enviado en Firestore (registro real)
-      await FirebaseService.guardarMailEnviado?.({
-        eventoDestacadoId: eventoSeleccionado,
-        fechaEnvio: new Date().toISOString(),
-        idConfiguracionMail: mail.id,
-        usuarioId: usuario.id,
-        mail: usuario.email,
-        asunto: mail.asunto,
-        cuerpo: mail.cuerpo
+      await FirebaseService.marcarMailEnviadoUsuarioEvento?.({
+        usuarioId,
+        eventoId: eventoSeleccionado
       });
       await cargarDatos(eventoSeleccionado);
     } catch (e) {
@@ -169,12 +167,11 @@ function Newsletter() {
 
   // Helpers para estado de mail y formulario
   function getMailEnviadoYLeido(usuario) {
-    const mailId = asociaciones[usuario.id];
-    if (!mailId) return { enviado: false, leido: false };
-    const mail = mailsEnviados.find(m => m.usuarioId === usuario.id && m.idConfiguracionMail === mailId);
+    const asociacion = asociaciones[usuario.id];
+    if (!asociacion) return { enviado: false, leido: false };
     return {
-      enviado: !!mail,
-      leido: !!mail && mail.leido
+      enviado: !!asociacion.mailenviado,
+      leido: !!asociacion.mailleido
     };
   }
 
@@ -236,8 +233,8 @@ function Newsletter() {
                     <td>{u.email}</td>
                     <td>{u.rol || u.perfil}</td>
                     <td style={{textAlign:'center'}}>
-                      {asociaciones[u.id] ? (
-                        <span title={mails.find(m => m.id === asociaciones[u.id])?.nombre || ''} style={{color:'green',fontWeight:'bold'}}>✔️</span>
+                      {asociaciones[u.id]?.mailasociado ? (
+                        <span title={mails.find(m => m.id === asociaciones[u.id]?.mailId)?.nombre || ''} style={{color:'green',fontWeight:'bold'}}>✔️</span>
                       ) : (
                         <span style={{color:'#bbb'}}>—</span>
                       )}

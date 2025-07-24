@@ -16,18 +16,55 @@ import {
 } from 'firebase/firestore';
 
 class FirebaseServiceClass {
-  // --- Newsletter: Asociación mail-usuario ---
-  async asociarMailAUsuario(usuarioId, mailId) {
-    // Guarda o actualiza la asociación en la colección 'mailUsuarioAsociado'
-    const ref = doc(db, 'mailUsuarioAsociado', usuarioId);
-    await setDoc(ref, { usuarioId, mailId }, { merge: true });
+  // --- Newsletter: Asociación y estado mail-usuario-evento ---
+  async asociarMailAUsuarioEvento({ usuarioId, mailId, eventoId, usuario, mail }) {
+    // Guarda o actualiza la asociación en la colección 'mailUsuarioEvento'
+    if (!usuarioId || !mailId || !eventoId) throw new Error('usuarioId, mailId y eventoId son obligatorios');
+    const ref = doc(db, 'mailUsuarioEvento', `${usuarioId}_${eventoId}`);
+    await setDoc(ref, {
+      usuarioId,
+      usuario: usuario || '',
+      eventoId,
+      mailId,
+      mail: mail || '',
+      mailasociado: true,
+      mailenviado: false,
+      fechaenvio: null,
+      mailleido: false,
+      fechaleido: null
+    }, { merge: true });
     return true;
   }
 
-  async obtenerAsociacionesMailUsuarios() {
-    // Devuelve [{usuarioId, mailId}]
-    const snap = await getDocs(collection(db, 'mailUsuarioAsociado'));
+  async obtenerAsociacionesMailUsuarioEvento(eventoId) {
+    // Devuelve [{usuarioId, mailId, eventoId, ...}]
+    const q = eventoId
+      ? query(collection(db, 'mailUsuarioEvento'), where('eventoId', '==', eventoId))
+      : collection(db, 'mailUsuarioEvento');
+    const snap = await getDocs(q);
     return snap.docs.map(d => d.data());
+  }
+
+  // Marcar mail como enviado
+  async marcarMailEnviadoUsuarioEvento({ usuarioId, eventoId }) {
+    if (!usuarioId || !eventoId) throw new Error('usuarioId y eventoId son obligatorios');
+    const ref = doc(db, 'mailUsuarioEvento', `${usuarioId}_${eventoId}`);
+    await updateDoc(ref, {
+      mailenviado: true,
+      fechaenvio: new Date().toISOString()
+    });
+    return true;
+  }
+
+  // Marcar mail como leído
+  async marcarMailLeidoUsuarioEvento({ usuarioId, eventoId }) {
+    if (!usuarioId || !eventoId) throw new Error('usuarioId y eventoId son obligatorios');
+    const ref = doc(db, 'mailUsuarioEvento', `${usuarioId}_${eventoId}`);
+    await updateDoc(ref, {
+      mailleido: true,
+      fechaleido: new Date().toISOString()
+    });
+    return true;
   }
   // Inicializar datos por defecto
   async inicializarDatos() {
@@ -1043,56 +1080,7 @@ a
     }
   }
 
-  // Guardar mail enviado (uno por usuario)
-  async guardarMailEnviado({ eventoDestacadoId, fechaEnvio, idConfiguracionMail, usuarioId, mail, asunto, cuerpo }) {
-    try {
-      const docRef = await addDoc(collection(db, 'mailsEnviados'), {
-        eventoDestacadoId,
-        fechaEnvio: fechaEnvio || new Date().toISOString(),
-        idConfiguracionMail,
-        usuarioId,
-        mail,
-        asunto,
-        cuerpo,
-        mailenviado: true,
-        leido: false
-      });
-      return docRef.id;
-    } catch (error) {
-      console.error('❌ Error guardando mail enviado:', error);
-      throw error;
-    }
-  }
-
-  // Endpoint especial para marcar mail como leído
-  async marcarMailLeido(mailEnviadoId) {
-    try {
-      const mailRef = doc(db, 'mailsEnviados', mailEnviadoId);
-      await updateDoc(mailRef, {
-        leido: true,
-        fechaLeido: new Date().toISOString()
-      });
-      return true;
-    } catch (error) {
-      console.error('❌ Error marcando mail como leído:', error);
-      throw error;
-    }
-  }
-
-  // Obtener historial de mails enviados por evento (opcional)
-  async obtenerMailsEnviadosPorEvento(eventoDestacadoId) {
-    try {
-      const q = query(
-        collection(db, 'mailsEnviados'),
-        where('eventoDestacadoId', '==', eventoDestacadoId)
-      );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error('❌ Error obteniendo mails enviados por evento:', error);
-      throw error;
-    }
-  }
+  // (Las funciones de mailsEnviados y marcarMailLeido quedan obsoletas con la nueva colección unificada)
 
 }
 
