@@ -10,7 +10,8 @@ function EventosDestacados({
   onFormularioSocio,
   onFormularioProveedorConHotel,
   onFormularioProveedorSinHotel,
-  onDetalleFormulario
+  onDetalleFormulario,
+  rolUsuario
 }) {
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -460,63 +461,69 @@ function EventosDestacados({
         margin: '2.5rem 0 2rem 0',
         flexWrap: 'wrap'
       }}>
-        <button
-          className="form-btn socio"
-          style={{
-            background: 'var(--color-azul-oscuro)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '1.2rem 2.5rem',
-            fontWeight: 'bold',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(69, 55, 150, 0.15)'
-          }}
-          onClick={() => {
-            if (eventos.length > 0) handleFormularioSocio(eventos[0]);
-          }}
-        >
-          🧑‍💼 Formulario Socio
-        </button>
-        <button
-          className="form-btn proveedor-hotel"
-          style={{
-            background: 'var(--color-azul-medio)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '1.2rem 2.5rem',
-            fontWeight: 'bold',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(87, 84, 164, 0.15)'
-          }}
-          onClick={() => {
-            if (eventos.length > 0) handleFormularioProveedorConHotel(eventos[0]);
-          }}
-        >
-          🏨 Formulario Proveedor con Hotel
-        </button>
-        <button
-          className="form-btn proveedor-sin-hotel"
-          style={{
-            background: 'var(--color-azul-claro)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '1.2rem 2.5rem',
-            fontWeight: 'bold',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(107, 102, 174, 0.15)'
-          }}
-          onClick={() => {
-            if (eventos.length > 0) handleFormularioProveedorSinHotel(eventos[0]);
-          }}
-        >
-          🏢 Formulario Proveedor sin Hotel
-        </button>
+        {rolUsuario === 'socio' && (
+          <button
+            className="form-btn socio"
+            style={{
+              background: 'var(--color-azul-oscuro)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '1.2rem 2.5rem',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(69, 55, 150, 0.15)'
+            }}
+            onClick={() => {
+              if (eventos.length > 0) handleFormularioSocio(eventos[0]);
+            }}
+          >
+            🧑‍💼 Formulario Socio
+          </button>
+        )}
+        {rolUsuario === 'proveedor-con-hotel' && (
+          <button
+            className="form-btn proveedor-hotel"
+            style={{
+              background: 'var(--color-azul-medio)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '1.2rem 2.5rem',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(87, 84, 164, 0.15)'
+            }}
+            onClick={() => {
+              if (eventos.length > 0) handleFormularioProveedorConHotel(eventos[0]);
+            }}
+          >
+            🏨 Formulario Proveedor con Hotel
+          </button>
+        )}
+        {rolUsuario === 'proveedor-sin-hotel' && (
+          <button
+            className="form-btn proveedor-sin-hotel"
+            style={{
+              background: 'var(--color-azul-claro)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '1.2rem 2.5rem',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(107, 102, 174, 0.15)'
+            }}
+            onClick={() => {
+              if (eventos.length > 0) handleFormularioProveedorSinHotel(eventos[0]);
+            }}
+          >
+            🏢 Formulario Proveedor sin Hotel
+          </button>
+        )}
       </div>
     </div>
   );

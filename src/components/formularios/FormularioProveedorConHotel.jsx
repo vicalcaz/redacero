@@ -424,15 +424,25 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                />
              </div>
              <div className="campo-grupo">
-               <label>Página Web:</label>
-               <input
-                 type="url"
-                 value={datosEmpresa.paginaWeb}
-                 onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
-                 placeholder="ej.: https://www.articulos_del_hogar.com.ar"
-                 required
-                 disabled={guardando || !edicionHabilitada}
-               />
+              <label>Página Web:</label>
+              <input
+                type="text"
+                value={datosEmpresa.paginaWeb}
+                onChange={e => {
+                  let valor = e.target.value;
+                  if (valor === '') {
+                    valor = 'www.';
+                  }
+                  valor = valor.replace(/^https?:\/\//, '');
+                  if (!valor.startsWith('www.')) {
+                    valor = 'www.' + valor.replace(/^www\./, '');
+                  }
+                  actualizarDatosEmpresa('paginaWeb', valor);
+                }}
+                placeholder="ej.: www.articulos_del_hogar.com.ar"
+                required
+                disabled={guardando || !edicionHabilitada}
+              />
              </div>
           </div>  
           <div className="campo-fila"> 
@@ -641,7 +651,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 >
                   <option value="">-- Seleccione --</option>
                   <option value="doble">Doble</option>
-                  <option value="matrimonial">Matrimonial</option>
+                  <option value="matrimonial">-single (Matrimonial)</option>
                   </select> 
                 </div>
                 {/* Ca  mpo Comentario */}
@@ -666,8 +676,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     <input
                       type="date"
                       value={persona.fechaLlegada}
-                      min={minFecha}
-                      max={maxFecha}
+                      {...(evento?.fechaDesde ? {min: new Date(evento.fechaDesde).toISOString().split('T')[0]} : {})}
+                      {...(evento?.fechaHasta ? {max: new Date(evento.fechaHasta).toISOString().split('T')[0]} : {})}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
                       required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
@@ -695,8 +705,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     <input
                       type="date"
                       value={persona.fechaSalida}
-                      min={minFecha}
-                      max={maxFecha}
+                      {...(evento?.fechaDesde ? {min: (() => { const d = new Date(evento.fechaDesde); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()} : {})}
+                      {...(evento?.fechaHasta ? {max: (() => { const d = new Date(evento.fechaHasta); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()} : {})}
                       onChange={(e) => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
@@ -884,18 +894,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           </div>
         </div>
 
-        <div className="nota-importante inferior">
-          <div className="nota-icon">🏨</div>
-          <div className="nota-content">
-            <h3>Confirmación de reserva hotelera:</h3>
-            <ul>
-              <li>✅ Tipo de habitación y fechas están correctas</li>
-              <li>✅ Información de acompañantes completa</li>
-              <li>✅ Datos de contacto actualizados</li>
-            </ul>
-            <p><strong>La reserva se confirmará en los próximos días.</strong></p>
-          </div>
-        </div>
 
         <div className="formulario-acciones">
           <button

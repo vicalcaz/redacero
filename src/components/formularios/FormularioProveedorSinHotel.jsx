@@ -391,15 +391,25 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                />
              </div>
              <div className="campo-grupo">
-               <label>Página Web:</label>
-               <input
-                 type="url"
-                 value={datosEmpresa.paginaWeb}
-                 onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
-                 placeholder="ej.: https://www.articulos_del_hogar.com.ar"
-                 required
-                 disabled={guardando || !edicionHabilitada}
-               />
+              <label>Página Web:</label>
+              <input
+                type="text"
+                value={datosEmpresa.paginaWeb}
+                onChange={e => {
+                  let valor = e.target.value;
+                  if (valor === '') {
+                    valor = 'www.';
+                  }
+                  valor = valor.replace(/^https?:\/\//, '');
+                  if (!valor.startsWith('www.')) {
+                    valor = 'www.' + valor.replace(/^www\./, '');
+                  }
+                  actualizarDatosEmpresa('paginaWeb', valor);
+                }}
+                placeholder="ej.: www.articulos_del_hogar.com.ar"
+                required
+                disabled={guardando || !edicionHabilitada}
+              />
              </div>
           </div>  
           <div className="campo-fila"> 
@@ -753,18 +763,6 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
           </div>
         </div>
 
-        <div className="nota-importante inferior">
-          <div className="nota-icon">🏨</div>
-          <div className="nota-content">
-            <h3>Confirmación de reserva hotelera:</h3>
-            <ul>
-              <li>✅ Tipo de habitación y fechas están correctas</li>
-              <li>✅ Información de acompañantes completa</li>
-              <li>✅ Datos de contacto actuales</li>
-            </ul>
-            <p><strong>La reserva se confirmará en los próximos días.</strong></p>
-          </div>
-        </div>
 
         <div className="formulario-acciones">
           <button

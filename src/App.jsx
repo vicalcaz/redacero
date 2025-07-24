@@ -263,6 +263,9 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  // Control de acceso por rol: solo admin puede acceder a dashboard/newsletter
+// ...eliminado control de acceso centralizado...
+
   // Si es primer login o debe cambiar password, mostrar modal
   if (forzarCambioPassword) {
     return (
@@ -337,13 +340,15 @@ function App() {
                 </h1>
                 <div className="header-actions">
                   <span>👤 {usuario.nombre || usuario.email}</span>
-                  <button 
-                    onClick={navegarADashboard}
-                    className="btn-admin"
-                    title="Ir al panel de administración"
-                  >
-                    🔧 Administración
-                  </button>
+                  {usuario.rol === 'admin' && (
+                    <button 
+                      onClick={navegarADashboard}
+                      className="btn-admin"
+                      title="Ir al panel de administración"
+                    >
+                      🔧 Administración
+                    </button>
+                  )}
                   <button 
                     onClick={handleLogout}
                     className="btn-logout"
@@ -358,9 +363,10 @@ function App() {
             <main className="app-main">
               <EventosDestacados
                 onFormularioSocio={navegarAFormularioSocio}
-                onFormularioProveedorConHotel={navegarAFormularioProveedorConHotel} // <-- usa esta
+                onFormularioProveedorConHotel={navegarAFormularioProveedorConHotel}
                 onFormularioProveedorSinHotel={navegarAFormularioProveedorSinHotel}
                 onDetalleFormulario={handleDetalleFormulario}
+                rolUsuario={usuario.rol}
               />
             </main>
           </div>

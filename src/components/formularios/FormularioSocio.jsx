@@ -427,10 +427,23 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
              <div className="campo-grupo">
                <label>Página Web:</label>
                <input
-                 type="url"
+                 type="text"
                  value={datosEmpresa.paginaWeb}
-                 onChange={(e) => actualizarDatosEmpresa('paginaWeb', e.target.value)}
-                 placeholder="ej.: https://www.articulos_del_hogar.com.ar"
+                 onChange={e => {
+                   let valor = e.target.value;
+                   // Si el campo está vacío, precompletar con 'www.'
+                   if (valor === '') {
+                     valor = 'www.';
+                   }
+                   // Si el usuario escribe 'http://' o 'https://', eliminarlo
+                   valor = valor.replace(/^https?:\/\//, '');
+                   // Si no empieza con 'www.', agregarlo
+                   if (!valor.startsWith('www.')) {
+                     valor = 'www.' + valor.replace(/^www\./, '');
+                   }
+                   actualizarDatosEmpresa('paginaWeb', valor);
+                 }}
+                 placeholder="ej.: www.articulos_del_hogar.com.ar"
                  required
                  disabled={guardando || !edicionHabilitada}
                />
@@ -642,10 +655,10 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                 >
                   <option value="">-- Seleccione --</option>
                   <option value="doble">Doble</option>
-                  <option value="matrimonial">Matrimonial</option>
+                  <option value="matrimonial">Single (Matrimonial)</option>
                   </select> 
                 </div>
-                {/* Ca  mpo Comentario */}
+                {/* Campo Comentario */}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
                   <input
@@ -664,17 +677,33 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                 <div className="campo-fila">
                   <div className="campo-grupo">
                     <label>Fecha de Llegada:</label>
-                    <input
-                      type="date"
+                    <select
                       value={persona.fechaLlegada}
-                      min={minFecha}
-                      max={maxFecha}
-                      onChange={(e) => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
+                      onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
                       required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
                       disabled={guardando || !edicionHabilitada}
-                    />
+                    >
+                      <option value="">-- Seleccione --</option>
+                      {(() => {
+                        if (!evento?.fechaDesde || !evento?.fechaHasta) return null;
+                        const dias = [];
+                        let d = new Date(evento.fechaDesde);
+                        const hasta = new Date(evento.fechaHasta);
+                        while (d <= hasta) {
+                          const fechaStr = d.toISOString().split('T')[0];
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long' });
+                          dias.push(
+                            <option key={fechaStr} value={fechaStr}>
+                              {diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} {fechaStr}
+                            </option>
+                          );
+                          d.setDate(d.getDate() + 1);
+                        }
+                        return dias;
+                      })()}
+                    </select>
                   </div>
                   <div className="campo-grupo">
                     <label>Hora de Llegada:</label>
@@ -693,17 +722,35 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                 <div className="campo-fila">
                   <div className="campo-grupo">
                     <label>Fecha de Salida:</label>
-                    <input
-                      type="date"
+                    <select
                       value={persona.fechaSalida}
-                      min={minFecha}
-                      max={maxFecha}
-                      onChange={(e) => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                      onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                      required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
-                      required
                       disabled={guardando || !edicionHabilitada}
-                    />
+                    >
+                      <option value="">-- Seleccione --</option>
+                      {(() => {
+                        if (!evento?.fechaDesde || !evento?.fechaHasta) return null;
+                        const dias = [];
+                        let d = new Date(evento.fechaDesde);
+                        d.setDate(d.getDate() + 1); // salida es al menos un día después de llegada
+                        const hasta = new Date(evento.fechaHasta);
+                        hasta.setDate(hasta.getDate() + 1); // salida puede ser hasta un día después del fin
+                        while (d <= hasta) {
+                          const fechaStr = d.toISOString().split('T')[0];
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long' });
+                          dias.push(
+                            <option key={fechaStr} value={fechaStr}>
+                              {diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} {fechaStr}
+                            </option>
+                          );
+                          d.setDate(d.getDate() + 1);
+                        }
+                        return dias;
+                      })()}
+                    </select>
                   </div>
                   <div className="campo-grupo">
                     <label>Hora de Salida:</label>
@@ -885,18 +932,6 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
           </div>
         </div>
 
-        <div className="nota-importante inferior">
-          <div className="nota-icon">🏨</div>
-          <div className="nota-content">
-            <h3>Confirmación de reserva hotelera:</h3>
-            <ul>
-              <li>✅ Tipo de habitación y fechas están correctas</li>
-              <li>✅ Información de acompañantes completa</li>
-              <li>✅ Datos de contacto actualizados</li>
-            </ul>
-            <p><strong>La reserva se confirmará en los próximos días.</strong></p>
-          </div>
-        </div>
 
         <div className="formulario-acciones">
           <button

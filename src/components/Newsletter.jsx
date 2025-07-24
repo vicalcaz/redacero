@@ -40,7 +40,10 @@ function Newsletter() {
   useEffect(() => {
     cargarEventos();
     // Obtener usuario logueado (ajusta según tu auth)
-    FirebaseService.obtenerUsuarioActual?.().then(setUsuarioLogueado);
+    FirebaseService.obtenerUsuarioActual?.().then(user => {
+      console.log('Usuario logueado:', user);
+      setUsuarioLogueado(user);
+    });
   }, []);
 
   useEffect(() => {
@@ -206,13 +209,6 @@ function Newsletter() {
             <option key={ev.id} value={ev.id}>{ev.nombre || ev.id}</option>
           ))}
         </select>
-        <label style={{marginLeft: 16}}>Filtrar por rol:&nbsp;</label>
-        <select value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
-          <option value="todos">Todos</option>
-          {[...new Set(usuarios.map(u => u.rol || u.perfil))].map(rol => (
-            <option key={rol} value={rol}>{rol}</option>
-          ))}
-        </select>
         <label style={{marginLeft: 16}}>Mail a asociar:&nbsp;</label>
         <select value={mailSeleccionado} onChange={e => setMailSeleccionado(e.target.value)}>
           <option value="">-- Selecciona mail --</option>
@@ -283,7 +279,7 @@ function Newsletter() {
                     <td>
                       <button
                         className="btn-asociar btn-sm"
-                        disabled={guardando || !mailSeleccionado || (usuarioLogueado?.rol !== 'admin')}
+                        disabled={guardando || !mailSeleccionado}
                         onClick={() => handleAsociarMail(u.id)}
                         style={{fontSize:'1.05em'}}
                       >
@@ -295,13 +291,12 @@ function Newsletter() {
                             className="btn-preview btn-sm"
                             onClick={() => setPreviewMail(mails.find(m => m.id === asociaciones[u.id]?.mailId))}
                             style={{fontSize:'1.05em'}}
-                            disabled={usuarioLogueado?.rol !== 'admin' && usuarioLogueado?.id !== u.id}
                           >
                             👁️
                           </button>
                           <button
                             className="btn-enviar btn-sm"
-                            disabled={guardando || (usuarioLogueado?.rol !== 'admin')}
+                            disabled={guardando}
                             onClick={() => handleEnviarMail(u.id)}
                             style={{fontSize:'1.05em'}}
                           >
