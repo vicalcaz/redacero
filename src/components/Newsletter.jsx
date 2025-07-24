@@ -256,11 +256,11 @@ function Newsletter() {
                       >
                         Asociar
                       </button>
-                      {asociaciones[u.id] && (
+                      {asociaciones[u.id]?.mailId && (
                         <>
                           <button
                             className="btn-preview btn-sm"
-                            onClick={() => setPreviewMail(mails.find(m => m.id === asociaciones[u.id]))}
+                            onClick={() => setPreviewMail(mails.find(m => m.id === asociaciones[u.id]?.mailId))}
                           >
                             👁️
                           </button>
