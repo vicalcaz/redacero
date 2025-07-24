@@ -124,8 +124,16 @@ function Newsletter() {
         subject: mail.asunto || mail.nombre || 'Newsletter',
         html: mail.cuerpo || ''
       });
-      // Marca como enviado en Firestore (opcional, si quieres mantener el registro)
-      await FirebaseService.enviarMailAUsuario?.(usuarioId, mailId, eventoSeleccionado);
+      // Marca como enviado en Firestore (registro real)
+      await FirebaseService.guardarMailEnviado?.({
+        eventoDestacadoId: eventoSeleccionado,
+        fechaEnvio: new Date().toISOString(),
+        idConfiguracionMail: mail.id,
+        usuarioId: usuario.id,
+        mail: usuario.email,
+        asunto: mail.asunto,
+        cuerpo: mail.cuerpo
+      });
       await cargarDatos(eventoSeleccionado);
     } catch (e) {
       alert('Error enviando mail: ' + (e.message || e));
