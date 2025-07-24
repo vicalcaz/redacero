@@ -371,10 +371,10 @@ function EventosDestacados({
               {/* MOSTRAR IMAGEN SI EXISTE */}
               {evento.imagenBase64 && (
                 <div
-                  className={`evento-imagen${evento.destacado ? ' destacado-brillo-naranja' : ''}`}
+                  className="evento-imagen"
                   style={{
                     position: 'relative',
-                    background: evento.destacado ? 'var(--color-naranja)' : undefined,
+                    background: undefined,
                     overflow: 'hidden',
                     height: '320px',
                     minHeight: '220px',
@@ -400,11 +400,6 @@ function EventosDestacados({
                       background: 'transparent',
                     }}
                   />
-                  {evento.destacado && (
-                    <div className="flash-overlay">
-                      <span>⭐ Evento Destacado</span>
-                    </div>
-                  )}
                 </div>
               )}
               <div className="evento-content" style={{ background: 'var(--color-gris, #f5f5f5)', padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '0 0 12px 12px' }}>
