@@ -28,6 +28,8 @@ function Newsletter() {
   const [mails, setMails] = useState([]);
   const [asociaciones, setAsociaciones] = useState({});
   const [filtroRol, setFiltroRol] = useState('todos');
+  const [filtroEmpresa, setFiltroEmpresa] = useState('');
+  const [filtroNombre, setFiltroNombre] = useState('');
   const [mailSeleccionado, setMailSeleccionado] = useState('');
   const [previewMail, setPreviewMail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -134,10 +136,14 @@ function Newsletter() {
     }
     setGuardando(true);
     try {
+      // Tracking pixel para mail leído
+      const pixelUrl = `https://redacero.vercel.app//api/readMail?id=${asociacion.id || asociacion.mailId}`;
+      const trackingPixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none" />`;
+      const htmlConPixel = (mail.cuerpo || '') + trackingPixel;
       await sendMailViaApi({
         to: usuario.email,
         subject: mail.asunto || mail.nombre || 'Newsletter',
-        html: mail.cuerpo || ''
+        html: htmlConPixel
       });
       // Al reenviar, mailleido y fechaleido vuelven a false/null, fechaenvio se actualiza
       await FirebaseService.asociarMailAUsuarioEvento?.({
@@ -160,9 +166,21 @@ function Newsletter() {
     }
   };
 
-  const usuariosFiltrados = filtroRol === 'todos'
-    ? usuarios
-    : usuarios.filter(u => (u.rol || u.perfil) === filtroRol);
+  // (Eliminado: ahora se calcula con los nuevos filtros más abajo)
+  let usuariosFiltrados = usuarios;
+  if (filtroRol !== 'todos') {
+    usuariosFiltrados = usuariosFiltrados.filter(u => (u.rol || u.perfil) === filtroRol);
+  }
+  if (filtroEmpresa.trim()) {
+    usuariosFiltrados = usuariosFiltrados.filter(u => (u.empresa || '').toLowerCase().includes(filtroEmpresa.trim().toLowerCase()));
+  }
+  if (filtroNombre.trim()) {
+    const nombreBuscado = filtroNombre.trim().toLowerCase();
+    usuariosFiltrados = usuariosFiltrados.filter(u =>
+      (u.nombre || '').toLowerCase().includes(nombreBuscado) ||
+      (u.apellido || '').toLowerCase().includes(nombreBuscado)
+    );
+  }
 
   const exportarAExcel = () => {
     if (!usuariosFiltrados.length) {
@@ -221,6 +239,27 @@ function Newsletter() {
         {usuarioLogueado?.rol === 'admin' && (
           <button className="btn-admin" style={{marginLeft:16}}>Administración</button>
         )}
+        {/* Filtros avanzados */}
+        <div style={{marginTop:16, display:'flex', gap:'1rem', flexWrap:'wrap'}}>
+          <div>
+            <label>Filtrar por rol:&nbsp;</label>
+            <select value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
+              <option value="todos">Todos</option>
+              <option value="admin">Admin</option>
+              <option value="socio">Socio</option>
+              <option value="proveedor-con-hotel">Proveedor con hotel</option>
+              <option value="proveedor-sin-hotel">Proveedor sin hotel</option>
+            </select>
+          </div>
+          <div>
+            <label>Filtrar por empresa:&nbsp;</label>
+            <input type="text" value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)} placeholder="Empresa..." />
+          </div>
+          <div>
+            <label>Filtrar por nombre/apellido:&nbsp;</label>
+            <input type="text" value={filtroNombre} onChange={e => setFiltroNombre(e.target.value)} placeholder="Nombre o apellido..." />
+          </div>
+        </div>
       </div>
       {loading ? (
         <div className="loading-container"><div className="loading-spinner"></div> Cargando...</div>
