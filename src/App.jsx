@@ -327,21 +327,25 @@ function App() {
       case 'eventos':
         return (
           <div className="app">
-            {/* Header con información del usuario */}
+            {/* Header con imágenes del evento */}
             <header className="app-header">
-              <div className="header-content">
-                <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+              <div className="header-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                   <img
-                    src="/logo_redacero.svg"
-                    alt="Logo Red Acero"
-                    style={{ height: '2.2rem', verticalAlign: 'middle' }}
+                    src="/ENCUENTRO 2025-01.svg"
+                    alt="Encuentro 2025"
+                    style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
                   />
-                  Red Acero Eventos
-                </h1>
+                  <img
+                    src="/25-26-27 AGOSTO-01.svg"
+                    alt="25-26-27 Agosto"
+                    style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
+                  />
+                </div>
                 <div className="header-actions">
                   <span>👤 {usuario.nombre || usuario.email}</span>
                   {usuario.rol === 'admin' && (
-                    <button 
+                    <button aun
                       onClick={navegarADashboard}
                       className="btn-admin"
                       title="Ir al panel de administración"
@@ -359,7 +363,6 @@ function App() {
                 </div>
               </div>
             </header>
-            
             <main className="app-main">
               <EventosDestacados
                 onFormularioSocio={navegarAFormularioSocio}
