@@ -35,9 +35,12 @@ function Newsletter() {
   const [formularios, setFormularios] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
+  const [usuarioLogueado, setUsuarioLogueado] = useState(null);
 
   useEffect(() => {
     cargarEventos();
+    // Obtener usuario logueado (ajusta según tu auth)
+    FirebaseService.obtenerUsuarioActual?.().then(setUsuarioLogueado);
   }, []);
 
   useEffect(() => {
@@ -99,7 +102,12 @@ function Newsletter() {
         mailId: mailSeleccionado,
         eventoId: eventoSeleccionado,
         usuario: usuario?.nombre || '',
-        mail: usuario?.email || ''
+        mail: usuario?.email || '',
+        mailasociado: true,
+        mailenviado: false,
+        fechaenvio: null,
+        mailleido: false,
+        fechaleido: null
       });
       await cargarDatos(eventoSeleccionado);
     } catch (e) {
@@ -128,9 +136,18 @@ function Newsletter() {
         subject: mail.asunto || mail.nombre || 'Newsletter',
         html: mail.cuerpo || ''
       });
-      await FirebaseService.marcarMailEnviadoUsuarioEvento?.({
+      // Al reenviar, mailleido y fechaleido vuelven a false/null, fechaenvio se actualiza
+      await FirebaseService.asociarMailAUsuarioEvento?.({
         usuarioId,
-        eventoId: eventoSeleccionado
+        mailId: asociacion.mailId,
+        eventoId: eventoSeleccionado,
+        usuario: usuario?.nombre || '',
+        mail: usuario?.email || '',
+        mailasociado: true,
+        mailenviado: true,
+        fechaenvio: new Date().toISOString(),
+        mailleido: false,
+        fechaleido: null
       });
       await cargarDatos(eventoSeleccionado);
     } catch (e) {
@@ -205,12 +222,15 @@ function Newsletter() {
         </select>
         <button className="btn-exportar" onClick={exportarAExcel} style={{marginLeft: 16}}>📤 Exportar a Excel</button>
         <button className="btn-recargar" onClick={() => cargarDatos(eventoSeleccionado)} style={{marginLeft: 8}}>🔄 Recargar</button>
+        {usuarioLogueado?.rol === 'admin' && (
+          <button className="btn-admin" style={{marginLeft:16}}>Administración</button>
+        )}
       </div>
       {loading ? (
         <div className="loading-container"><div className="loading-spinner"></div> Cargando...</div>
       ) : (
         <div className="newsletter-table-container">
-          <table className="newsletter-table newsletter-table-sm">
+          <table className="newsletter-table newsletter-table-sm" style={{fontSize:'1.05em'}}>
             <thead>
               <tr>
                 <th className="th-sm">Nombre</th>
@@ -220,6 +240,8 @@ function Newsletter() {
                 <th className="th-sm">Mail enviado</th>
                 <th className="th-sm">Mail leído</th>
                 <th className="th-sm">Formulario</th>
+                <th className="th-sm">Fecha envío</th>
+                <th className="th-sm">Fecha lectura</th>
                 <th className="th-sm">Acciones</th>
               </tr>
             </thead>
@@ -234,25 +256,36 @@ function Newsletter() {
                     <td>{u.rol || u.perfil}</td>
                     <td style={{textAlign:'center'}}>
                       {asociaciones[u.id]?.mailasociado ? (
-                        <span title={mails.find(m => m.id === asociaciones[u.id]?.mailId)?.nombre || ''} style={{color:'green',fontWeight:'bold'}}>✔️</span>
+                        <span title={mails.find(m => m.id === asociaciones[u.id]?.mailId)?.nombre || ''} style={{color:'green',fontWeight:'bold',fontSize:'1.15em'}}>✔️</span>
                       ) : (
-                        <span style={{color:'#bbb'}}>—</span>
+                        <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>
                       )}
                     </td>
                     <td style={{textAlign:'center'}}>
-                      {estadoMail.enviado ? <span style={{color:'green'}}>📤</span> : <span style={{color:'#bbb'}}>—</span>}
+                      {estadoMail.enviado ? <span style={{color:'green',fontSize:'1.15em'}}>📤</span> : <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>}
                     </td>
                     <td style={{textAlign:'center'}}>
-                      {estadoMail.leido ? <span style={{color:'green'}}>👁️</span> : <span style={{color:'#bbb'}}>—</span>}
+                      {estadoMail.leido ? <span style={{color:'green',fontSize:'1.15em'}}>👁️</span> : <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>}
                     </td>
                     <td style={{textAlign:'center'}}>
-                      {formularioCompletado ? <span style={{color:'green'}}>✔️</span> : <span style={{color:'#bbb'}}>—</span>}
+                      {formularioCompletado ? <span style={{color:'green',fontSize:'1.15em'}}>✔️</span> : <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>}
+                    </td>
+                    <td style={{textAlign:'center'}}>
+                      {asociaciones[u.id]?.fechaenvio ? (
+                        <div style={{fontSize:'0.84em',color:'#555'}}>{new Date(asociaciones[u.id].fechaenvio).toLocaleString()}</div>
+                      ) : <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>}
+                    </td>
+                    <td style={{textAlign:'center'}}>
+                      {asociaciones[u.id]?.fechaleido ? (
+                        <div style={{fontSize:'0.84em',color:'#555'}}>{new Date(asociaciones[u.id].fechaleido).toLocaleString()}</div>
+                      ) : <span style={{color:'#bbb',fontSize:'1.15em'}}>—</span>}
                     </td>
                     <td>
                       <button
                         className="btn-asociar btn-sm"
-                        disabled={guardando || !mailSeleccionado}
+                        disabled={guardando || !mailSeleccionado || (usuarioLogueado?.rol !== 'admin')}
                         onClick={() => handleAsociarMail(u.id)}
+                        style={{fontSize:'1.05em'}}
                       >
                         Asociar
                       </button>
@@ -261,13 +294,16 @@ function Newsletter() {
                           <button
                             className="btn-preview btn-sm"
                             onClick={() => setPreviewMail(mails.find(m => m.id === asociaciones[u.id]?.mailId))}
+                            style={{fontSize:'1.05em'}}
+                            disabled={usuarioLogueado?.rol !== 'admin' && usuarioLogueado?.id !== u.id}
                           >
                             👁️
                           </button>
                           <button
                             className="btn-enviar btn-sm"
-                            disabled={guardando || getMailEnviadoYLeido(u).enviado}
+                            disabled={guardando || (usuarioLogueado?.rol !== 'admin')}
                             onClick={() => handleEnviarMail(u.id)}
+                            style={{fontSize:'1.05em'}}
                           >
                             📤
                           </button>
