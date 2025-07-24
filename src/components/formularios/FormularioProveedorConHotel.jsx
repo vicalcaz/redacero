@@ -1,3 +1,12 @@
+// Utilidad robusta para parsear fechas tipo 'YYYY-MM-DD' o Date
+function parseFecha(fecha) {
+  if (!fecha) return null;
+  if (fecha instanceof Date) return fecha;
+  if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+    return new Date(fecha);
+  }
+  return null;
+}
 import { useEffect, useState } from 'react';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
@@ -292,8 +301,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     return date.toISOString().slice(0, 10);
   }
 
-  const minFecha = addDays(evento?.fechaDesde, -2);
-  const maxFecha = addDays(evento?.fechaHasta, 2);
+  const minFecha = addDays(eventoContext?.fechaDesde, -2);
+  const maxFecha = addDays(eventoContext?.fechaHasta, 2);
 
   useEffect(() => {
     if (!eventoSeleccionado || eventos.length === 0) return;
@@ -651,10 +660,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 >
                   <option value="">-- Seleccione --</option>
                   <option value="doble">Doble</option>
-                  <option value="matrimonial">-single (Matrimonial)</option>
+                  <option value="matrimonial">single (Matrimonial)</option>
                   </select> 
                 </div>
-                {/* Ca  mpo Comentario */}
+                {/* Campo Comentario */}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
                   <input
@@ -673,17 +682,49 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 <div className="campo-fila">
                   <div className="campo-grupo">
                     <label>Fecha de Llegada:</label>
-                    <input
-                      type="date"
+                    <select
                       value={persona.fechaLlegada}
-                      {...(evento?.fechaDesde ? {min: new Date(evento.fechaDesde).toISOString().split('T')[0]} : {})}
-                      {...(evento?.fechaHasta ? {max: new Date(evento.fechaHasta).toISOString().split('T')[0]} : {})}
-                      onChange={(e) => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
+                      onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
                       required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
                       disabled={guardando || !edicionHabilitada}
-                    />
+                    >
+                      <option value="">-- Seleccione --</option>
+                      {(() => {
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
+                        const dias = [];
+                        // Convertir fecha a string UTC (YYYY-MM-DD) y crear Date con 'T00:00:00Z'
+                        function toUTCDate(fecha) {
+                          if (!fecha) return null;
+                          if (typeof fecha === 'string') {
+                            return new Date(fecha + 'T00:00:00Z');
+                          }
+                          // Si ya es Date, formatear a ISO y volver a crear en UTC
+                          const iso = fecha.toISOString().slice(0, 10);
+                          return new Date(iso + 'T00:00:00Z');
+                        }
+                        let d = toUTCDate(eventoContext?.fechaDesde);
+                        const hastaUTC = toUTCDate(eventoContext?.fechaHasta);
+                        while (d && hastaUTC && d <= hastaUTC) {
+                          const yyyy = d.getUTCFullYear();
+                          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                          const dd_ = String(d.getUTCDate()).padStart(2, '0');
+                          const fechaStr = `${yyyy}-${mm}-${dd_}`;
+                          const fechaFormateada = `${dd_}/${mm}/${yyyy}`;
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
+                          dias.push(
+                            <option key={fechaStr} value={fechaStr}>
+                              {fechaFormateada} ({diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)})
+                            </option>
+                          );
+                          d.setUTCDate(d.getUTCDate() + 1);
+                        }
+                        return dias;
+                      })()}
+                    </select>
                   </div>
                   <div className="campo-grupo">
                     <label>Hora de Llegada:</label>
@@ -702,17 +743,50 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 <div className="campo-fila">
                   <div className="campo-grupo">
                     <label>Fecha de Salida:</label>
-                    <input
-                      type="date"
+                    <select
                       value={persona.fechaSalida}
-                      {...(evento?.fechaDesde ? {min: (() => { const d = new Date(evento.fechaDesde); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()} : {})}
-                      {...(evento?.fechaHasta ? {max: (() => { const d = new Date(evento.fechaHasta); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()} : {})}
-                      onChange={(e) => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                      onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                      required
                       onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
                       onInput={e => e.target.setCustomValidity('')}
-                      required
                       disabled={guardando || !edicionHabilitada}
-                    />
+                    >
+                      <option value="">-- Seleccione --</option>
+                      {(() => {
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
+                        const dias = [];
+                        // Convertir fecha a string UTC (YYYY-MM-DD) y crear Date con 'T00:00:00Z'
+                        function toUTCDate(fecha) {
+                          if (!fecha) return null;
+                          if (typeof fecha === 'string') {
+                            return new Date(fecha + 'T00:00:00Z');
+                          }
+                          const iso = fecha.toISOString().slice(0, 10);
+                          return new Date(iso + 'T00:00:00Z');
+                        }
+                        let d = toUTCDate(eventoContext?.fechaDesde);
+                        if (d) d.setUTCDate(d.getUTCDate() + 1); // salida es al menos un día después de llegada
+                        const hastaSalida = toUTCDate(eventoContext?.fechaHasta);
+                        if (hastaSalida) hastaSalida.setUTCDate(hastaSalida.getUTCDate() + 1); // salida puede ser hasta un día después del fin
+                        while (d && hastaSalida && d <= hastaSalida) {
+                          const yyyy = d.getUTCFullYear();
+                          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                          const dd_ = String(d.getUTCDate()).padStart(2, '0');
+                          const fechaStr = `${yyyy}-${mm}-${dd_}`;
+                          const fechaFormateada = `${dd_}/${mm}/${yyyy}`;
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
+                          dias.push(
+                            <option key={fechaStr} value={fechaStr}>
+                              {fechaFormateada} ({diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)})
+                            </option>
+                          );
+                          d.setUTCDate(d.getUTCDate() + 1);
+                        }
+                        return dias;
+                      })()}
+                    </select>
                   </div>
                   <div className="campo-grupo">
                     <label>Hora de Salida:</label>

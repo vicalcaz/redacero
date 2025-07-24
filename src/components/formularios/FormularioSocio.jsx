@@ -687,19 +687,42 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
-                        if (!evento?.fechaDesde || !evento?.fechaHasta) return null;
+                        // Lógica robusta UTC/context igual que en ProveedorConHotel
+                        function parseFecha(fecha) {
+                          if (!fecha) return null;
+                          if (fecha instanceof Date) return fecha;
+                          if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+                            return new Date(fecha);
+                          }
+                          return null;
+                        }
+                        function toUTCDate(fecha) {
+                          if (!fecha) return null;
+                          if (typeof fecha === 'string') {
+                            return new Date(fecha + 'T00:00:00Z');
+                          }
+                          const iso = fecha.toISOString().slice(0, 10);
+                          return new Date(iso + 'T00:00:00Z');
+                        }
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
                         const dias = [];
-                        let d = new Date(evento.fechaDesde);
-                        const hasta = new Date(evento.fechaHasta);
-                        while (d <= hasta) {
-                          const fechaStr = d.toISOString().split('T')[0];
-                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long' });
+                        let d = toUTCDate(eventoContext?.fechaDesde);
+                        const hastaUTC = toUTCDate(eventoContext?.fechaHasta);
+                        while (d && hastaUTC && d <= hastaUTC) {
+                          const yyyy = d.getUTCFullYear();
+                          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                          const dd_ = String(d.getUTCDate()).padStart(2, '0');
+                          const fechaStr = `${yyyy}-${mm}-${dd_}`;
+                          const fechaFormateada = `${dd_}/${mm}/${yyyy}`;
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
                           dias.push(
                             <option key={fechaStr} value={fechaStr}>
-                              {diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} {fechaStr}
+                              {fechaFormateada} ({diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)})
                             </option>
                           );
-                          d.setDate(d.getDate() + 1);
+                          d.setUTCDate(d.getUTCDate() + 1);
                         }
                         return dias;
                       })()}
@@ -732,21 +755,43 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
-                        if (!evento?.fechaDesde || !evento?.fechaHasta) return null;
+                        function parseFecha(fecha) {
+                          if (!fecha) return null;
+                          if (fecha instanceof Date) return fecha;
+                          if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+                            return new Date(fecha);
+                          }
+                          return null;
+                        }
+                        function toUTCDate(fecha) {
+                          if (!fecha) return null;
+                          if (typeof fecha === 'string') {
+                            return new Date(fecha + 'T00:00:00Z');
+                          }
+                          const iso = fecha.toISOString().slice(0, 10);
+                          return new Date(iso + 'T00:00:00Z');
+                        }
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
                         const dias = [];
-                        let d = new Date(evento.fechaDesde);
-                        d.setDate(d.getDate() + 1); // salida es al menos un día después de llegada
-                        const hasta = new Date(evento.fechaHasta);
-                        hasta.setDate(hasta.getDate() + 1); // salida puede ser hasta un día después del fin
-                        while (d <= hasta) {
-                          const fechaStr = d.toISOString().split('T')[0];
-                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long' });
+                        let d = toUTCDate(eventoContext?.fechaDesde);
+                        if (d) d.setUTCDate(d.getUTCDate() + 1); // salida es al menos un día después de llegada
+                        const hastaSalida = toUTCDate(eventoContext?.fechaHasta);
+                        if (hastaSalida) hastaSalida.setUTCDate(hastaSalida.getUTCDate() + 1); // salida puede ser hasta un día después del fin
+                        while (d && hastaSalida && d <= hastaSalida) {
+                          const yyyy = d.getUTCFullYear();
+                          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                          const dd_ = String(d.getUTCDate()).padStart(2, '0');
+                          const fechaStr = `${yyyy}-${mm}-${dd_}`;
+                          const fechaFormateada = `${dd_}/${mm}/${yyyy}`;
+                          const diaSemana = d.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
                           dias.push(
                             <option key={fechaStr} value={fechaStr}>
-                              {diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} {fechaStr}
+                              {fechaFormateada} ({diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)})
                             </option>
                           );
-                          d.setDate(d.getDate() + 1);
+                          d.setUTCDate(d.getUTCDate() + 1);
                         }
                         return dias;
                       })()}
