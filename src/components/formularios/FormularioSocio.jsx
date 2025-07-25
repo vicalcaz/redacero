@@ -569,8 +569,6 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                     value={persona.celular}
                     onChange={e => {
                       let valor = e.target.value.replace(/\D/g, '');
-
-                      // Empieza con +54 9
                       let resultado = '+54 9 ';
                       if (valor.startsWith('549')) {
                         valor = valor.slice(3);
@@ -579,18 +577,14 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                       } else if (valor.startsWith('9')) {
                         valor = valor.slice(1);
                       }
-
-                      // Código de área (2 a 4 dígitos)
                       if (valor.length > 0) resultado += valor.slice(0, 4);
                       if (valor.length > 4) resultado += ' ' + valor.slice(4, 7);
                       if (valor.length > 7) resultado += ' ' + valor.slice(7, 11);
-
                       actualizarPersona(persona.id, 'celular', resultado.trim());
                     }}
                     placeholder="+54 9 11 6789 0123"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular en formato internacional.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    required
                     disabled={guardando || !edicionHabilitada}
                   />
                   
@@ -823,10 +817,9 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                     <label>Hora de Salida:</label>
                     <input
                       type="time"
-                      value={persona.horaSalida}
-                      onChange={(e) => actualizarPersona(persona.id, 'horaSalida', e.target.value)}
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de salida al hotel.')}
-                      onInput={e => e.target.setCustomValidity('')}
+                      value="10:00"
+                      readOnly
+                      disabled
                       required
                       disabled={guardando || !edicionHabilitada}
                     />

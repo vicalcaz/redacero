@@ -573,8 +573,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     value={persona.celular}
                     onChange={e => {
                       let valor = e.target.value.replace(/\D/g, '');
-
-                      // Empieza con +54 9
                       let resultado = '+54 9 ';
                       if (valor.startsWith('549')) {
                         valor = valor.slice(3);
@@ -583,18 +581,14 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                       } else if (valor.startsWith('9')) {
                         valor = valor.slice(1);
                       }
-
-                      // Código de área (2 a 4 dígitos)
                       if (valor.length > 0) resultado += valor.slice(0, 4);
                       if (valor.length > 4) resultado += ' ' + valor.slice(4, 7);
                       if (valor.length > 7) resultado += ' ' + valor.slice(7, 11);
-
                       actualizarPersona(persona.id, 'celular', resultado.trim());
                     }}
                     placeholder="+54 9 11 6789 0123"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular en formato internacional.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    required
                     disabled={guardando || !edicionHabilitada}
                   />
                   
@@ -604,21 +598,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <input
                     type="tel"
                     value={persona.telefono}
-                    onChange={(e) => {
-                      // Máscara para teléfono fijo: (011) 4567-8901
-                      let valor = e.target.value.replace(/\D/g, '');
-                      if (valor.length <= 12) {
-                        if (valor.length >= 3) {
-                          valor = `(${valor.slice(0, 3)}) ${valor.slice(3)}`;
-                        }
-                        if (valor.length >= 9) {
-                          valor = valor.replace(/(\(\d{3}\) )(\d{4})(\d{4})/, '$1$2-$3');
-                        }
-                        actualizarPersona(persona.id, 'telefono', valor);
-                      }
-                    }}
-                    placeholder="(011) 4567-8901"
+                    onChange={e => actualizarPersona(persona.id, 'telefono', e.target.value)}
+                    placeholder="Teléfono fijo"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
+                    onInput={e => e.target.setCustomValidity('')}
                     required
                     disabled={guardando || !edicionHabilitada}
                   />
@@ -792,13 +775,12 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     <label>Hora de Salida:</label>
                     <input
                       type="time"
-                      value={persona.horaSalida}
-                      onChange={(e) => actualizarPersona(persona.id, 'horaSalida', e.target.value)}
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de salida al hotel.')}
-                      onInput={e => e.target.setCustomValidity('')}
+                      value="10:00"
+                      readOnly
+                      disabled
                       required
-                      disabled={guardando || !edicionHabilitada}
                     />
+                  
                   </div>
                 </div>
               </div>
