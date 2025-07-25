@@ -174,8 +174,8 @@ function PersonalizacionFormularios({ user }) {
     setGuardando(true);
     try {
       const datos = {
-        tipoformulario: formularioSeleccionado,
-        ...configFormularios[formularioSeleccionado]
+        tipoformulario: pestaniaFormulario,
+        ...configFormularios[pestaniaFormulario]
       };
       await FirebaseService.guardarConfiguracionFormularioTipo(datos);
       alert('✅ Configuración de formulario guardada exitosamente');

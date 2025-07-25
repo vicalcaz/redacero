@@ -299,6 +299,11 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
       </div>
 
       <div className="tabla-formularios">
+        <div style={{display:'flex', justifyContent:'flex-end', marginBottom:12}}>
+          <button className="btn-exportar" onClick={exportarAExcel} style={{padding:'6px 16px', background:'#1976d2', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>
+            Exportar a Excel
+          </button>
+        </div>
         {formulariosFiltrados.length === 0 ? (
           <div className="no-data">
             <p>No hay formularios guardados</p>
@@ -338,15 +343,13 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                       >
                         👁️
                       </button>
-                      {(userPerfil === 'admin' || formulario.usuarioCreador === userEmail) && (
-                        <button 
-                          className="btn-editar" 
-                          onClick={() => editarFormulario(formulario)}
-                          title="Editar"
-                        >
-                          ✏️
-                        </button>
-                      )}
+                      <button 
+                        className="btn-editar" 
+                        onClick={() => editarFormulario(formulario)}
+                        title="Editar"
+                      >
+                        ✏️
+                      </button>
                       {userPerfil === 'admin' && (
                         <button 
                           className="btn-eliminar" 

@@ -184,15 +184,16 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
       const cantidadPersonas = personas.length;
 
       // 2. Calcular noches para cada persona
+      // Guardar también el campo comparteCon (ya está en persona)
       const personasActualizadas = personas.map(persona => {
         let noches = 0;
         if (persona.fechaLlegada && persona.fechaSalida) {
           const fechaLlegada = new Date(persona.fechaLlegada);
           const fechaSalida = new Date(persona.fechaSalida);
-          // Diferencia en milisegundos, luego a días
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
         }
-        return { ...persona, noches };
+        // Aseguramos que comparteCon se guarde (ya lo hace el formulario)
+        return { ...persona, noches, comparteCon: persona.comparteCon || null };
       });
 
       // 3. Guardar cantidad_personas en datosEmpresa
@@ -645,19 +646,40 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                 </h5>
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
-                 <select
-                  value={persona.tipoHabitacion || ''}
-                  onChange={e => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
-                  required
-                  onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
-                  onInput={e => e.target.setCustomValidity('')}
-                  disabled={guardando || !edicionHabilitada}
-                >
-                  <option value="">-- Seleccione --</option>
-                  <option value="doble">Doble</option>
-                  <option value="matrimonial">Single (Matrimonial)</option>
-                  </select> 
+                  <select
+                    value={persona.tipoHabitacion || ''}
+                    onChange={e => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
+                    required
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada}
+                  >
+                    <option value="">-- Seleccione --</option>
+                    <option value="doble">Doble</option>
+                    <option value="matrimonial">Single (Matrimonial)</option>
+                  </select>
                 </div>
+                {/* Nuevo campo: Comparte habitación con... solo si es doble */}
+                {persona.tipoHabitacion === 'doble' && (
+                  <div className="campo-grupo">
+                    <label>Comparte habitación con:</label>
+                    <select
+                      value={persona.comparteCon || ''}
+                      onChange={e => actualizarPersona(persona.id, 'comparteCon', e.target.value)}
+                      required
+                      onInvalid={e => e.target.setCustomValidity('Por favor seleccione con quién comparte la habitación.')}
+                      onInput={e => e.target.setCustomValidity('')}
+                      disabled={guardando || !edicionHabilitada}
+                    >
+                      <option value="">-- Seleccione --</option>
+                      {personas.filter(p => p.id !== persona.id).map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} {p.apellido}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {/* Campo Comentario */}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
