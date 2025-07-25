@@ -567,23 +567,9 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                   <input
                     type="tel"
                     value={persona.celular}
-                    onChange={e => {
-                      let valor = e.target.value.replace(/\D/g, '');
-                      let resultado = '+54 9 ';
-                      if (valor.startsWith('549')) {
-                        valor = valor.slice(3);
-                      } else if (valor.startsWith('54')) {
-                        valor = valor.slice(2);
-                      } else if (valor.startsWith('9')) {
-                        valor = valor.slice(1);
-                      }
-                      if (valor.length > 0) resultado += valor.slice(0, 4);
-                      if (valor.length > 4) resultado += ' ' + valor.slice(4, 7);
-                      if (valor.length > 7) resultado += ' ' + valor.slice(7, 11);
-                      actualizarPersona(persona.id, 'celular', resultado.trim());
-                    }}
-                    placeholder="+54 9 11 6789 0123"
-                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular en formato internacional.')}
+                    onChange={e => actualizarPersona(persona.id, 'celular', e.target.value)}
+                    placeholder="Celular"
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el celular.')}
                     onInput={e => e.target.setCustomValidity('')}
                     disabled={guardando || !edicionHabilitada}
                   />
@@ -819,7 +805,6 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                       type="time"
                       value="10:00"
                       readOnly
-                      disabled
                       required
                       disabled={guardando || !edicionHabilitada}
                     />
