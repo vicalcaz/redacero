@@ -7,16 +7,20 @@ async function sendMailViaApi({ to, subject, html }) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, html })
+    console.log('Enviando mail a:', to, 'Asunto:', subject);
   });
   let data;
   try {
     data = await res.json();
+    console.log('Respuesta del servidor:', data);
   } catch (e) {
     // Si la respuesta no es JSON, intenta leer como texto
     const text = await res.text();
+    console.error('Error enviando mail:', text || e);
+    if (text)
     throw new Error(text || 'Error enviando mail (respuesta no JSON)');
   }
-  if (!res.ok) throw new Error(data.error || 'Error enviando mail');
+  if (!res.ok)   throw new Error(data.error || 'Error enviando mail');
   console.log('Mail enviado:', data);
   if (!data.success) throw new Error(data.message || 'Error enviando mail');
   return data;
