@@ -1,4 +1,6 @@
 
+
+
 import { db } from '../firebase/config';
 import {
   collection,
@@ -16,6 +18,43 @@ import {
 } from 'firebase/firestore';
 
 class FirebaseServiceClass {
+  // Eliminar todos los usuarios creados hoy
+  async eliminarUsuariosCreadosHoy() {
+    try {
+      const hoy = new Date();
+      const hoyISO = hoy.toISOString().slice(0, 10); // yyyy-mm-dd
+      const q = query(collection(db, 'usuarios'));
+      const snapshot = await getDocs(q);
+      let eliminados = 0;
+      for (const docSnap of snapshot.docs) {
+        const fecha = docSnap.data().fechaCreacion;
+        if (fecha && fecha.startsWith(hoyISO)) {
+          await deleteDoc(doc(db, 'usuarios', docSnap.id));
+          eliminados++;
+        }
+      }
+      console.log(`✅ Usuarios eliminados hoy: ${eliminados}`);
+      return eliminados;
+    } catch (error) {
+      console.error('❌ Error eliminando usuarios creados hoy:', error);
+      throw error;
+    }
+  }
+  // Actualizar formulario genérico
+  async actualizarFormulario(coleccion, id, data) {
+    try {
+      const docRef = doc(db, coleccion, id);
+      await updateDoc(docRef, {
+        ...data,
+        fechaActualizacion: new Date().toISOString(),
+        fechaActualizacionString: new Date().toLocaleString('es-AR')
+      });
+      return true;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error actualizando formulario:', error);
+      throw error;
+    }
+  }
   // --- Newsletter: Asociación y estado mail-usuario-evento ---
   async asociarMailAUsuarioEvento({ usuarioId, mailId, eventoId, usuario, mail }) {
     // Guarda o actualiza la asociación en la colección 'mailUsuarioEvento'
@@ -141,17 +180,19 @@ await this.crearUsuario({
       const usuarios = [];
       
       querySnapshot.forEach((doc) => {
-        usuarios.push({id: doc.id,
-        nombre: doc.data().nombre,
-        email: doc.data().email,
-        password: doc.data().password, // ✅ Solo para desarrollo
-        rol: doc.data().rol,
-        activo: doc.data().activo,
-        passwordCambiado: doc.data().passwordCambiado, // ✅ Solo este campo
-        fechaCreacion: doc.data().fechaCreacion,
-        cantidadLogins: doc.data().cantidadLogins,
-        fechaUltimoLogin: doc.data().fechaUltimoLogin
-       });
+        usuarios.push({
+          id: doc.id,
+          nombre: doc.data().nombre,
+          email: doc.data().email,
+          empresa: doc.data().empresa || '',
+          password: doc.data().password, // ✅ Solo para desarrollo
+          rol: doc.data().rol,
+          activo: doc.data().activo,
+          passwordCambiado: doc.data().passwordCambiado, // ✅ Solo este campo
+          fechaCreacion: doc.data().fechaCreacion,
+          cantidadLogins: doc.data().cantidadLogins,
+          fechaUltimoLogin: doc.data().fechaUltimoLogin
+        });
       });
       
       console.log('✅ FirebaseService: Usuarios obtenidos:', usuarios.length);
@@ -189,6 +230,7 @@ await this.crearUsuario({
         id: userDoc.id,
         nombre: userDoc.data().nombre,
         email: userDoc.data().email,
+        empresa: userDoc.data().empresa || '',
         password: userDoc.data().password, // ✅ Solo para desarrollo
         rol: userDoc.data().rol,
         activo: userDoc.data().activo,
@@ -196,7 +238,7 @@ await this.crearUsuario({
         fechaCreacion: userDoc.data().fechaCreacion,
         cantidadLogins: userDoc.data().cantidadLogins,
         fechaUltimoLogin: userDoc.data().fechaUltimoLogin
-     }; 
+      };
       console.log('✅ FirebaseService: Usuario encontrado:', userData.email);
       return userData;
       
@@ -460,15 +502,13 @@ await this.crearUsuario({
   
   async guardarFormularioSocio(formData) {
     try {
-      console.log('🔥 FirebaseService: Guardando formulario de socio');
-      
-      const docRef = await addDoc(collection(db, 'formularios-socios'), {
+      console.log('🔥 FirebaseService: Guardando formulario de socio (unificado)');
+      const docRef = await addDoc(collection(db, 'formularios'), {
         ...formData,
         fechaCreacion: new Date().toISOString(),
         fechaCreacionString: new Date().toLocaleString('es-AR'),
         tipo: 'socio'
       });
-      
       console.log('✅ FirebaseService: Formulario de socio guardado con ID:', docRef.id);
       return docRef.id;
     } catch (error) {
@@ -479,15 +519,13 @@ await this.crearUsuario({
 
   async guardarFormularioProveedorConHotel(formData) {
     try {
-      console.log('🔥 FirebaseService: Guardando formulario de proveedor con hotel');
-      
-      const docRef = await addDoc(collection(db, 'formularios-proveedores'), {
+      console.log('🔥 FirebaseService: Guardando formulario de proveedor con hotel (unificado)');
+      const docRef = await addDoc(collection(db, 'formularios'), {
         ...formData,
         fechaCreacion: new Date().toISOString(),
         fechaCreacionString: new Date().toLocaleString('es-AR'),
         tipo: 'proveedor-con-hotel'
       });
-      
       console.log('✅ FirebaseService: Formulario de proveedor guardado con ID:', docRef.id);
       return docRef.id;
     } catch (error) {
@@ -498,15 +536,13 @@ await this.crearUsuario({
 
   async guardarFormularioProveedorSinHotel(formData) {
     try {
-      console.log('🔥 FirebaseService: Guardando formulario de proveedor sin hotel');
-      
-      const docRef = await addDoc(collection(db, 'formularios-proveedores'), {
+      console.log('🔥 FirebaseService: Guardando formulario de proveedor sin hotel (unificado)');
+      const docRef = await addDoc(collection(db, 'formularios'), {
         ...formData,
         fechaCreacion: new Date().toISOString(),
         fechaCreacionString: new Date().toLocaleString('es-AR'),
         tipo: 'proveedor-sin-hotel'
       });
-      
       console.log('✅ FirebaseService: Formulario de proveedor guardado con ID:', docRef.id);
       return docRef.id;
     } catch (error) {
@@ -613,16 +649,16 @@ await this.crearUsuario({
       const usuarioRef = doc(db, 'usuarios', userId);
       const updateData = {
         password: nuevaPassword,
-        passwordCambiado: true, // SIEMPRE marcar como cambiado cuando se cambia password
+        passwordCambiado: false, // Ahora debe cambiar la contraseña en el próximo login
         fechaActualizacionPassword: new Date().toISOString(),
         fechaActualizacionPasswordString: new Date().toLocaleString('es-AR'),
         fechaCambioPassword: new Date().toISOString(),
         fechaCambioPasswordString: new Date().toLocaleString('es-AR')
       };
-      
+
       await updateDoc(usuarioRef, updateData);
-      
-      console.log('✅ FirebaseService: Contraseña actualizada y marcada como cambiada');
+
+      console.log('✅ FirebaseService: Contraseña actualizada y passwordCambiado=false (debe cambiar en próximo login)');
       return true;
     } catch (error) {
       console.error('❌ FirebaseService: Error cambiando contraseña:', error);
@@ -677,33 +713,17 @@ await this.crearUsuario({
   // Método unificado para enviar formularios
   async enviarFormulario(datosFormulario) {
     try {
-      console.log('📤 FirebaseService: Enviando formulario:', datosFormulario.tipoFormulario);
-      
+      console.log('📤 FirebaseService: Enviando formulario (unificado):', datosFormulario.tipoFormulario);
       if (!datosFormulario.tipoFormulario) {
         throw new Error('Tipo de formulario es obligatorio');
       }
-
       const datosCompletos = {
         ...datosFormulario,
         fechaEnvio: new Date().toISOString(),
         fechaEnvioString: new Date().toLocaleString('es-AR'),
         estado: 'pendiente'
       };
-
-      let docRef;
-      
-      switch (datosFormulario.tipoFormulario) {
-        case 'socio':
-          docRef = await addDoc(collection(db, 'formularios-socios'), datosCompletos);
-          break;
-        case 'proveedor-con-hotel':
-        case 'proveedor-sin-hotel':
-          docRef = await addDoc(collection(db, 'formularios-proveedores'), datosCompletos);
-          break;
-        default:
-          throw new Error('Tipo de formulario no válido');
-      }
-      
+      const docRef = await addDoc(collection(db, 'formularios'), datosCompletos);
       console.log('✅ FirebaseService: Formulario enviado con ID:', docRef.id);
       return docRef.id;
     } catch (error) {
@@ -715,25 +735,14 @@ await this.crearUsuario({
   // Método para obtener todos los formularios
   async obtenerFormularios() {
     try {
-      console.log('🔍 FirebaseService: Obteniendo formularios');
-      
-      const [sociosSnapshot, proveedoresSnapshot] = await Promise.all([
-        getDocs(collection(db, 'formularios-socios')),
-        getDocs(collection(db, 'formularios-proveedores'))
-      ]);
-      
+      console.log('🔍 FirebaseService: Obteniendo formularios (unificado)');
+      const snapshot = await getDocs(collection(db, 'formularios'));
       const formularios = [];
-      
-      sociosSnapshot.forEach((doc) => {
+      snapshot.forEach((doc) => {
         formularios.push({ id: doc.id, ...doc.data() });
       });
-      
-      proveedoresSnapshot.forEach((doc) => {
-        formularios.push({ id: doc.id, ...doc.data() });
-      });
-      
       console.log('✅ FirebaseService: Total formularios obtenidos:', formularios.length);
-      console.log('📝 Formularios obtenidos:', formularios); // <-- Agrega esta línea
+      console.log('📝 Formularios obtenidos:', formularios);
       return formularios;
     } catch (error) {
       console.error('❌ FirebaseService: Error obteniendo formularios:', error);
@@ -974,26 +983,26 @@ await this.crearUsuario({
     try {
       console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
       if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
-      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+      console.log('🔍 Buscando formulario socio en colección unificada para:', email, eventoId);
 
       const q = query(
-        collection(db, 'formularios-socios'),
+        collection(db, 'formularios'),
         where('usuarioCreador', '==', email.toLowerCase().trim()),
         where('eventoId', '==', eventoId),
         where('tipo', '==', 'socio'),
         limit(1)
       );
       const querySnapshot = await getDocs(q);
-       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Query snapshot:', db, email.toLowerCase().trim(), querySnapshot);
       console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
       if (querySnapshot.empty) {
-        console.log('ℹ️ No existe formulario proveedor con hotel para este usuario/evento');
+        console.log('ℹ️ No existe formulario socio para este usuario/evento');
         return null;
       }
       const docSnap = querySnapshot.docs[0];
       return { id: docSnap.id, ...docSnap.data() };
     } catch (error) {
-      console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      console.error('❌ Error buscando formulario socio:', error);
       throw error;
     }
   }
@@ -1004,20 +1013,20 @@ a
     try {
       console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
       if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
-      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+      console.log('🔍 Buscando formulario proveedor con hotel en colección unificada para:', email, eventoId);
 
       const q = query(
-        collection(db, 'formularios-proveedores'),
+        collection(db, 'formularios'),
         where('usuarioCreador', '==', email.toLowerCase().trim()),
         where('eventoId', '==', eventoId),
-        where('tipo', '==', 'proveedor-sin-hotel'),
+        where('tipo', '==', 'proveedor-con-hotel'),
         limit(1)
       );
       const querySnapshot = await getDocs(q);
-       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Query snapshot:', db, email.toLowerCase().trim(), querySnapshot);
       console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
       if (querySnapshot.empty) {
-        console.log('ℹ️ No existe formulario proveedor sin hotel para este usuario/evento');
+        console.log('ℹ️ No existe formulario proveedor con hotel para este usuario/evento');
         return null;
       }
       const docSnap = querySnapshot.docs[0];
@@ -1031,17 +1040,17 @@ a
     try {
       console.log('ℹ️ +email:', email, 'eventoId:', eventoId);
       if (!email || !eventoId) throw new Error('Email y eventoId son obligatorios');
-      console.log('🔍 Buscando formulario proveedor con hotel para:', email, eventoId);
+      console.log('🔍 Buscando formulario proveedor sin hotel en colección unificada para:', email, eventoId);
 
       const q = query(
-        collection(db, 'formularios-proveedores'),
+        collection(db, 'formularios'),
         where('usuarioCreador', '==', email.toLowerCase().trim()),
         where('eventoId', '==', eventoId),
         where('tipo', '==', 'proveedor-sin-hotel'),
         limit(1)
       );
       const querySnapshot = await getDocs(q);
-       console.log('ℹ️ Query snapshot:',db, email.toLowerCase().trim() , querySnapshot);
+      console.log('ℹ️ Query snapshot:', db, email.toLowerCase().trim(), querySnapshot);
       console.log('ℹ️ Cantidad de documentos encontrados:', querySnapshot.size);
       if (querySnapshot.empty) {
         console.log('ℹ️ No existe formulario proveedor sin hotel para este usuario/evento');
@@ -1050,7 +1059,7 @@ a
       const docSnap = querySnapshot.docs[0];
       return { id: docSnap.id, ...docSnap.data() };
     } catch (error) {
-      console.error('❌ Error buscando formulario proveedor con hotel:', error);
+      console.error('❌ Error buscando formulario proveedor sin hotel:', error);
       throw error;
     }
   }

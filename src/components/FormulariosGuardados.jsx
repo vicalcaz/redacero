@@ -6,6 +6,8 @@ import './FormulariosGuardados.css';
 import * as XLSX from 'xlsx';
 
 function FormulariosGuardados({ userPerfil, userEmail }) {
+  // Filtro por nombre para usuarios sin formulario
+  const [filtroNombre, setFiltroNombre] = useState('');
   const [formularios, setFormularios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState('todos');
@@ -158,10 +160,6 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   };
 
   const editarFormulario = (formulario) => {
-    if (userPerfil !== 'admin' && formulario.usuarioCreador !== userEmail) {
-      alert('Solo puedes editar tus propios formularios');
-      return;
-    }
     setFormularioSeleccionado(formulario);
     setModoEdicion(true);
   };
@@ -189,10 +187,12 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
     !formularios.some(f => f.usuarioCreador === u.email)
   );
 
-  // Filtrado por tipo de usuario
-  const usuariosFiltrados = usuariosSinFormulario.filter(u =>
-    filtroRol === 'todos' ? true : (u.rol || u.perfil) === filtroRol
-  );
+  // Filtrado por tipo de usuario y nombre
+  const usuariosFiltrados = usuariosSinFormulario.filter(u => {
+    const coincideRol = filtroRol === 'todos' ? true : (u.rol || u.perfil) === filtroRol;
+    const coincideNombre = filtroNombre.trim() === '' ? true : (`${u.apellido || ''} ${u.nombre || ''}`.toLowerCase().includes(filtroNombre.trim().toLowerCase()));
+    return coincideRol && coincideNombre;
+  });
 
   // Manejo de selección
   const toggleSeleccion = (email) => {
@@ -216,6 +216,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
     const datos = usuariosFiltrados.map(u => ({
       Nombre: u.nombre,
       Email: u.email,
+      Empresa: u.empresa || '',
       Rol: u.rol || u.perfil
     }));
     const ws = XLSX.utils.json_to_sheet(datos);
@@ -316,7 +317,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                 <th>Tipo</th>
                 <th>Empresa</th>
                 <th>Personas</th>
-                {userPerfil === 'admin' && <th>Usuario</th>}
+                <th>Usuario Creador</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -329,11 +330,9 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                       {formulario.tipo}
                     </span>
                   </td>
-                  <td>{formulario.datosEmpresa?.rubro || 'N/A'}</td>
+                  <td>{formulario.datosEmpresa?.empresa || 'N/A'}</td>
                   <td>{formulario.personas?.length || 0}</td>
-                  {userPerfil === 'admin' && (
-                    <td>{formulario.usuarioCreador || 'N/A'}</td>
-                  )}
+                  <td>{formulario.usuarioCreador || 'N/A'}</td>
                   <td>
                     <div className="acciones">
                       <button 
@@ -378,13 +377,13 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
             setModoEdicion(false);
           }}
           onGuardar={guardarEdicion}
-          puedeEditar={userPerfil === 'Administrador' || formularioSeleccionado.usuarioCreador === userEmail}
+          puedeEditar={true}
         />
       )}
 
       <div className="usuarios-sin-formulario" style={{margin: '2rem 0', padding: '1rem', background: '#fff3cd', border: '1px solid #ffeeba', borderRadius: 8}}>
         <h4>Usuarios que no completaron el formulario</h4>
-        <div style={{marginBottom: 8}}>
+        <div style={{marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8}}>
           <label>Filtrar por tipo:&nbsp;</label>
           <select value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
             <option value="todos">Todos</option>
@@ -392,41 +391,19 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
               <option key={rol} value={rol}>{rol}</option>
             ))}
           </select>
+          <input
+            type="text"
+            placeholder="Apellido + nombre"
+            style={{marginLeft: 8, minWidth: 180}}
+            value={filtroNombre}
+            onChange={e => setFiltroNombre(e.target.value)}
+          />
           <button onClick={exportarUsuarios} style={{marginLeft: 12}}>📥 Exportar a Excel</button>
           <button onClick={seleccionarTodos} style={{marginLeft: 12}}>Seleccionar todos</button>
           <button onClick={deseleccionarTodos} style={{marginLeft: 8}}>Deseleccionar</button>
           <button onClick={enviarRecordatorio} disabled={seleccionados.length === 0} style={{marginLeft: 12}}>✉️ Enviar recordatorio</button>
         </div>
-        {usuariosFiltrados.length === 0 ? (
-          <p>Todos los usuarios han completado el formulario.</p>
-        ) : (
-          <table style={{width: '100%', background: '#fff', borderCollapse: 'collapse'}}>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuariosFiltrados.map(u => (
-                <tr key={u.id || u.email}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={seleccionados.includes(u.email)}
-                      onChange={() => toggleSeleccion(u.email)}
-                    />
-                  </td>
-                  <td>{u.nombre}</td>
-                  <td>{u.email}</td>
-                  <td>{u.rol || u.perfil}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        {/* Tabla de usuarios sin formulario eliminada. Ahora solo se muestra la tabla principal de formularios guardados. */}
       </div>
     {/* Modal para usuarios sin formulario */}
     {mostrarDetalleSinFormulario && (

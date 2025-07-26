@@ -1,3 +1,13 @@
+/* Reducir tamaño de fuente en la tabla de usuarios para que entren más campos en una sola fila */
+.users-table {
+  font-size: 13px;
+}
+
+.users-table th, .users-table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  line-height: 1.2;
+}
 .user-management {
   padding: 2rem;
 }
@@ -289,9 +299,9 @@ select.error {
 
 /* Mejorar los badges de estado */
 .status-badge {
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.68rem;
   font-weight: 500;
 }
 
@@ -347,14 +357,15 @@ select.error {
 }
 
 /* Ajustar el ancho de la tabla para la nueva columna */
-.users-table th:nth-child(5),
-.users-table td:nth-child(5) {
-  width: 120px;
-  text-align: center;
+
+/* Achicar la columna de Email (aprox. 1cm menos) */
+.users-table th:nth-child(2),
+.users-table td:nth-child(2) {
+  width: 140px;
+  min-width: 120px;
+  max-width: 180px;
+  white-space: nowrap;
 }
-  
-/* Ajustar el ancho de la tabla para la nueva columna */
-.users-table th:last-child,
 .users-table td:last-child {
   width: 180px; /* Ajusta el ancho según la cantidad de botones */
   min-width: 140px;
@@ -460,10 +471,14 @@ select.error {
     min-width: 80px;
   }
   
-  .users-table th:nth-child(4),
-  .users-table td:nth-child(4) {
-    width: 100px;
-  }
+/* Agrandar la columna de Rol para que el contenido no se corte */
+.users-table th:nth-child(4),
+.users-table td:nth-child(4) {
+  width: 220px;
+  min-width: 200px;
+  max-width: 260px;
+  white-space: nowrap;
+}
 }
 
 @media (max-width: 480px) {
@@ -691,10 +706,10 @@ select.error {
 }
 
 .actions-buttons button {
-  padding: 4px 8px;
-  font-size: 1rem;
-  min-width: 32px;
-  min-height: 32px;
+  padding: 3.5px 7px;
+  font-size: 0.9rem;
+  min-width: 29px;
+  min-height: 29px;
   margin: 0;
-  border-radius: 6px;
+  border-radius: 5px;
 }

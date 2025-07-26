@@ -1,30 +1,65 @@
 /* filepath: c:\Users\Public\RedAcero\redacero-eventos\src\components\UserManagement.jsx */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 import './UserManagement.css';
 
 function UserManagement() {
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [passwordUser, setPasswordUser] = useState(null);
+  // Estado para el formulario de usuario
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
+    empresa: '',
     password: '',
-    rol: 'admin',
-    activo: true
-  });
-  const [passwordData, setPasswordData] = useState({
-    password: '',
-    confirmPassword: ''
+    rol: 'socio',
+    activo: true,
+    passwordCambiado: false
   });
   const [errors, setErrors] = useState({});
+  const [editingUser, setEditingUser] = useState(null);
+  // Estado para el formulario de cambio de contraseña
+  const [passwordData, setPasswordData] = useState({ password: '', confirmPassword: '' });
   const [passwordErrors, setPasswordErrors] = useState({});
+  const [passwordUser, setPasswordUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroEmpresa, setFiltroEmpresa] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [showModal, setShowModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  // ...otros hooks...
+  const eliminandoRef = useRef(false);
+
+  // Botón temporal para eliminar usuarios creados hoy
+  // Eliminar usuarios filtrados (excepto admin)
+  const handleEliminarUsuariosHoy = async () => {
+    if (!window.confirm('¿Seguro que quieres eliminar TODOS los usuarios listados (excepto admin)?')) return;
+    eliminandoRef.current = true;
+    setLoading(true);
+    try {
+      // Filtrar usuarios actualmente visibles y que no sean admin
+      const usuariosAEliminar = sortedUsuarios.filter(u => u.rol !== 'admin');
+      let eliminados = 0, fallidos = 0;
+      for (const usuario of usuariosAEliminar) {
+        try {
+          await FirebaseService.eliminarUsuario(usuario.id);
+          eliminados++;
+        } catch (err) {
+          fallidos++;
+        }
+      }
+      alert(`Usuarios eliminados: ${eliminados}. Fallidos: ${fallidos}`);
+      // Actualizar el listado localmente sin recargar todos los usuarios
+      setUsuarios(prev => prev.filter(u => !usuariosAEliminar.some(e => e.id === u.id)));
+    } catch (err) {
+      alert('Error eliminando usuarios: ' + err.message);
+    }
+    eliminandoRef.current = false;
+    setLoading(false);
+};
 
   useEffect(() => {
     cargarUsuarios();
@@ -48,6 +83,7 @@ function UserManagement() {
     setFormData({
       nombre: '',
       email: '',
+      empresa: '',
       password: '',
       rol: 'socio',
       activo: true,
@@ -79,6 +115,10 @@ function UserManagement() {
       newErrors.email = 'El email es obligatorio';
     } else if (!formData.email.includes('@')) {
       newErrors.email = 'Email inválido';
+    }
+
+    if (!formData.empresa.trim()) {
+      newErrors.empresa = 'La empresa es obligatoria';
     }
 
     // Validar contraseña solo si es usuario nuevo o si se está cambiando
@@ -145,15 +185,14 @@ function UserManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     try {
       if (editingUser) {
         // Actualizar usuario existente (sin cambiar password aquí)
         const updateData = { ...formData };
+        // Asegurar que empresa es string
+        updateData.empresa = typeof updateData.empresa === 'string' ? updateData.empresa : (updateData.empresa ? String(updateData.empresa) : '');
         delete updateData.password; // No actualizar password desde aquí
-        
         await FirebaseService.actualizarUsuario(editingUser.id, updateData);
         console.log('✅ Usuario actualizado');
         alert('Usuario actualizado exitosamente');
@@ -163,7 +202,6 @@ function UserManagement() {
         console.log('✅ Usuario creado');
         alert('Usuario creado exitosamente');
       }
-      
       setShowModal(false);
       resetForm();
       cargarUsuarios();
@@ -201,10 +239,11 @@ function UserManagement() {
 
   const openEditModal = (usuario) => {
     setFormData({
-      nombre: usuario.nombre,
-      email: usuario.email,
+      nombre: usuario.nombre || '',
+      email: usuario.email || '',
+      empresa: (typeof usuario.empresa === 'string' && usuario.empresa !== undefined && usuario.empresa !== null) ? usuario.empresa : (usuario.empresa ? String(usuario.empresa) : ''),
       password: '', // No mostrar password actual
-      rol: usuario.rol,
+      rol: usuario.rol || 'socio',
       activo: usuario.activo !== undefined ? usuario.activo : true,
       passwordCambiado: usuario.passwordCambiado || false
     });
@@ -306,32 +345,187 @@ function UserManagement() {
     }
   };
 
+  const handleImportarUsuarios = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const XLSX = await import('xlsx');
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const data = evt.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        // Espera encabezado: nombre, empresa, email, rol
+        const header = rows[0].map(h => h.toLowerCase().trim());
+        const idxNombre = header.indexOf('nombre');
+        const idxEmpresa = header.indexOf('empresa');
+        const idxEmail = header.indexOf('email');
+        const idxRol = header.indexOf('rol');
+        if (idxNombre === -1 || idxEmpresa === -1 || idxEmail === -1 || idxRol === -1) {
+          alert('El archivo debe tener las columnas: nombre, empresa, email, rol');
+          setLoading(false);
+          return;
+        }
+        const hoy = new Date();
+        const hoyStr = hoy.toLocaleDateString('es-AR');
+        const hoyISO = hoy.toISOString();
+        const nuevosUsuarios = rows.slice(1).filter(r => r[idxEmail]).map(r => ({
+          nombre: r[idxNombre] || '',
+          empresa: r[idxEmpresa] || '',
+          email: r[idxEmail] || '',
+          rol: r[idxRol] || 'socio',
+          password: 'redacero',
+          passwordCambiado: false,
+          activo: true,
+          fechaCreacion: hoyISO,
+          fechaCreacionString: hoyStr
+        }));
+        if (nuevosUsuarios.length === 0) {
+          alert('No se encontraron usuarios válidos para importar.');
+          setLoading(false);
+          return;
+        }
+        let ok = 0, fail = 0;
+        for (const usuario of nuevosUsuarios) {
+          try {
+            await FirebaseService.crearUsuario(usuario);
+            ok++;
+          } catch (err) {
+            fail++;
+          }
+        }
+        alert(`Importación finalizada. Usuarios creados: ${ok}. Fallidos: ${fail}`);
+        await cargarUsuarios();
+        setLoading(false);
+      };
+      reader.readAsBinaryString(file);
+    } catch (err) {
+      alert('Error importando usuarios: ' + err.message);
+      setLoading(false);
+    }
+  };
+
   if (loading) {
+    let mensaje = 'Cargando usuarios...';
+    if (eliminandoRef.current) {
+      mensaje = 'Eliminando usuarios...';
+    } else if (usuarios.length === 0) {
+      mensaje = 'Cargando usuarios...';
+    } else if (usuarios.length > 0) {
+      mensaje = 'Importando usuarios...';
+    }
     return (
       <div className="user-management">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Cargando usuarios...</p>
+          <p>{mensaje}</p>
         </div>
       </div>
     );
   }
 
+  // Filtrar usuarios
+  let filteredUsuarios = usuarios.filter(u =>
+    (!filtroNombre || (u.nombre && u.nombre.toLowerCase().includes(filtroNombre.toLowerCase()))) &&
+    (!filtroEmpresa || (u.empresa && u.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase()))) &&
+    (!filtroRol || (u.rol && u.rol === filtroRol))
+  );
+
+  // Ordenar usuarios según sortConfig
+  const sortedUsuarios = [...filteredUsuarios];
+  if (sortConfig.key) {
+    sortedUsuarios.sort((a, b) => {
+      const aValue = (a[sortConfig.key] || '').toLowerCase();
+      const bValue = (b[sortConfig.key] || '').toLowerCase();
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  // Manejar click en cabecera para ordenar
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        // Alternar dirección
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      } else {
+        return { key, direction: 'asc' };
+      }
+    });
+  };
+
   return (
     <div className="user-management">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <h1>👥 Gestión de Usuarios</h1>
         <button onClick={openCreateModal} className="btn-primary">
           ➕ Nuevo Usuario
         </button>
+        <label htmlFor="importar-usuarios" className="btn-secondary" style={{ cursor: 'pointer', marginLeft: 8 }}>
+          📥 Importar
+          <input
+            id="importar-usuarios"
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={handleImportarUsuarios}
+          />
+        </label>
+        {/* BOTÓN TEMPORAL: Eliminar usuarios creados hoy SIEMPRE VISIBLE */}
+        <button onClick={handleEliminarUsuariosHoy} className="btn-danger" style={{ marginLeft: 8 }}>
+          🗑️ Eliminar usuarios listados
+        </button>
       </div>
 
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: 16, margin: '16px 0' }}>
+        <input
+          type="text"
+          placeholder="Filtrar por nombre"
+          value={filtroNombre}
+          onChange={e => setFiltroNombre(e.target.value)}
+          style={{ maxWidth: 200 }}
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por empresa"
+          value={filtroEmpresa}
+          onChange={e => setFiltroEmpresa(e.target.value)}
+          style={{ maxWidth: 200 }}
+        />
+        <select
+          value={filtroRol}
+          onChange={e => setFiltroRol(e.target.value)}
+          style={{ maxWidth: 180 }}
+        >
+          <option value="">Filtrar por rol</option>
+          <option value="admin">Administrador</option>
+          <option value="socio">Socio</option>
+          <option value="proveedor-con-hotel">Proveedor con hotel</option>
+          <option value="proveedor-sin-hotel">Proveedor sin hotel</option>
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 8, fontWeight: 500, color: '#2c3e50', fontSize: 15 }}>
+        Usuarios listados: {sortedUsuarios.length}
+      </div>
       <div className="users-table-container">
         <table className="users-table">
           <thead>
             <tr>
-              <th>Nombre</th>
-              <th>Email</th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', paddingLeft: 12 }} onClick={() => handleSort('nombre')}>
+                Nombre {sortConfig.key === 'nombre' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+              </th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', paddingLeft: 12 }} onClick={() => handleSort('email')}>
+                Usuario/Email {sortConfig.key === 'email' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => handleSort('empresa')}>
+                Empresa {sortConfig.key === 'empresa' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+              </th>
               <th>Rol</th>
               <th>Estado</th>
               <th>Primera vez</th>
@@ -340,10 +534,11 @@ function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((usuario) => (
+            {sortedUsuarios.map((usuario) => (
               <tr key={usuario.id}>
-                <td>{usuario.nombre}</td>
-                <td>{usuario.email}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{usuario.nombre}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{usuario.email}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{(usuario.empresa && String(usuario.empresa).trim()) ? usuario.empresa : <span style={{color:'#bbb'}}>-</span>}</td>
                 <td>
                   <span className={`rol-badge ${usuario.rol}`}>
                     {usuario.rol === 'admin' ? '🔧 Administrador' : 
@@ -442,7 +637,7 @@ function UserManagement() {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
-                    placeholder="Nombre completo"
+                    placeholder="Apellido + nombre"
                     className={errors.nombre ? 'error' : ''}
                   />
                   {errors.nombre && <span className="error-text">{errors.nombre}</span>}
@@ -462,6 +657,19 @@ function UserManagement() {
                   {errors.email && <span className="error-text">{errors.email}</span>}
                 </div>
 
+                <div className="campo-grupo">
+                  <label htmlFor="empresa">Empresa *</label>
+                  <input
+                    type="text"
+                    id="empresa"
+                    name="empresa"
+                    value={formData.empresa}
+                    onChange={handleInputChange}
+                    placeholder="Razón social"
+                    className={errors.empresa ? 'error' : ''}
+                  />
+                  {errors.empresa && <span className="error-text">{errors.empresa}</span>}
+                </div>
                 <div className="campo-grupo">
                   <label htmlFor="rol">Rol</label>
                   <select
@@ -539,7 +747,7 @@ function UserManagement() {
                         onChange={handleInputChange}
                       />
                       <span className="checkbox-custom"></span>
-                      Ya cambió su contraseña inicial
+                      Ya cambió su contraseña inicial?
                     </label>
                     <small className="field-help">
                       {formData.passwordCambiado ? '✅ No necesita cambiar contraseña' : '🔐 Deberá cambiar contraseña en el próximo login'}

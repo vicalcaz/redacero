@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
+import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-  function FormularioSocio({ user, evento, onSubmit, onCancel }) {
-    const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
+
+function FormularioSocio({ user, evento, onSubmit, onCancel }) {
+  const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
+
+  // Admin user selector state
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [filtroUsuario, setFiltroUsuario] = useState('');
 
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
@@ -52,8 +59,9 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
   // Al montar, buscar si ya existe formulario para este usuario y evento
   useEffect(() => {
     const cargarFormularioExistente = async () => {
-      if (!eventoSeleccionado || !user?.email) return;
-      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(user.email, eventoSeleccionado);
+      const emailParaBuscar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user?.email;
+      if (!eventoSeleccionado || !emailParaBuscar) return;
+      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
       if (existente) {
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
@@ -96,12 +104,20 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
       }
     };
     cargarFormularioExistente();
-  }, [eventoSeleccionado, user]);
+    // eslint-disable-next-line
+  }, [eventoSeleccionado, user, rolUsuario, usuarioSeleccionado]);
+
+  // Cargar usuarios para admin
+  useEffect(() => {
+    if (rolUsuario === 'admin') {
+      FirebaseService.obtenerUsuarios().then(setUsuarios);
+    }
+  }, [rolUsuario]);
 
   // Controlar si la edición está habilitada según la fecha límite
   useEffect(() => {
     if (!evento) {
-      console.log("evento aún no está disponible");
+      console.log("Evento aún no está disponible");
       return;
     }
     if (!evento.fechaLimiteEdicion) {
@@ -182,9 +198,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
     try {
       // 1. Calcular cantidad de personas
       const cantidadPersonas = personas.length;
-
       // 2. Calcular noches para cada persona
-      // Guardar también el campo comparteCon (ya está en persona)
       const personasActualizadas = personas.map(persona => {
         let noches = 0;
         if (persona.fechaLlegada && persona.fechaSalida) {
@@ -192,16 +206,14 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
           const fechaSalida = new Date(persona.fechaSalida);
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
         }
-        // Aseguramos que comparteCon se guarde (ya lo hace el formulario)
         return { ...persona, noches, comparteCon: persona.comparteCon || null };
       });
-
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
         ...datosEmpresa,
         cantidad_personas: cantidadPersonas
       };
-
+      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
       const formularioData = {
         tipo: 'Socio',
         eventoId: eventoSeleccionado,
@@ -209,52 +221,21 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
         personas: personasActualizadas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
-        usuarioCreador: user.email.toLowerCase().trim()
+        usuarioCreador: emailParaGuardar.toLowerCase().trim()
       };
-
-      console.log('Enviando formulario Socio:', formularioData);
-
-      await FirebaseService.guardarFormularioSocio(formularioData);
-
-      alert('✅ Formulario de Socio guardado exitosamente!');
-
-      // Limpiar formulario después de guardar
-      setDatosEmpresa({
-        empresa: '',
-        direccion: '',
-        ciudad: '',
-        paginaWeb: '',
-        codigoPostal: '',
-        rubro: '',
-        cantidad_personas: 0
-      });
-      setPersonas([{
-        id: 1,
-        nombre: '',
-        apellido: '',
-        cargo: '',
-        celular: '',
-        telefono: '',
-        email: '',
-        dni: '',
-        fechaLlegada: '',
-        horaLlegada: '',
-        fechaSalida: '',
-        horaSalida: '',
-        lunes: '',
-        martes: '',
-        miercoles: '',
-        asisteCena: '',
-        menuEspecial: '',
-        atiendeReuniones: '',
-        tipoHabitacion: '',
-        noches: 0,
-      }]);
-      setComentarios('');
-
+      let idFormularioExistente = formularioExistente?.id;
+      // Si existe, actualizar, si no, crear nuevo
+      if (idFormularioExistente) {
+        // Actualizar el documento existente
+        await FirebaseService.actualizarFormulario('formularios-socios', idFormularioExistente, formularioData);
+        alert('✅ Formulario de Socio actualizado exitosamente!');
+      } else {
+        await FirebaseService.guardarFormularioSocio(formularioData);
+        alert('✅ Formulario de Socio guardado exitosamente!');
+      }
       // 🔄 Volver a consultar el formulario guardado
       const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(
-        user.email,
+        emailParaGuardar,
         eventoSeleccionado
       );
       if (existente) {
@@ -305,8 +286,55 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
     // lógica para mostrar el formulario de socio
 };
 
+  // Filtrado de usuarios para admin
+  const usuariosFiltrados = filtroUsuario
+    ? matchSorter(usuarios, filtroUsuario, { keys: ['nombre', 'email', 'empresa'] })
+    : usuarios;
+
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
+
+      {/* Admin: Selector de usuario */}
+      {rolUsuario === 'admin' && (
+        <div style={{ marginBottom: 24, background: '#e3f2fd', padding: 16, borderRadius: 8 }}>
+          <h3 style={{ marginBottom: 8 }}>👤 Seleccionar usuario para cargar/modificar formulario</h3>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email o empresa..."
+            value={filtroUsuario}
+            onChange={e => setFiltroUsuario(e.target.value)}
+            style={{ width: '100%', padding: 8, marginBottom: 8, borderRadius: 4, border: '1px solid #bbb' }}
+            disabled={guardando}
+          />
+          <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid #ddd', borderRadius: 4, background: '#fff' }}>
+            {usuariosFiltrados.length === 0 ? (
+              <div style={{ padding: 8, color: '#888' }}>No se encontraron usuarios</div>
+            ) : (
+              usuariosFiltrados.slice(0, 20).map(u => (
+                <div
+                  key={u.email}
+                  style={{
+                    padding: 8,
+                    background: usuarioSeleccionado?.email === u.email ? '#90caf9' : 'transparent',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    fontWeight: usuarioSeleccionado?.email === u.email ? 600 : 400
+                  }}
+                  onClick={() => setUsuarioSeleccionado(u)}
+                >
+                  {u.nombre} ({u.email}) {u.empresa ? `- ${u.empresa}` : ''}
+                </div>
+              ))
+            )}
+          </div>
+          {usuarioSeleccionado && (
+            <div style={{ marginTop: 8, color: '#1976d2' }}>
+              Usuario seleccionado: <b>{usuarioSeleccionado.nombre} ({usuarioSeleccionado.email})</b>
+              <button type="button" style={{ marginLeft: 12 }} onClick={() => setUsuarioSeleccionado(null)} disabled={guardando}>Quitar selección</button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="formulario-header">
         <h1>Eventos Red Acero</h1>
         <h2>📝 Formulario Socio</h2>
@@ -921,7 +949,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                   type="text"
                   value={persona.menuEspecial}
                   onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  placeholder="Vegetariano, sin gluten, etc."
+                  placeholder="Vegetariano, sin gluten, etc. (Ingrese No si no requiere)"
                   required
                   onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
                   disabled={guardando || !edicionHabilitada}
@@ -1000,9 +1028,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
       {configSocio?.notafin && (
         <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configSocio.notafin }} />
       )}
-      <small>
-        Solo puedes elegir entre {minFecha} y {maxFecha}
-      </small>
+     
     </div>
   );
 }

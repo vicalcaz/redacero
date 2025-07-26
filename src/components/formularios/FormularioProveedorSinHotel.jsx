@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
+import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-  function FormularioProveedorSinHotel({ user, onCancel }) {
-    const { rolUsuario, eventoId, evento, setEvento } = useEventoDestacado();
+
+function FormularioProveedorSinHotel({ user, onCancel }) {
+  const { rolUsuario, eventoId, evento, setEvento } = useEventoDestacado();
+
+  // Admin user selector state
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [filtroUsuario, setFiltroUsuario] = useState('');
 
   const [datosEmpresa, setDatosEmpresa] = useState({
     empresa: '',
@@ -48,8 +55,9 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
   // Al montar, buscar si ya existe formulario para este usuario y evento
   useEffect(() => {
     const cargarFormularioExistente = async () => {
-      if (!eventoSeleccionado || !user?.email) return;
-      const existente = await FirebaseService.obtenerFormularioProveedorSinHotelPorUsuarioYEvento(user.email, eventoSeleccionado);
+      const emailParaBuscar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user?.email;
+      if (!eventoSeleccionado || !emailParaBuscar) return;
+      const existente = await FirebaseService.obtenerFormularioProveedorSinHotelPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
       if (existente) {
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
@@ -81,13 +89,20 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
           asisteCena: '',
           menuEspecial: '',
           atiendeReuniones: ''
-          
         }]);
         setComentarios('');
       }
     };
     cargarFormularioExistente();
-  }, [eventoSeleccionado, user]);
+    // eslint-disable-next-line
+  }, [eventoSeleccionado, user, rolUsuario, usuarioSeleccionado]);
+
+  // Cargar usuarios para admin
+  useEffect(() => {
+    if (rolUsuario === 'admin') {
+      FirebaseService.obtenerUsuarios().then(setUsuarios);
+    }
+  }, [rolUsuario]);
 
   // Controlar si la edición está habilitada según la fecha límite
   useEffect(() => {
@@ -167,63 +182,32 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
     try {
       // 1. Calcular cantidad de personas
       const cantidadPersonas = personas.length;
-
-    
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
         ...datosEmpresa,
         cantidad_personas: cantidadPersonas
       };
-
+      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
       const formularioData = {
         tipo: 'Proveedor-sin-hotel',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
-        personas: personasActualizadas,
+        personas: personas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
-        usuarioCreador: user.email.toLowerCase().trim()
+        usuarioCreador: emailParaGuardar.toLowerCase().trim()
       };
-
-      console.log('Enviando formulario Proveedor sin Hotel:', formularioData);
-
-      await FirebaseService.guardarFormularioProveedorSinHotel(formularioData);
-
-      alert('✅ Formulario de Proveedor sin Hotel guardado exitosamente!');
-
-      // Limpiar formulario después de guardar
-      setDatosEmpresa({
-        empresa: '',
-        direccion: '',
-        ciudad: '',
-        paginaWeb: '',
-        codigoPostal: '',
-        rubro: '',
-        cantidad_personas: 0
-      });
-      setPersonas([{
-        id: 1,
-        nombre: '',
-        apellido: '',
-        cargo: '',
-        celular: '',
-        telefono: '',
-        email: '',
-        dni: '',
-        lunes: '',
-        martes: '',
-        miercoles: '',
-        asisteCena: '',
-        menuEspecial: '',
-        atiendeReuniones: '',
-        tipoHabitacion: '',
-        noches: 0,
-      }]);
-      setComentarios('');
-
+      let idFormularioExistente = formularioExistente?.id;
+      if (idFormularioExistente) {
+        await FirebaseService.actualizarFormulario('formularios-proveedores', idFormularioExistente, formularioData);
+        alert('✅ Formulario de Proveedor actualizado exitosamente!');
+      } else {
+        await FirebaseService.guardarFormularioProveedorSinHotel(formularioData);
+        alert('✅ Formulario de Proveedor sin Hotel guardado exitosamente!');
+      }
       // 🔄 Volver a consultar el formulario guardado
       const existente = await FirebaseService.obtenerFormularioProveedorSinHotelPorUsuarioYEvento(
-        user.email,
+        emailParaGuardar,
         eventoSeleccionado
       );
       if (existente) {
@@ -270,8 +254,55 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
     cargarConfig();
   }, []);
 
+  // Filtrado de usuarios para admin
+  const usuariosFiltrados = filtroUsuario
+    ? matchSorter(usuarios, filtroUsuario, { keys: ['nombre', 'email', 'empresa'] })
+    : usuarios;
+
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
+
+      {/* Admin: Selector de usuario */}
+      {rolUsuario === 'admin' && (
+        <div style={{ marginBottom: 24, background: '#e3f2fd', padding: 16, borderRadius: 8 }}>
+          <h3 style={{ marginBottom: 8 }}>👤 Seleccionar usuario para cargar/modificar formulario</h3>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email o empresa..."
+            value={filtroUsuario}
+            onChange={e => setFiltroUsuario(e.target.value)}
+            style={{ width: '100%', padding: 8, marginBottom: 8, borderRadius: 4, border: '1px solid #bbb' }}
+            disabled={guardando}
+          />
+          <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid #ddd', borderRadius: 4, background: '#fff' }}>
+            {usuariosFiltrados.length === 0 ? (
+              <div style={{ padding: 8, color: '#888' }}>No se encontraron usuarios</div>
+            ) : (
+              usuariosFiltrados.slice(0, 20).map(u => (
+                <div
+                  key={u.email}
+                  style={{
+                    padding: 8,
+                    background: usuarioSeleccionado?.email === u.email ? '#90caf9' : 'transparent',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    fontWeight: usuarioSeleccionado?.email === u.email ? 600 : 400
+                  }}
+                  onClick={() => setUsuarioSeleccionado(u)}
+                >
+                  {u.nombre} ({u.email}) {u.empresa ? `- ${u.empresa}` : ''}
+                </div>
+              ))
+            )}
+          </div>
+          {usuarioSeleccionado && (
+            <div style={{ marginTop: 8, color: '#1976d2' }}>
+              Usuario seleccionado: <b>{usuarioSeleccionado.nombre} ({usuarioSeleccionado.email})</b>
+              <button type="button" style={{ marginLeft: 12 }} onClick={() => setUsuarioSeleccionado(null)} disabled={guardando}>Quitar selección</button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="formulario-header">
         <h1>Eventos Red Acero</h1>
         <h2>📝 Formulario Proveedor sin Hotel</h2>
@@ -687,7 +718,7 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
                   type="text"
                   value={persona.menuEspecial}
                   onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  placeholder="Vegetariano, sin gluten, etc."
+                  placeholder="Vegetariano, sin gluten, etc. (Ingrese No si no requiere)"
                   required
                   onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
                   disabled={guardando || !edicionHabilitada}

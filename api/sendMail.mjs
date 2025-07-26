@@ -15,20 +15,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Faltan parámetros' });
   }
 
-  // Configura el transporter con SMTP de Brevo
+  // Configura el transporter con SMTP de la red acero
   const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
+    host: 'smtp.redacero.com.ar',
+    port: 587, // Cambia el puerto si tu proveedor indica otro (ej: 465 para SSL)
+    secure: false, // true si usas SSL (puerto 465)
     auth: {
-      user: process.env.BREVO_USER,
-      pass: process.env.BREVO_PASS,
+      user: process.env.SMTP_USER || 'encuentro2025@redacero.com.ar',
+      pass: process.env.SMTP_PASS || 'Encuentro2025!',
+      SMTP_FROM: process.env.SMTP_FROM || 'smtp.redacero.com.ar'
     },
   });
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.BREVO_FROM || process.env.BREVO_USER,
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to,
       subject,
       html,
