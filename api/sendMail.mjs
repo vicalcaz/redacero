@@ -1,7 +1,7 @@
 // Vercel Serverless Function: /api/sendMail.mjs
-// Usa Nodemailer con SMTP de Brevo (Sendinblue)
+// Usa Nodemailer con SMTP de Red Acero
 // 1. Instala nodemailer: npm install nodemailer
-// 2. Crea variables de entorno en Vercel: BREVO_USER, BREVO_PASS
+// 2. Crea variables de entorno en Vercel: SMTP_USER, SMTP_PASS, SMTP_FROM
 
 import nodemailer from 'nodemailer';
 
@@ -22,19 +22,24 @@ export default async function handler(req, res) {
     secure: false, // true si usas SSL (puerto 465)
     auth: {
       user: process.env.SMTP_USER || 'encuentro2025@redacero.com.ar',
-      pass: process.env.SMTP_PASS || 'Encuentro2025!',
-      SMTP_FROM: process.env.SMTP_FROM || 'smtp.redacero.com.ar'
+      pass: process.env.SMTP_PASS || 'Encuentro2025!'
     },
   });
 
   try {
+    // Verifica la conexión SMTP antes de enviar
+    await transporter.verify();
+    // Si la conexión es exitosa, responde primero
+    res.write(JSON.stringify({ message: 'Conexión SMTP exitosa. Enviando mail...' }));
+    // Envía el mail
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      from: process.env.SMTP_FROM || 'encuentro2025@redacero.com.ar',
       to,
       subject,
       html,
     });
-    return res.status(200).json({ success: true, info });
+    // Finaliza la respuesta con el resultado del envío
+    res.end(JSON.stringify({ success: true, info }));
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
