@@ -17,6 +17,8 @@ async function sendMailViaApi({ to, subject, html }) {
     throw new Error(text || 'Error enviando mail (respuesta no JSON)');
   }
   if (!res.ok) throw new Error(data.error || 'Error enviando mail');
+  console.log('Mail enviado:', data);
+  if (!data.success) throw new Error(data.message || 'Error enviando mail');
   return data;
 }
 import * as XLSX from 'xlsx';
