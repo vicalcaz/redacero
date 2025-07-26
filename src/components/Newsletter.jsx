@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 
-// Enviar mail real usando la API de Vercel con Brevo
+// Enviar mail real usando la API de Vercel 
 async function sendMailViaApi({ to, subject, html }) {
-  const res = await fetch('/api/sendMail', {
+  const res = await fetch('/api/sendMail.mjs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, html })
