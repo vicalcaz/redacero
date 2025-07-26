@@ -7,8 +7,8 @@ async function sendMailViaApi({ to, subject, html }) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to, subject, html })
-    console.log('Enviando mail a:', to, 'Asunto:', subject);
   });
+  console.log('Enviando mail a:', to, 'Asunto:', subject);
   let data;
   try {
     data = await res.json();
