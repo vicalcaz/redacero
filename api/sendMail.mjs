@@ -28,9 +28,9 @@ export default async function handler(req, res) {
 
   try {
     // Verifica la conexión SMTP antes de enviar
-    await transporter.verify();
+   // await transporter.verify();
     // Si la conexión es exitosa, responde primero
-    res.write(JSON.stringify({ message: 'Conexión SMTP exitosa. Enviando mail...' }));
+   // res.write(JSON.stringify({ message: 'Conexión SMTP exitosa. Enviando mail...' }));
     // Envía el mail
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || 'encuentro2025@redacero.com.ar',
