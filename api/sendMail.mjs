@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   const transporter = nodemailer.createTransport({
     host: 'smtp.redacero.com.ar',
     port: 225, // Cambia el puerto si tu proveedor indica otro (ej: 465 para SSL)
-    secure: true, // true si usas SSL (puerto 465)
+    secure: false, // true si usas SSL (puerto 465)
     auth: {
       user: process.env.SMTP_USER || 'encuentro2025@redacero.com.ar',
       pass: process.env.SMTP_PASS || 'Encuentro2025!'
