@@ -27,19 +27,15 @@ export default async function handler(req, res) {
   });
 
   try {
-    // Verifica la conexión SMTP antes de enviar
-   // await transporter.verify();
-    // Si la conexión es exitosa, responde primero
-   // res.write(JSON.stringify({ message: 'Conexión SMTP exitosa. Enviando mail...' }));
-    // Envía el mail
+    // Espera a que termine el envío antes de responder
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || 'encuentro2025@redacero.com.ar',
       to,
       subject,
       html,
     });
-    // Finaliza la respuesta con el resultado del envío
-    res.end(JSON.stringify({ success: true, info }));
+    // Responde solo después de que el mail fue enviado
+    return res.status(200).json({ success: true, info });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

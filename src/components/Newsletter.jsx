@@ -17,12 +17,11 @@ async function sendMailViaApi({ to, subject, html }) {
     // Si la respuesta no es JSON, intenta leer como texto
     const text = await res.text();
     console.error('Error enviando mail:', text || e);
-    if (text)
-    throw new Error(text || 'Error enviando mail (respuesta no JSON)');
+    if (text) throw new Error(text || 'Error enviando mail (respuesta no JSON)');
   }
-  if (!res.ok)   throw new Error(data.error || 'Error enviando mail');
+  if (!res.ok) throw new Error(data?.error || 'Error enviando mail');
   console.log('Mail enviado:', data);
-  if (!data.success) throw new Error(data.message || 'Error enviando mail');
+  if (!data?.success) throw new Error(data?.message || 'Error enviando mail');
   return data;
 }
 import * as XLSX from 'xlsx';
