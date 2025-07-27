@@ -5,6 +5,27 @@ import './PersonalizacionFormularios.css';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
+// --- Soporte para interlineado personalizado (lineheight) ---
+const ParchLineHeight = () => {
+  const Inline = Quill.import('blots/inline');
+  class LineHeightStyle extends Inline {
+    static create(value) {
+      const node = super.create();
+      node.style.lineHeight = value;
+      return node;
+    }
+    static formats(node) {
+      return node.style.lineHeight;
+    }
+  }
+  LineHeightStyle.blotName = 'lineheight';
+  LineHeightStyle.className = 'ql-lineheight';
+  LineHeightStyle.tagName = 'SPAN';
+  Quill.register(LineHeightStyle, true);
+};
+ParchLineHeight();
+// -----------------------------------------------------------
+
 // --- Agrega este código antes de tu componente ---
 const Link = Quill.import('formats/link');
 Link.sanitize = url => {
@@ -313,12 +334,16 @@ function PersonalizacionFormularios({ user }) {
   const modules = {
     toolbar: [
       [{ 'header': [1, 2, false] }],
+      [{ 'font': [] }],
+      [{ 'size': ['small', false, 'large', 'huge'] }],
       ['bold', 'italic', 'underline'],
       [{ 'color': [] }, { 'background': [] }],
       ['link', 'image'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'lineheight': ['1', '1.2', '1.5', '2', '2.5', '3'] }],
       ['clean']
-    ]
+    ],
+    // Para que funcione lineheight, se requiere un módulo extra o CSS personalizado
   };
 
   const TABS_FORM = [

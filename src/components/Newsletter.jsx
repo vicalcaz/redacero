@@ -9,20 +9,21 @@ async function sendMailViaApi({ to, subject, html }) {
     body: JSON.stringify({ to, subject, html })
   });
   console.log('Enviando mail a:', to, 'Asunto:', subject, 'Contenido:', html);
-  let data;
-  try {
+  let data = null;
+  let text = '';
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
     data = await res.json();
-    console.log('Respuesta del servidor:', data);
-  } catch (e) {
-    // Si la respuesta no es JSON, intenta leer como texto
-    const text = await res.text();
-    console.error('Error enviando mail:', text || e);
-    if (text) throw new Error(text || 'Error enviando mail (respuesta no JSON)');
+  } else {
+    text = await res.text();
   }
-  if (!res.ok) throw new Error(data?.error || 'Error enviando mail');
-  console.log('Mail enviado:', data);
-  if (!data?.success) throw new Error(data?.message || 'Error enviando mail');
-  return data;
+  if (!res.ok) {
+    if (data && data.error) throw new Error(data.error);
+    if (text) throw new Error(text);
+    throw new Error('Error enviando mail');
+  }
+  if (data && !data.success) throw new Error(data.message || 'Error enviando mail');
+  return data || text;
 }
 import * as XLSX from 'xlsx';
 import './Newsletter.css';
