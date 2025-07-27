@@ -5,22 +5,14 @@ import './PersonalizacionFormularios.css';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
-// --- Soporte para interlineado personalizado (lineheight) ---
+// --- Soporte manual para interlineado personalizado (lineheight) ---
+import Quill from 'quill';
 const ParchLineHeight = () => {
-  const Inline = Quill.import('blots/inline');
-  class LineHeightStyle extends Inline {
-    static create(value) {
-      const node = super.create();
-      node.style.lineHeight = value;
-      return node;
-    }
-    static formats(node) {
-      return node.style.lineHeight;
-    }
-  }
-  LineHeightStyle.blotName = 'lineheight';
-  LineHeightStyle.className = 'ql-lineheight';
-  LineHeightStyle.tagName = 'SPAN';
+  const Parch = Quill.import('parchment');
+  const LineHeightStyle = new Parch.Attributor.Style('lineheight', 'line-height', {
+    scope: Parch.Scope.INLINE,
+    whitelist: ['1', '1.2', '1.5', '2', '2.5', '3']
+  });
   Quill.register(LineHeightStyle, true);
 };
 ParchLineHeight();

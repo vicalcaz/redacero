@@ -1,6 +1,6 @@
 /* Soporte para interlineado personalizado en Quill */
-.ql-lineheight[style*="line-height"] {
-  display: block;
+.ql-editor [style*="line-height"] {
+  line-height: inherit;
 }
 .personalizacion-formularios {
   max-width: 1400px;
