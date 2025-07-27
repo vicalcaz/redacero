@@ -150,18 +150,10 @@ function Newsletter() {
         subject: mail.asunto || mail.nombre || 'Newsletter',
         html: htmlConPixel
       });
-      // Al reenviar, mailleido y fechaleido vuelven a false/null, fechaenvio se actualiza
-      await FirebaseService.asociarMailAUsuarioEvento?.({
+      // Marcar como enviado usando la función correcta
+      await FirebaseService.marcarMailEnviadoUsuarioEvento?.({
         usuarioId,
-        mailId: asociacion.mailId,
-        eventoId: eventoSeleccionado,
-        usuario: usuario?.nombre || '',
-        mail: usuario?.email || '',
-        mailasociado: true,
-        mailenviado: true,
-        fechaenvio: new Date().toISOString(),
-        mailleido: false,
-        fechaleido: null
+        eventoId: eventoSeleccionado
       });
       await cargarDatos(eventoSeleccionado);
     } catch (e) {
