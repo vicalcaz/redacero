@@ -3,7 +3,9 @@
 // 1. Instala nodemailer: npm install nodemailer
 // 2. Crea variables de entorno en Vercel: SMTP_USER, SMTP_PASS, SMTP_FROM
 
-import nodemailer from 'nodemailer';
+
+// Requiere: npm install resend
+import { Resend } from 'resend';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,27 +17,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Faltan parámetros' });
   }
 
-  // Configura el transporter con SMTP de la red acero
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.redacero.com.ar',
-    port: 587, // Cambia el puerto si tu proveedor indica otro (ej: 465 para SSL)
-    secure: false, // true si usas SSL (puerto 465)
-    auth: {
-      user: process.env.SMTP_USER || 'encuentro2025@redacero.com.ar',
-      pass: process.env.SMTP_PASS || 'Encuentro2025!'
-    },
-  });
-
+  // Usa la API de Resend
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
-    // Espera a que termine el envío antes de responder
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'encuentro2025@redacero.com.ar',
+    const data = await resend.emails.send({
+      from: process.env.RESEND_FROM || 'Red Acero <no-reply@redacero.com.ar>',
       to,
       subject,
       html,
     });
-    // Responde solo después de que el mail fue enviado
-    return res.status(200).json({ success: true, info });
+    return res.status(200).json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
