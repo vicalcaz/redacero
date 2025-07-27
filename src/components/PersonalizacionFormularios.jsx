@@ -12,7 +12,7 @@ const ParchLineHeight = () => {
   const LineHeightStyle = new Parch.Attributor.Style('lineheight', 'line-height', {
     scope: Parch.Scope.BLOCK,
     whitelist: ['1', '1.2', '1.5', '2', '2.5', '3']
-  });
+  }); 
   Quill.register(LineHeightStyle, true);
   // Registrar el módulo para la toolbar
   const icons = Quill.import('ui/icons');
@@ -337,12 +337,7 @@ function PersonalizacionFormularios({ user }) {
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       [{ 'lineheight': ['1', '1.2', '1.5', '2', '2.5', '3'] }],
       ['clean']
-    ],
-    // Registrar el módulo lineheight para la toolbar
-    lineheight: {
-      default: '1.5',
-      options: ['1', '1.2', '1.5', '2', '2.5', '3']
-    }
+    ]
   };
 
   const TABS_FORM = [
