@@ -20,9 +20,9 @@ export default async function handler(req, res) {
     return res.status(400).send('Missing mail id');
   }
   try {
-    // Actualiza el campo "leido" del mail en Firestore
-    const mailRef = doc(db, 'mails', id);
-    await updateDoc(mailRef, { leido: true, fechaLeido: new Date().toISOString() });
+    // Actualiza el campo "mailleido" del mailUsuarioEvento en Firestore
+    const mailRef = doc(db, 'mailUsuarioEvento', id);
+    await updateDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() });
     // Devuelve un pixel transparente
     res.setHeader('Content-Type', 'image/png');
     const pixel = Buffer.from(
