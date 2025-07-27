@@ -10,10 +10,13 @@ import 'react-quill/dist/quill.snow.css';
 const ParchLineHeight = () => {
   const Parch = Quill.import('parchment');
   const LineHeightStyle = new Parch.Attributor.Style('lineheight', 'line-height', {
-    scope: Parch.Scope.INLINE,
+    scope: Parch.Scope.BLOCK,
     whitelist: ['1', '1.2', '1.5', '2', '2.5', '3']
   });
   Quill.register(LineHeightStyle, true);
+  // Registrar el módulo para la toolbar
+  const icons = Quill.import('ui/icons');
+  icons['lineheight'] = '<svg viewBox="0 0 18 18"><line class="ql-stroke" x1="7" x2="11" y1="4" y2="4"></line><line class="ql-stroke" x1="7" x2="11" y1="9" y2="9"></line><line class="ql-stroke" x1="7" x2="11" y1="14" y2="14"></line><polyline class="ql-stroke" points="3 7 3 11 5 9 3 7"></polyline><polyline class="ql-stroke" points="15 7 15 11 13 9 15 7"></polyline></svg>';
 };
 ParchLineHeight();
 // -----------------------------------------------------------
@@ -335,7 +338,11 @@ function PersonalizacionFormularios({ user }) {
       [{ 'lineheight': ['1', '1.2', '1.5', '2', '2.5', '3'] }],
       ['clean']
     ],
-    // Para que funcione lineheight, se requiere un módulo extra o CSS personalizado
+    // Registrar el módulo lineheight para la toolbar
+    lineheight: {
+      default: '1.5',
+      options: ['1', '1.2', '1.5', '2', '2.5', '3']
+    }
   };
 
   const TABS_FORM = [
@@ -597,7 +604,6 @@ function PersonalizacionFormularios({ user }) {
                   }
                   theme="snow"
                   modules={modules}
-                  style={{ background: 'white', minHeight: 120 }}
                   readOnly={guardando}
                 />
               )}
@@ -619,7 +625,6 @@ function PersonalizacionFormularios({ user }) {
                   }
                   theme="snow"
                   modules={modules}
-                  style={{ background: 'white', minHeight: 120 }}
                   readOnly={guardando}
                 />
               )}
