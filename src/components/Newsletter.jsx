@@ -141,8 +141,8 @@ function Newsletter() {
     }
     setGuardando(true);
     try {
-      // Tracking pixel para mail leído
-      const pixelUrl = `https://redacero.vercel.app//api/readMail?id=${asociacion.id || asociacion.mailId}`;
+      // Tracking pixel para mail leído (ID de Firestore: usuarioId_eventoId)
+      const pixelUrl = `https://redacero.vercel.app/api/readMail?id=${usuarioId}_${eventoSeleccionado}`;
       const trackingPixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none" />`;
       const htmlConPixel = (mail.cuerpo || '') + trackingPixel;
       await sendMailViaApi({
