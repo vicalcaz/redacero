@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { FirebaseService } from '../services/FirebaseService';
 import './PersonalizacionFormularios.css';
-import ReactQuill, { Quill } from 'react-quill';
+import ReactQuill from 'react-quill';
+import Quill from 'quill';
 import 'react-quill/dist/quill.snow.css';
 
 // --- Soporte manual para interlineado personalizado (lineheight) ---
-import Quill from 'quill';
 const ParchLineHeight = () => {
   const Parch = Quill.import('parchment');
   const LineHeightStyle = new Parch.Attributor.Style('lineheight', 'line-height', {
