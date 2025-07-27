@@ -21,13 +21,15 @@ export default async function handler(req, res) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const data = await resend.emails.send({
-      from: process.env.RESEND_FROM || 'Red Acero <no-reply@redacero.com.ar>',
+      from: process.env.RESEND_FROM || 'onboarding@resend.dev', // Usa el from de prueba para descartar problemas de dominio
       to,
       subject,
       html,
     });
+    console.log('Respuesta de Resend:', data);
     return res.status(200).json({ success: true, data });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error('Error Resend:', error);
+    return res.status(500).json({ error: error.message, details: error });
   }
 }
