@@ -188,11 +188,16 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         cantidad_personas: cantidadPersonas
       };
       const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
+      // Asegurar que menuEspecial siempre tenga valor en cada persona
+      const personasActualizadas = personas.map(persona => ({
+        ...persona,
+        menuEspecial: persona.menuEspecial ? persona.menuEspecial : 'Ninguno'
+      }));
       const formularioData = {
         tipo: 'Proveedor-sin-hotel',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
-        personas: personas,
+        personas: personasActualizadas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
         usuarioCreador: emailParaGuardar.toLowerCase().trim()
@@ -735,16 +740,20 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
               {/* Campo Menú Especial */}
               <div className="campo-grupo" style={{ marginTop: '1.5rem' }}>
                 <label>Menú Especial cena de cierre:</label>
-                <input
-                  type="text"
-                  value={persona.menuEspecial}
-                  onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  placeholder="Vegetariano, sin gluten, etc. (Ingrese No si no requiere)"
+                <select
+                  value={persona.menuEspecial || ''}
+                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
                   required
-                  onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
+                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
                   disabled={guardando || !edicionHabilitada}
-                />
-              </div>            
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Vegano">Vegano</option>
+                  <option value="Sin gluten">Sin gluten</option>
+                  <option value="Sin Lactosa">Sin Lactosa</option>
+                </select>
+              </div>
             </div>
           ))}
           

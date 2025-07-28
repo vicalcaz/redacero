@@ -249,7 +249,6 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
           const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
-          // Solo sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
           if (
             persona.horaSalida &&
             persona.horaSalida > '10:00' &&
@@ -257,12 +256,13 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           ) {
             noches += 1;
           }
-          // Si no hay horaSalida, setear por defecto '10:00'
           if (!horaSalida) {
             horaSalida = '10:00';
           }
         }
-        return { ...persona, noches, horaSalida, comparteCon: persona.comparteCon || null };
+        // Asegurar que menuEspecial siempre tenga valor
+        const menuEspecial = persona.menuEspecial ? persona.menuEspecial : 'Ninguno';
+        return { ...persona, noches, horaSalida, comparteCon: persona.comparteCon || null, menuEspecial };
       });
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
@@ -634,6 +634,10 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
               ))}
             </tbody>
           </table>
+        <div style={{ marginTop: 16, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
+          <span style={{ color: '#453796', fontSize: '0.7em' }}>recuerde que solo tiene una habitación sin cargo.</span>
+        </div>
         </div>
           <h3>
             👥 Personas que asistirán
@@ -1152,16 +1156,20 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
               {/* Campo Menú Especial */}
               <div className="campo-grupo" style={{ marginTop: '1.5rem' }}>
                 <label>Menú Especial cena de cierre:</label>
-                <input
-                  type="text"
-                  value={persona.menuEspecial}
-                  onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  placeholder="Vegetariano, sin gluten, etc. (Ingrese No si no requiere)"
+                <select
+                  value={persona.menuEspecial || ''}
+                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
                   required
-                  onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
+                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
                   disabled={guardando || !edicionHabilitada}
-                />
-              </div>            
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Vegano">Vegano</option>
+                  <option value="Sin gluten">Sin gluten</option>
+                  <option value="Sin Lactosa">Sin Lactosa</option>
+                </select>
+              </div>
             </div>
           ))}
           

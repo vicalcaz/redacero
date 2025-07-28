@@ -204,8 +204,17 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
           <div className="form-group">
             <label>Menú especial:</label>
             {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.menuEspecial || ''} onChange={e => actualizarPersona(index, 'menuEspecial', e.target.value)} />
-            ) : (<span>{persona.menuEspecial || 'N/A'}</span>)}
+              <select
+                value={formularioEditado.personas[index]?.menuEspecial || 'Ninguno'}
+                onChange={e => actualizarPersona(index, 'menuEspecial', e.target.value)}
+              >
+                <option value="Ninguno">Ninguno</option>
+                <option value="Vegetariano">Vegetariano</option>
+                <option value="Vegano">Vegano</option>
+                <option value="Sin gluten">Sin gluten</option>
+                <option value="Sin Lactosa">Sin Lactosa</option>
+              </select>
+            ) : (<span>{persona.menuEspecial || 'Ninguno'}</span>)}
           </div>
                 </div>
                 

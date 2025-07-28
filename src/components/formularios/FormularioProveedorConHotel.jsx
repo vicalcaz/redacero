@@ -272,7 +272,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
           const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
-          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
           if (
             persona.horaSalida &&
             persona.horaSalida > '10:00' &&
@@ -280,12 +279,13 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           ) {
             noches += 1;
           }
-          // Si no hay horaSalida, setear por defecto '10:00'
           if (!horaSalida) {
             horaSalida = '10:00';
           }
         }
-        return { ...persona, noches, horaSalida };
+        // Asegurar que menuEspecial siempre tenga valor
+        const menuEspecial = persona.menuEspecial ? persona.menuEspecial : 'Ninguno';
+        return { ...persona, noches, horaSalida, menuEspecial };
       });
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
@@ -1097,16 +1097,20 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
               {/* Campo Menú Especial */}
               <div className="campo-grupo" style={{ marginTop: '1.5rem' }}>
                 <label>Menú Especial cena de cierre:</label>
-                <input
-                  type="text"
-                  value={persona.menuEspecial}
-                  onChange={(e) => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  placeholder="Vegetariano, sin gluten, etc. (Ingrese No si no requiere)"
+                <select
+                  value={persona.menuEspecial || ''}
+                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
                   required
-                  onInvalid={e => e.target.setCustomValidity('Por favor indique si requiere un menú especial, por lo contrario escriba "No".')}
+                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
                   disabled={guardando || !edicionHabilitada}
-                />
-              </div>            
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Vegano">Vegano</option>
+                  <option value="Sin gluten">Sin gluten</option>
+                  <option value="Sin Lactosa">Sin Lactosa</option>
+                </select>
+              </div>
             </div>
           ))}
           

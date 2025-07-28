@@ -292,15 +292,7 @@ function EventManagement() {
           </div>
 
           {/* Fila 4: Descripción */}
-          <div className="form-group">
-            <label htmlFor="descripcion">Descripción</label>
-            <textarea
-              id="descripcion"
-              value={nuevoEvento.descripcion}
-              onChange={(e) => actualizarCampo('descripcion', e.target.value)}
-              rows="2"
-            />
-          </div>
+          {/* Solo un campo de descripción, se eliminó el duplicado */}
 
           <div className="form-group">
             <label htmlFor="descripcion">Descripción</label>

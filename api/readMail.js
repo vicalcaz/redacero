@@ -1,19 +1,18 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
-// Configuración de Firebase (ajusta con tus datos)
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-};
+import { getApps, initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// Evita inicializar más de una vez
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// Inicializa firebase-admin solo una vez
+if (!getApps().length) {
+  initializeApp({
+    credential: applicationDefault(),
+    // Si usas variables de entorno para el service account, puedes usar:
+    // credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+  });
+}
+const db = getFirestore();
+
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -22,8 +21,8 @@ export default async function handler(req, res) {
   }
   try {
     // Actualiza el campo "mailleido" del mailUsuarioEvento en Firestore
-    const mailRef = doc(db, 'mailUsuarioEvento', id);
-    await setDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() }, { merge: true });
+    const mailRef = db.collection('mailUsuarioEvento').doc(id);
+    await mailRef.set({ mailleido: true, fechaleido: new Date().toISOString() }, { merge: true });
     // Devuelve un pixel transparente
     res.setHeader('Content-Type', 'image/png');
     const pixel = Buffer.from(
