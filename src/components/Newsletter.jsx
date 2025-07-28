@@ -144,10 +144,9 @@ function Newsletter() {
     try {
       // Generar link de login con email y password (espacio)
       const loginUrl = `https://redacero.vercel.app/login?email=${encodeURIComponent(usuario.email)}&password=%20`;
-      // Reemplazar @link en el cuerpo del mail por el link generado
       let cuerpoMail = mail.cuerpo || '';
+      const linkHtml = `<a href="${loginUrl}" style="background:#1976d2;color:#fff;padding:0.7em 1.5em;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block">Acceder al sistema</a>`;
       if (cuerpoMail.includes('@link')) {
-        const linkHtml = `<a href="${loginUrl}" style="background:#1976d2;color:#fff;padding:0.7em 1.5em;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block">Acceder al sistema</a>`;
         cuerpoMail = cuerpoMail.replace(/@link/g, linkHtml);
       }
       // Tracking pixel para mail leído (ID de Firestore: usuarioId_eventoId)
