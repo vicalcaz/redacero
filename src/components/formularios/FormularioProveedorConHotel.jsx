@@ -218,7 +218,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   };
 
   // Permite actualizar un campo individual o varios campos a la vez (merge)
-  // Synchronized room sharing logic with dialog
+  // Synchronized room sharing logic with dialog and improved message
   const actualizarPersona = (id, campo, valor) => {
     // Detect if this is a room sharing change
     if ((campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined)) && (valor !== '' && valor !== undefined)) {
@@ -226,8 +226,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       const persona = personas.find(p => p.id === id);
       const target = personas.find(p => String(p.id) === String(targetId));
       if (target && (target.comparteCon !== String(id) || target.tipoHabitacion !== persona.tipoHabitacion || !target.comparteHabitacion)) {
-        // Prompt user to sync or remove
-        setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: persona.tipoHabitacion });
+        setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: persona.tipoHabitacion, campo, valor });
         setDialogOpen(true);
         return;
       }
@@ -275,10 +274,16 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     if (!pendingSync) return;
     setPersonas(personas => personas.map(p => {
       if (p.id === pendingSync.personaId) {
-        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.targetId) };
+        let nuevaPersona = { ...p };
+        if (pendingSync.campo === null && typeof pendingSync.valor === 'object' && pendingSync.valor !== null) {
+          nuevaPersona = { ...nuevaPersona, ...pendingSync.valor };
+        } else {
+          nuevaPersona = { ...nuevaPersona, [pendingSync.campo]: pendingSync.valor };
+        }
+        return { ...nuevaPersona, comparteHabitacion: true, comparteCon: String(pendingSync.targetId), tipoHabitacion: pendingSync.tipoHabitacion };
       }
       if (p.id === pendingSync.targetId) {
-        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.personaId), tipoHabitacion: personas.find(x => x.id === pendingSync.personaId)?.tipoHabitacion || '' };
+        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.personaId), tipoHabitacion: pendingSync.tipoHabitacion };
       }
       return p;
     }));
@@ -288,11 +293,16 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   const handleRemoveRoom = () => {
     if (!pendingSync) return;
     setPersonas(personas => personas.map(p => {
-      if (p.id === pendingSync.personaId) {
-        return { ...p, comparteHabitacion: false, comparteCon: '' };
-      }
-      if (p.id === pendingSync.targetId) {
-        return { ...p, comparteHabitacion: false, comparteCon: '' };
+      if (p.id === pendingSync.personaId || p.id === pendingSync.targetId) {
+        let nuevaPersona = { ...p };
+        if (p.id === pendingSync.personaId) {
+          if (pendingSync.campo === null && typeof pendingSync.valor === 'object' && pendingSync.valor !== null) {
+            nuevaPersona = { ...nuevaPersona, ...pendingSync.valor };
+          } else {
+            nuevaPersona = { ...nuevaPersona, [pendingSync.campo]: pendingSync.valor };
+          }
+        }
+        return { ...nuevaPersona, comparteHabitacion: false, comparteCon: '' };
       }
       return p;
     }));
@@ -306,11 +316,11 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar habitación compartida</h3>
         <p style={{ fontSize: '1rem', marginBottom: 24 }}>
           La persona seleccionada no tiene la relación de compartir habitación sincronizada.<br />
-          ¿Desea sincronizar la relación (ambos compartirán la misma habitación y tipo) o eliminar la relación?
+          ¿Desea <b>sincronizar habitación</b> (ambos compartirán la misma habitación y tipo) o <b>borrar relación</b>?
         </p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-          <button className="btn-primario" onClick={handleSyncRoom} style={{ padding: '0.5rem 1.5rem' }}>Sincronizar</button>
-          <button className="btn-secundario" onClick={handleRemoveRoom} style={{ padding: '0.5rem 1.5rem' }}>Eliminar relación</button>
+          <button className="btn-primario" onClick={handleSyncRoom} style={{ padding: '0.5rem 1.5rem' }}>Sincronizar habitación</button>
+          <button className="btn-secundario" onClick={handleRemoveRoom} style={{ padding: '0.5rem 1.5rem' }}>Borrar relación</button>
         </div>
       </div>
     </div>

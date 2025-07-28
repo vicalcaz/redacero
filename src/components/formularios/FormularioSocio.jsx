@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import React from 'react';
+import React from 'react';
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
@@ -191,7 +193,26 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     }
   };
 
+  // Synchronized room sharing logic with custom dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingSync, setPendingSync] = useState(null); // {personaId, targetId, tipoHabitacion, campo, valor}
   const actualizarPersona = (id, campo, valor) => {
+    let isRoomTypeChange = campo === 'tipoHabitacion' || (campo === null && valor.tipoHabitacion !== undefined);
+    let isRoomShareChange = campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined);
+    if (isRoomTypeChange || isRoomShareChange) {
+      const persona = personas.find(p => p.id === id);
+      let nextTipo = isRoomTypeChange ? (campo === 'tipoHabitacion' ? valor : valor.tipoHabitacion) : persona.tipoHabitacion;
+      let nextComparteCon = isRoomShareChange ? (campo === 'comparteCon' ? valor : valor.comparteCon) : persona.comparteCon;
+      if (nextComparteCon) {
+        const target = personas.find(p => String(p.id) === String(nextComparteCon));
+        if (target && (target.comparteCon !== String(id) || target.tipoHabitacion !== nextTipo || !target.comparteHabitacion)) {
+          setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: nextTipo, campo, valor });
+          setDialogOpen(true);
+          return;
+        }
+      }
+    }
+    // Normal update logic
     setPersonas(personas.map(persona => {
       if (persona.id !== id) return persona;
       let nuevaPersona = { ...persona };
@@ -212,7 +233,6 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           const llegada = new Date(fechaLlegada + 'T00:00:00');
           const salida = new Date(fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
-          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
           if (
             nuevaPersona.horaSalida &&
             nuevaPersona.horaSalida > '10:00' &&
@@ -220,7 +240,6 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           ) {
             noches += 1;
           }
-          // Si no hay horaSalida, setear por defecto '10:00'
           if (!nuevaPersona.horaSalida) {
             nuevaPersona.horaSalida = '10:00';
           }
@@ -230,6 +249,88 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       return nuevaPersona;
     }));
   };
+
+  // Dialog handlers
+  const handleSyncRoom = () => {
+    if (!pendingSync) return;
+    setPersonas(personas => personas.map(p => {
+      if (p.id === pendingSync.personaId) {
+        let nuevaPersona = { ...p };
+        if (pendingSync.campo === null && typeof pendingSync.valor === 'object' && pendingSync.valor !== null) {
+          nuevaPersona = { ...nuevaPersona, ...pendingSync.valor };
+        } else {
+          nuevaPersona = { ...nuevaPersona, [pendingSync.campo]: pendingSync.valor };
+        }
+        // Recalcular noches si corresponde
+        if (
+          pendingSync.campo === 'fechaLlegada' || pendingSync.campo === 'fechaSalida' || pendingSync.campo === 'tipoHabitacion' ||
+          (pendingSync.campo === null && (pendingSync.valor.fechaLlegada !== undefined || pendingSync.valor.fechaSalida !== undefined || pendingSync.valor.tipoHabitacion !== undefined))
+        ) {
+          const fechaLlegada = nuevaPersona.fechaLlegada;
+          const fechaSalida = nuevaPersona.fechaSalida;
+          let noches = 0;
+          if (fechaLlegada && fechaSalida) {
+            const llegada = new Date(fechaLlegada + 'T00:00:00');
+            const salida = new Date(fechaSalida + 'T00:00:00');
+            noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
+            if (
+              nuevaPersona.horaSalida &&
+              nuevaPersona.horaSalida > '10:00' &&
+              fechaSalida > fechaLlegada
+            ) {
+              noches += 1;
+            }
+            if (!nuevaPersona.horaSalida) {
+              nuevaPersona.horaSalida = '10:00';
+            }
+          }
+          nuevaPersona.noches = noches;
+        }
+        return { ...nuevaPersona, comparteHabitacion: true, comparteCon: String(pendingSync.targetId), tipoHabitacion: pendingSync.tipoHabitacion };
+      }
+      if (p.id === pendingSync.targetId) {
+        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.personaId), tipoHabitacion: pendingSync.tipoHabitacion };
+      }
+      return p;
+    }));
+    setDialogOpen(false);
+    setPendingSync(null);
+  };
+  const handleRemoveRoom = () => {
+    if (!pendingSync) return;
+    setPersonas(personas => personas.map(p => {
+      if (p.id === pendingSync.personaId || p.id === pendingSync.targetId) {
+        let nuevaPersona = { ...p };
+        if (p.id === pendingSync.personaId) {
+          if (pendingSync.campo === null && typeof pendingSync.valor === 'object' && pendingSync.valor !== null) {
+            nuevaPersona = { ...nuevaPersona, ...pendingSync.valor };
+          } else {
+            nuevaPersona = { ...nuevaPersona, [pendingSync.campo]: pendingSync.valor };
+          }
+        }
+        return { ...nuevaPersona, comparteHabitacion: false, comparteCon: '' };
+      }
+      return p;
+    }));
+    setDialogOpen(false);
+    setPendingSync(null);
+  };
+  {/* Room sharing sync dialog */}
+  {dialogOpen && pendingSync && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 400, textAlign: 'center' }}>
+        <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar habitación compartida</h3>
+        <p style={{ fontSize: '1rem', marginBottom: 24 }}>
+          La persona seleccionada no tiene la relación de compartir habitación sincronizada.<br />
+          ¿Desea <b>sincronizar habitación</b> (ambos compartirán la misma habitación y tipo) o <b>borrar relación</b>?
+        </p>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+          <button className="btn-primario" onClick={handleSyncRoom} style={{ padding: '0.5rem 1.5rem' }}>Sincronizar habitación</button>
+          <button className="btn-secundario" onClick={handleRemoveRoom} style={{ padding: '0.5rem 1.5rem' }}>Borrar relación</button>
+        </div>
+      </div>
+    </div>
+  )}
 
   const actualizarDatosEmpresa = (campo, valor) => {
     setDatosEmpresa({ ...datosEmpresa, [campo]: valor });
