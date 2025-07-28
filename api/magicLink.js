@@ -20,6 +20,19 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
+  // Parsear body manualmente si es necesario (Vercel serverless)
+  if (!req.body || Object.keys(req.body).length === 0) {
+    try {
+      const rawBody = await new Promise((resolve) => {
+        let data = '';
+        req.on('data', chunk => { data += chunk; });
+        req.on('end', () => resolve(data));
+      });
+      req.body = JSON.parse(rawBody);
+    } catch {
+      req.body = {};
+    }
+  }
   const { userId, email } = req.body;
   if (!userId || !email) {
     return res.status(400).json({ error: 'Faltan parámetros' });
