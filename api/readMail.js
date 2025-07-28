@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 // Configuración de Firebase (ajusta con tus datos)
 const firebaseConfig = {
@@ -23,8 +23,7 @@ export default async function handler(req, res) {
   try {
     // Actualiza el campo "mailleido" del mailUsuarioEvento en Firestore
     const mailRef = doc(db, 'mailUsuarioEvento', id);
-    console
-    await setDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() });
+    await setDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() }, { merge: true });
     // Devuelve un pixel transparente
     res.setHeader('Content-Type', 'image/png');
     const pixel = Buffer.from(
