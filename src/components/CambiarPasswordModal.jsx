@@ -55,12 +55,11 @@ function CambiarPasswordModal({ usuario, esPrimerLogin, onPasswordCambiado, onCa
     setLoading(true);
     
     try {
-      // Cambiar contraseña (automáticamente marca passwordCambiado = true)
+      // Cambiar contraseña
       await FirebaseService.cambiarPassword(usuario.id, passwordData.password, esPrimerLogin);
-      
+      // Actualizar passwordCambiado a true explícitamente
+      await FirebaseService.actualizarUsuario(usuario.id, { passwordCambiado: true });
       console.log('✅ Contraseña cambiada exitosamente');
-      console.log('✅ Campo "Primera vez" automáticamente marcado como "No"');
-      
       onPasswordCambiado();
     } catch (error) {
       console.error('❌ Error cambiando contraseña:', error);

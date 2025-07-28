@@ -1,23 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import { actualizarPasswordCambiadoSiEmailCambio } from './useActualizarPasswordCambiado';
-  // Utilidad para marcar passwordCambiado=true si cambia el email
-  // Ref para guardar el email original de cada persona
-  const emailOriginalesRef = useRef({});
-
-  // Guardar emails originales al cargar personas
-  useEffect(() => {
-    const nuevos = {};
-    personas.forEach(p => {
-      nuevos[p.id] = p.email;
-    });
-    emailOriginalesRef.current = nuevos;
-  }, [formularioExistente, personas.length]);
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
-
 
 function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
@@ -327,8 +314,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     setDialogOpen(false);
     setPendingSync(null);
   };
-  {/* Room sharing sync dialog */}
-  {dialogOpen && pendingSync && (
+  // Room sharing sync dialog as a variable
+  const roomSharingDialog = dialogOpen && pendingSync && (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 400, textAlign: 'center' }}>
         <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar habitación compartida</h3>
@@ -342,7 +329,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         </div>
       </div>
     </div>
-  )}
+  );
 
   const actualizarDatosEmpresa = (campo, valor) => {
     setDatosEmpresa({ ...datosEmpresa, [campo]: valor });
@@ -462,6 +449,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
 
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
+      {roomSharingDialog}
 
       {/* Admin: Selector de usuario */}
       {rolUsuario === 'admin' && (
