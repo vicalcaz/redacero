@@ -1,5 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import React from 'react';
+import { actualizarPasswordCambiadoSiEmailCambio } from './useActualizarPasswordCambiado';
+  // Utilidad para marcar passwordCambiado=true si cambia el email
+  // Ref para guardar el email original de cada persona
+  const emailOriginalesRef = useRef({});
+
+  // Guardar emails originales al cargar personas
+  useEffect(() => {
+    const nuevos = {};
+    personas.forEach(p => {
+      nuevos[p.id] = p.email;
+    });
+    emailOriginalesRef.current = nuevos;
+  }, [formularioExistente, personas.length]);
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
@@ -808,7 +821,18 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                   <input
                     type="email"
                     value={persona.email}
-                    onChange={(e) => actualizarPersona(persona.id, 'email', e.target.value)}
+                    onChange={async (e) => {
+                      const nuevoEmail = e.target.value;
+                      const emailAnterior = emailOriginalesRef.current[persona.id] || '';
+                      if (emailAnterior && nuevoEmail && emailAnterior.trim().toLowerCase() !== nuevoEmail.trim().toLowerCase()) {
+                        // Buscar usuario por email anterior para obtener el id
+                        const usuario = await FirebaseService.obtenerUsuarioPorEmail(emailAnterior);
+                        if (usuario && usuario.id) {
+                          await actualizarPasswordCambiadoSiEmailCambio(usuario.id, emailAnterior, nuevoEmail);
+                        }
+                      }
+                      actualizarPersona(persona.id, 'email', nuevoEmail);
+                    }}
                     placeholder="ejemplo@dominio.com"
                     required
                     onInput={e => e.target.setCustomValidity('')}
