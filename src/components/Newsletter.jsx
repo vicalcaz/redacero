@@ -142,35 +142,19 @@ function Newsletter() {
     }
     setGuardando(true);
     try {
-      // 1. Solicitar magic link al backend
-      const magicRes = await fetch('/api/magicLink', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: usuarioId, email: usuario.email })
-      });
-      const magicData = await magicRes.json();
-      const magicUrl = magicData.url;
+      // Generar link de login con email y password (espacio)
+      const loginUrl = `https://redacero.vercel.app/login?email=${encodeURIComponent(usuario.email)}&password=%20`;
+      // Reemplazar @link en el cuerpo del mail por el link generado
+      let cuerpoMail = mail.cuerpo || '';
+      if (cuerpoMail.includes('@link')) {
+        const linkHtml = `<a href="${loginUrl}" style="background:#1976d2;color:#fff;padding:0.7em 1.5em;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block">Acceder al sistema</a>`;
+        cuerpoMail = cuerpoMail.replace(/@link/g, linkHtml);
+      }
       // Tracking pixel para mail leído (ID de Firestore: usuarioId_eventoId)
       const pixelUrl = `https://redacero.vercel.app/api/readMail?id=${usuarioId}_${eventoSeleccionado}`;
       const trackingPixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none" />`;
-      // 2. Agregar magic link personalizado al cuerpo del mail
-      const nombre = usuario.nombre || '';
-      const magicLinkHtml = `
-        <div style="font-family:sans-serif;">
-          <h2>¡Hola ${nombre}!</h2>
-          <p>Te damos la bienvenida al Encuentro Red Acero 2025.</p>
-          <p>Para acceder a la plataforma y cambiar tu contraseña, haz clic en el siguiente botón:</p>
-          <p>
-            <a href="${magicUrl}" style="background:#b00;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1.2em;font-weight:bold;display:inline-block;">
-              Acceder y cambiar contraseña
-            </a>
-          </p>
-          <p>Si tienes dudas, responde a este correo.</p>
-          <hr>
-          <small>Este enlace es válido por 30 minutos y solo puede usarse una vez.</small>
-        </div>
-      `;
-      const htmlConPixel = magicLinkHtml + (mail.cuerpo || '') + trackingPixel;
+      // El HTML del mail es: cuerpo con link reemplazado + tracking pixel
+      const htmlConPixel = cuerpoMail + trackingPixel;
       await sendMailViaApi({
         to: usuario.email,
         subject: mail.asunto || mail.nombre || 'Newsletter',

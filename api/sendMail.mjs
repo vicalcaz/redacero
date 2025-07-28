@@ -10,12 +10,26 @@ import { Resend } from 'resend';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
+// Genera un link de login con email y contraseña (espacio vacío)
+function generarLinkLogin(email) {
+  const baseUrl = 'https://redacero.vercel.app/login';
+  const params = new URLSearchParams({
+    email,
+    password: ' '
+  });
+  return `${baseUrl}?${params.toString()}`;
+}
   }
+
 
   const { to, subject, html } = req.body;
   if (!to || !subject || !html) {
     return res.status(400).json({ error: 'Faltan parámetros' });
   }
+
+  // Ejemplo de uso de la función para el primer destinatario:
+  // const link = generarLinkLogin(Array.isArray(to) ? to[0] : to);
+  // Puedes usar 'link' para armar el HTML del mail si lo necesitas.
 
   // Usa la API de Resend
   const resend = new Resend(process.env.RESEND_API_KEY);
