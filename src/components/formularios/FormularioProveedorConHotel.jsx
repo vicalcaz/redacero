@@ -52,7 +52,9 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     menuEspecial: '',
     atiendeReuniones: '',
     tipoHabitacion: '',
-    noches: 0
+    noches: 0,
+    comparteHabitacion: false, // Por defecto false
+    comparteCon: ''
   }]);
 
   const [comentarios, setComentarios] = useState('');
@@ -123,6 +125,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           atiendeReuniones: '',
           tipoHabitacion: '',
           noches: 0,
+          comparteHabitacion: false, // Por defecto false
+          comparteCon: ''
         }]);
         setComentarios('');
       }
@@ -195,7 +199,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       atiendeReuniones: '',
       tipoHabitacion: '',
       noches: 1,
-      acompanantes: 0
+      acompanantes: 0,
+      comparteHabitacion: false, // Por defecto false
+      comparteCon: '',
+      comentario: ''
     };
     setPersonas([...personas, nuevaPersona]);
   };
@@ -206,10 +213,45 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     }
   };
 
+  // Permite actualizar un campo individual o varios campos a la vez (merge)
   const actualizarPersona = (id, campo, valor) => {
-    setPersonas(personas.map(persona =>
-      persona.id === id ? { ...persona, [campo]: valor } : persona
-    ));
+    setPersonas(personas.map(persona => {
+      if (persona.id !== id) return persona;
+      let nuevaPersona = { ...persona };
+      if (campo === null && typeof valor === 'object' && valor !== null) {
+        nuevaPersona = { ...nuevaPersona, ...valor };
+      } else {
+        nuevaPersona = { ...nuevaPersona, [campo]: valor };
+      }
+      // Si se cambia la fecha de llegada o salida, recalcular noches
+      if (
+        campo === 'fechaLlegada' || campo === 'fechaSalida' ||
+        (campo === null && (valor.fechaLlegada !== undefined || valor.fechaSalida !== undefined))
+      ) {
+        const fechaLlegada = nuevaPersona.fechaLlegada;
+        const fechaSalida = nuevaPersona.fechaSalida;
+        let noches = 0;
+        if (fechaLlegada && fechaSalida) {
+          const llegada = new Date(fechaLlegada + 'T00:00:00');
+          const salida = new Date(fechaSalida + 'T00:00:00');
+          noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
+          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
+          if (
+            nuevaPersona.horaSalida &&
+            nuevaPersona.horaSalida > '10:00' &&
+            fechaSalida > fechaLlegada
+          ) {
+            noches += 1;
+          }
+          // Si no hay horaSalida, setear por defecto '10:00'
+          if (!nuevaPersona.horaSalida) {
+            nuevaPersona.horaSalida = '10:00';
+          }
+        }
+        nuevaPersona.noches = noches;
+      }
+      return nuevaPersona;
+    }));
   };
 
   const actualizarDatosEmpresa = (campo, valor) => {
@@ -225,12 +267,25 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       // 2. Calcular noches para cada persona
       const personasActualizadas = personas.map(persona => {
         let noches = 0;
+        let horaSalida = persona.horaSalida;
         if (persona.fechaLlegada && persona.fechaSalida) {
-          const fechaLlegada = new Date(persona.fechaLlegada);
-          const fechaSalida = new Date(persona.fechaSalida);
+          const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
+          const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
+          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
+          if (
+            persona.horaSalida &&
+            persona.horaSalida > '10:00' &&
+            persona.fechaSalida > persona.fechaLlegada
+          ) {
+            noches += 1;
+          }
+          // Si no hay horaSalida, setear por defecto '10:00'
+          if (!horaSalida) {
+            horaSalida = '10:00';
+          }
         }
-        return { ...persona, noches };
+        return { ...persona, noches, horaSalida };
       });
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
@@ -248,8 +303,9 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         usuarioCreador: emailParaGuardar.toLowerCase().trim()
       };
       let idFormularioExistente = formularioExistente?.id;
+      // Usar siempre la colección 'formularios' para guardar y actualizar
       if (idFormularioExistente) {
-        await FirebaseService.actualizarFormulario('formularios-proveedores', idFormularioExistente, formularioData);
+        await FirebaseService.actualizarFormulario('formularios', idFormularioExistente, formularioData);
         alert('✅ Formulario de Proveedor actualizado exitosamente!');
       } else {
         await FirebaseService.guardarFormularioProveedorConHotel(formularioData);
@@ -390,7 +446,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         ) : (
           <div className="seccion-formulario" >
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Selección de Evento <span style={{ color: 'red' }}>*</span>
+              📅 Evento Seleccionado <span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -514,6 +570,74 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
+          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
+            Resumen información formulario
+          </h3>
+          {/* Resumen de personas */}
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            alignItems: 'center',
+            fontSize: '1.08rem',
+            fontWeight: 500
+          }}>
+            <span>👥 Personas registradas: <b>{personas.length}</b></span>
+            {/* Tabla resumen de personas */}
+            <div style={{ width: '100%', marginTop: 8 }}>
+              <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.75rem', background: '#fff', borderRadius: 6, overflow: 'hidden', boxShadow: '0 1px 4px #bbb' }}>
+                <thead style={{ background: '#e3f2fd' }}>
+                  <tr>
+                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Nombre</th>
+                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Tipo Habitación</th>
+                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Comparte con</th>
+                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Fecha Llegada</th>
+                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Fecha Salida</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {personas.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
+                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.tipoHabitacion || '-'}</td>
+                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{(() => {
+                        if (p.comparteHabitacion && p.comparteCon) {
+                          const comp = personas.find(o => o.id === Number(p.comparteCon));
+                          return comp ? `${comp.nombre} ${comp.apellido}`.trim() : p.comparteCon;
+                        }
+                        return '-';
+                      })()}</td>
+                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.fechaLlegada || '-'}</td>
+                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.fechaSalida || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <span>🛏️ Total noches tomadas: <b>{personas.reduce((acc, p) => acc + (p.noches || 0), 0)}</b></span>
+            <span>🏨 Habitaciones tomadas: <b>{personas.filter(p => p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial').length}</b></span>
+        <span>🏨 Habitaciones tomadas: <b>{(() => {
+          // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
+          const habitaciones = new Set();
+          personas.forEach(p => {
+            if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+              if (p.comparteHabitacion && p.comparteCon) {
+                // Usar un id único para la pareja (menor id primero)
+                const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                habitaciones.add(ids);
+              } else {
+                habitaciones.add(String(p.id));
+              }
+            }
+          });
+          return habitaciones.size;
+        })()}</b></span>
+          </div>
           <h3>
             👥 Personas que asistirán
           </h3>
@@ -646,30 +770,88 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 </h5>
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
-                 <select
-                  value={persona.tipoHabitacion || ''}
-                  onChange={e => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
-                  required
-                  onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
-                  onInput={e => e.target.setCustomValidity('')}
-                  disabled={guardando || !edicionHabilitada}
-                >
-                  <option value="">-- Seleccione --</option>
-                  <option value="doble">Doble</option>
-                  <option value="matrimonial">single (Matrimonial)</option>
-                  </select> 
+                  <select
+                    value={persona.tipoHabitacion || ''}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (value === 'no-requiere') {
+                        actualizarPersona(persona.id, null, {
+                          tipoHabitacion: value,
+                          fechaLlegada: '',
+                          horaLlegada: '',
+                          fechaSalida: '',
+                          comparteCon: '',
+                          comparteHabitacion: false
+                        });
+                      } else {
+                        actualizarPersona(persona.id, 'tipoHabitacion', value);
+                      }
+                    }}
+                    required
+                    onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada}
+                  >
+                    <option value="">-- Seleccione --</option>
+                    <option value="doble">Doble</option>
+                    <option value="matrimonial">single (Matrimonial)</option>
+                    <option value="no-requiere">No requiere</option>
+                  </select>
                 </div>
-                {/* Campo Comentario */}
+                {/* Nuevo: ¿Comparte habitación? y Comparte con en la misma línea */}
+                {(persona.tipoHabitacion === 'doble' || persona.tipoHabitacion === 'matrimonial') && (
+                  <div className="campo-fila">
+                    <div className="campo-grupo" style={{ flex: 1, minWidth: 180 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                        ¿Comparte habitación?
+                        <input
+                          type="checkbox"
+                          checked={!!persona.comparteHabitacion}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
+                            } else {
+                              actualizarPersona(persona.id, 'comparteHabitacion', true);
+                            }
+                          }}
+                          disabled={guardando || !edicionHabilitada}
+                          style={{ marginLeft: 8 }}
+                        />
+                      </label>
+                    </div>
+                    <div className="campo-grupo" style={{ flex: 2, minWidth: 220 }}>
+                      <label>Comparte habitación con:</label>
+                      <select
+                        value={persona.comparteCon || ''}
+                        onChange={e => actualizarPersona(persona.id, 'comparteCon', e.target.value)}
+                        required={!!persona.comparteHabitacion}
+                        onInvalid={e => {
+                          if (persona.comparteHabitacion) {
+                            e.target.setCustomValidity('Por favor seleccione con quién comparte la habitación.');
+                          }
+                        }}
+                        onInput={e => e.target.setCustomValidity('')}
+                        disabled={guardando || !edicionHabilitada || !persona.comparteHabitacion}
+                        style={!persona.comparteHabitacion ? { background: '#eee', color: '#888' } : {}}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        {personas.filter(p => p.id !== persona.id).map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.nombre} {p.apellido}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
                   <input
                     type="text"
                     value={persona.comentario || ''}
                     onChange={e => actualizarPersona(persona.id, 'comentario', e.target.value)}
-                    placeholder="Ej: Indique con quién comparte habitación o a quién reemplaza"
-                    required
-                    onInvalid={e => e.target.setCustomValidity('Por favor indique en caso de corresponder o no con quien comparte habitación o a quien reemplaza.')}
-                    onInput={e => e.target.setCustomValidity('')}
+                    placeholder="Ej: Indique cualquier observación sobre la habitación seleccionada (opcional)"
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
@@ -679,12 +861,16 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Fecha de Llegada:</label>
                     <select
-                      value={persona.fechaLlegada}
-                      onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
-                      required
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
-                      onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando || !edicionHabilitada}
+                    value={persona.fechaLlegada}
+                    onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
+                    required={persona.tipoHabitacion !== 'no-requiere'}
+                    onInvalid={e => {
+                      if (persona.tipoHabitacion !== 'no-requiere') {
+                        e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.');
+                      }
+                    }}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
@@ -725,13 +911,17 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Hora de Llegada:</label>
                     <input
-                      type="time"
-                      value={persona.horaLlegada}
-                      onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.')}
-                      onInput={e => e.target.setCustomValidity('')}
-                      required
-                      disabled={guardando || !edicionHabilitada}
+                    type="time"
+                    value={persona.horaLlegada}
+                    onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
+                    onInvalid={e => {
+                      if (persona.tipoHabitacion !== 'no-requiere') {
+                        e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.');
+                      }
+                    }}
+                    onInput={e => e.target.setCustomValidity('')}
+                    required={persona.tipoHabitacion !== 'no-requiere'}
+                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
                   </div>
                 </div>
@@ -740,12 +930,16 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Fecha de Salida:</label>
                     <select
-                      value={persona.fechaSalida}
-                      onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
-                      required
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
-                      onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando || !edicionHabilitada}
+                    value={persona.fechaSalida}
+                    onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                    required={persona.tipoHabitacion !== 'no-requiere'}
+                    onInvalid={e => {
+                      if (persona.tipoHabitacion !== 'no-requiere') {
+                        e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.');
+                      }
+                    }}
+                    onInput={e => e.target.setCustomValidity('')}
+                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
@@ -787,11 +981,11 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Hora de Salida:</label>
                     <input
-                      type="time"
-                      value="10:00"
-                      readOnly
-                      disabled
-                      required
+                    type="time"
+                    value="10:00"
+                    readOnly
+                    required={persona.tipoHabitacion !== 'no-requiere'}
+                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
                   
                   </div>

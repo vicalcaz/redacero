@@ -13,10 +13,15 @@ import Newsletter from './Newsletter';
 import './Dashboard.css';
 
 // Utilidad para obtener rango de fechas entre dos strings YYYY-MM-DD (inclusive)
-function getRangoFechas(desde, hasta) {
+// Recibe opcionalmente horaSalida. Si horaSalida <= '10:00', no incluye el día de salida.
+function getRangoFechas(desde, hasta, horaSalida) {
   const fechas = [];
   let d = new Date(desde + 'T00:00:00Z');
-  const h = new Date(hasta + 'T00:00:00Z');
+  let h = new Date(hasta + 'T00:00:00Z');
+  // Si la hora de salida es <= 10:00, no incluir el día de salida
+  if (!horaSalida || horaSalida <= '10:00') {
+    h.setUTCDate(h.getUTCDate() - 1);
+  }
   while (d <= h) {
     fechas.push(d.toISOString().slice(0, 10));
     d.setUTCDate(d.getUTCDate() + 1);
@@ -31,8 +36,8 @@ function ResumenHabitaciones({ formularios }) {
     if (!f.personas || !Array.isArray(f.personas)) return;
     f.personas.forEach(p => {
       if (!p.fechaLlegada || !p.fechaSalida) return;
-      // Rango de fechas ocupadas por esta persona
-      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida);
+      // Rango de fechas ocupadas por esta persona (ajustado por hora de salida)
+      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida, p.horaSalida);
       fechas.forEach(fecha => {
         if (!ocupacion[fecha]) ocupacion[fecha] = { dobles: new Set(), matrimoniales: 0 };
         if (p.tipoHabitacion === 'matrimonial') {
@@ -75,26 +80,37 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
   const [showHabitacionesDetalle, setShowHabitacionesDetalle] = useState(false);
   const [showUsuariosSinFormDetalle, setShowUsuariosSinFormDetalle] = useState(false);
 
-  // Calcular habitaciones tomadas (suma de dobles y matrimoniales por día)
+  // Calcular habitaciones tomadas únicas en todo el evento (no por día)
   let totalHabitaciones = 0;
-  const ocupacion = {};
+  let totalNoches = 0;
+    const habitacionesUnicas = new Set(); // Set de habitaciones únicas (doble compartida, doble individual, matrimonial)
+  const nochesPorHabitacion = new Map(); // habitacionId -> Set de fechas
   formularios.forEach(f => {
     if (!f.personas || !Array.isArray(f.personas)) return;
     f.personas.forEach(p => {
       if (!p.fechaLlegada || !p.fechaSalida) return;
-      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida);
-      fechas.forEach(fecha => {
-        if (!ocupacion[fecha]) ocupacion[fecha] = { dobles: new Set(), matrimoniales: 0 };
-        if (p.tipoHabitacion === 'matrimonial') {
-          ocupacion[fecha].matrimoniales += 1;
-        } else if (p.tipoHabitacion === 'doble' && p.comparteCon) {
-          const pareja = [String(p.id), String(p.comparteCon)].sort().join('-');
-          ocupacion[fecha].dobles.add(pareja);
+      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida, p.horaSalida);
+      let habitacionId = null;
+      if (p.tipoHabitacion === 'matrimonial') {
+        habitacionId = `matrimonial-${p.id}`;
+      } else if (p.tipoHabitacion === 'doble') {
+        if (p.comparteCon) {
+          // Compartida: id único por pareja
+          habitacionId = `doble-${[String(p.id), String(p.comparteCon)].sort().join('-')}`;
+        } else {
+          // No compartida: id único por persona
+          habitacionId = `doble-${p.id}`;
         }
-      });
+      }
+      if (habitacionId) {
+        habitacionesUnicas.add(habitacionId);
+        if (!nochesPorHabitacion.has(habitacionId)) nochesPorHabitacion.set(habitacionId, new Set());
+        fechas.forEach(fch => nochesPorHabitacion.get(habitacionId).add(fch));
+      }
     });
   });
-  totalHabitaciones = Object.values(ocupacion).reduce((acc, o) => acc + o.dobles.size + o.matrimoniales, 0);
+  totalHabitaciones = habitacionesUnicas.size;
+  totalNoches = Array.from(nochesPorHabitacion.values()).reduce((acc, set) => acc + set.size, 0);
 
   return (
     <div className="dashboard-inicio">
@@ -183,20 +199,91 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             </button>
           </div>
 
-          {/* Habitaciones tomadas */}
-          <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9'}}>
-            <div className="stat-icon">🏨</div>
-            <div className="stat-content">
-              <h3>Habitaciones tomadas</h3>
-              <span className="stat-number">{totalHabitaciones}</span>
-              <p>Sumatoria de dobles y matrimoniales</p>
+          {/* Card de noches ocupadas */}
+          <div className="stat-card noches" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🌙</div>
+              <div>
+                <h3 style={{margin: 0}}>Noches ocupadas</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>{totalNoches}</span>
+                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Cada noche ocupada por una habitación doble compartida o matrimonial se suma una vez.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card de habitaciones tomadas */}
+          <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🏨</div>
+              <div>
+                <h3 style={{margin: 0}}>Habitaciones tomadas</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>{totalHabitaciones}</span>
+                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Si una habitación doble es compartida por varias noches, se cuenta solo una vez en el total.</span>
+                </div>
+              </div>
             </div>
             <button 
               onClick={() => setShowHabitacionesDetalle(v => !v)}
               className="stat-action"
+              style={{marginTop: 16}}
             >
-              {showHabitacionesDetalle ? 'Ocultar detalle' : 'Ver →'}
+              {showHabitacionesDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
             </button>
+          </div>
+
+          {/* Card de personas registradas */}
+          <div className="stat-card personas-registradas" style={{background:'#f8fafc', border:'1px solid #90caf9', position: 'relative', minHeight: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem 1rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>👥</div>
+              <div>
+                <h3 style={{margin: 0}}>Personas registradas</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>{(() => {
+                  let total = 0;
+                  formularios.forEach(f => {
+                    if (Array.isArray(f.personas)) total += f.personas.length;
+                  });
+                  return total;
+                })()}</span>
+              </div>
+            </div>
+            <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 32, marginTop: 0, width: '100%'}}>
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70}}>
+                <span style={{fontSize: '1.1rem'}}>🧑‍💼</span>
+                <span style={{fontSize: '0.98rem', color: '#1976d2', fontWeight: 500, marginTop: 2}}>Socios</span>
+                <span style={{fontSize: '1.15rem', fontWeight: 600, marginTop: 2}}>{(() => {
+                  let socios = 0;
+                  formularios.forEach(f => {
+                    if (f.tipo === 'socio' && Array.isArray(f.personas)) socios += f.personas.length;
+                  });
+                  return socios;
+                })()}</span>
+              </div>
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70}}>
+                <span style={{fontSize: '1.1rem'}}>🏨</span>
+                <span style={{fontSize: '0.98rem', color: '#1976d2', fontWeight: 500, marginTop: 2}}>Prov. c/hotel</span>
+                <span style={{fontSize: '1.15rem', fontWeight: 600, marginTop: 2}}>{(() => {
+                  let provCon = 0;
+                  formularios.forEach(f => {
+                    if (f.tipo === 'proveedor-con-hotel' && Array.isArray(f.personas)) provCon += f.personas.length;
+                  });
+                  return provCon;
+                })()}</span>
+              </div>
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70}}>
+                <span style={{fontSize: '1.1rem'}}>🚚</span>
+                <span style={{fontSize: '0.98rem', color: '#1976d2', fontWeight: 500, marginTop: 2}}>Prov. s/hotel</span>
+                <span style={{fontSize: '1.15rem', fontWeight: 600, marginTop: 2}}>{(() => {
+                  let provSin = 0;
+                  formularios.forEach(f => {
+                    if (f.tipo === 'proveedor-sin-hotel' && Array.isArray(f.personas)) provSin += f.personas.length;
+                  });
+                  return provSin;
+                })()}</span>
+              </div>
+            </div>
           </div>
 
           {/* Usuarios sin formulario */}
@@ -359,6 +446,9 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
 
   const handleViewChange = (vista) => {
     setVistaActual(vista);
+    if (vista === 'inicio') {
+      cargarEstadisticas();
+    }
   };
 
   const renderVistaActual = () => {

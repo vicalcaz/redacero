@@ -1,3 +1,14 @@
+/* Asegura que el line-height inline de Quill se respete en las notas de inicio y fin */
+.nota-inicio-formulario [style*="line-height"],
+.nota-fin-formulario [style*="line-height"] {
+  line-height: inherit !important;
+}
+
+.nota-inicio-formulario,
+.nota-fin-formulario {
+  /* Permite que los estilos inline tengan prioridad */
+  line-height: normal;
+}
 /* Variables CSS para tema RedAcero 
  --color-azul-oscuro: #453796;  
   --color-azul-medio:  #5754a4;  
@@ -687,7 +698,7 @@ button:disabled {
 .nota-inicio-formulario {
   margin: 12px 0 24px 0;
   color: var(--color-gris);
-  font-weight: 500;
+ /* font-weight: 500;*/
   text-align: left;
 }
 

@@ -154,8 +154,8 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
       miercoles: '',
       asisteCena: '',
       menuEspecial: '',
-      atiendeReuniones: ''
-      
+      atiendeReuniones: '',
+      comentario: ''
     };
     setPersonas([...personas, nuevaPersona]);
   };
@@ -199,7 +199,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
       };
       let idFormularioExistente = formularioExistente?.id;
       if (idFormularioExistente) {
-        await FirebaseService.actualizarFormulario('formularios-proveedores', idFormularioExistente, formularioData);
+        await FirebaseService.actualizarFormulario('formularios', idFormularioExistente, formularioData);
         alert('✅ Formulario de Proveedor actualizado exitosamente!');
       } else {
         await FirebaseService.guardarFormularioProveedorSinHotel(formularioData);
@@ -352,7 +352,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         ) : (
           <div className="seccion-formulario" >
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Selección de Evento <span style={{ color: 'red' }}>*</span>
+              📅 Evento seleccionado<span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -476,6 +476,27 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
+          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
+            Resumen información formulario
+          </h3>
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            alignItems: 'center',
+            fontSize: '1.08rem',
+            fontWeight: 500
+          }}>
+            <span>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ fontSize: '0.98rem', color: '#333', marginLeft: 12 }}>
+              {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
+            </span>
+          </div>
           <h3>
             👥 Personas que asistirán
           </h3>

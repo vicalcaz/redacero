@@ -23,6 +23,9 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     cantidad_personas: 0
   });
 
+  // Estado para controlar si se está guardando el formulario
+  const [guardando, setGuardando] = useState(false);
+
   const [personas, setPersonas] = useState([{
     id: 1,
     nombre: '',
@@ -43,11 +46,12 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     menuEspecial: '',
     atiendeReuniones: '',
     tipoHabitacion: '',
-    noches: 0
+    noches: 0,
+    comparteHabitacion: false, // Por defecto false
+    comparteCon: ''
   }]);
 
   const [comentarios, setComentarios] = useState('');
-  const [guardando, setGuardando] = useState(false);
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
   const [eventosLoading, setEventosLoading] = useState(true);
@@ -99,6 +103,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           atiendeReuniones: '',
           tipoHabitacion: '',
           noches: 0,
+          comparteHabitacion: false, // Por defecto false
+          comparteCon: ''
         }]);
         setComentarios('');
       }
@@ -149,7 +155,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   }, []);
 
   const agregarPersona = () => {
-    const nuevaPersona = {
+    const nuevaPersona = { 
       id: personas.length + 1,
       nombre: '',
       apellido: '',
@@ -171,7 +177,10 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       atiendeReuniones: '',
       tipoHabitacion: '',
       noches: 1,
-      acompanantes: 0
+      acompanantes: 0,
+      comparteHabitacion: false, // Por defecto false
+      comparteCon: '',
+      comentario: '' // Asegura que el campo comentario también esté presente
     };
     setPersonas([...personas, nuevaPersona]);
   };
@@ -183,9 +192,43 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   };
 
   const actualizarPersona = (id, campo, valor) => {
-    setPersonas(personas.map(persona =>
-      persona.id === id ? { ...persona, [campo]: valor } : persona
-    ));
+    setPersonas(personas.map(persona => {
+      if (persona.id !== id) return persona;
+      let nuevaPersona = { ...persona };
+      if (campo === null && typeof valor === 'object' && valor !== null) {
+        nuevaPersona = { ...nuevaPersona, ...valor };
+      } else {
+        nuevaPersona = { ...nuevaPersona, [campo]: valor };
+      }
+      // Si se cambia la fecha de llegada o salida, recalcular noches
+      if (
+        campo === 'fechaLlegada' || campo === 'fechaSalida' ||
+        (campo === null && (valor.fechaLlegada !== undefined || valor.fechaSalida !== undefined))
+      ) {
+        const fechaLlegada = nuevaPersona.fechaLlegada;
+        const fechaSalida = nuevaPersona.fechaSalida;
+        let noches = 0;
+        if (fechaLlegada && fechaSalida) {
+          const llegada = new Date(fechaLlegada + 'T00:00:00');
+          const salida = new Date(fechaSalida + 'T00:00:00');
+          noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
+          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
+          if (
+            nuevaPersona.horaSalida &&
+            nuevaPersona.horaSalida > '10:00' &&
+            fechaSalida > fechaLlegada
+          ) {
+            noches += 1;
+          }
+          // Si no hay horaSalida, setear por defecto '10:00'
+          if (!nuevaPersona.horaSalida) {
+            nuevaPersona.horaSalida = '10:00';
+          }
+        }
+        nuevaPersona.noches = noches;
+      }
+      return nuevaPersona;
+    }));
   };
 
   const actualizarDatosEmpresa = (campo, valor) => {
@@ -201,12 +244,25 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       // 2. Calcular noches para cada persona
       const personasActualizadas = personas.map(persona => {
         let noches = 0;
+        let horaSalida = persona.horaSalida;
         if (persona.fechaLlegada && persona.fechaSalida) {
-          const fechaLlegada = new Date(persona.fechaLlegada);
-          const fechaSalida = new Date(persona.fechaSalida);
+          const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
+          const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
+          // Solo sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
+          if (
+            persona.horaSalida &&
+            persona.horaSalida > '10:00' &&
+            persona.fechaSalida > persona.fechaLlegada
+          ) {
+            noches += 1;
+          }
+          // Si no hay horaSalida, setear por defecto '10:00'
+          if (!horaSalida) {
+            horaSalida = '10:00';
+          }
         }
-        return { ...persona, noches, comparteCon: persona.comparteCon || null };
+        return { ...persona, noches, horaSalida, comparteCon: persona.comparteCon || null };
       });
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
@@ -215,7 +271,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       };
       const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
       const formularioData = {
-        tipo: 'Socio',
+        tipo: 'socio',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
         personas: personasActualizadas,
@@ -227,7 +283,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       // Si existe, actualizar, si no, crear nuevo
       if (idFormularioExistente) {
         // Actualizar el documento existente
-        await FirebaseService.actualizarFormulario('formularios-socios', idFormularioExistente, formularioData);
+        await FirebaseService.actualizarFormulario('formularios', idFormularioExistente, formularioData);
         alert('✅ Formulario de Socio actualizado exitosamente!');
       } else {
         await FirebaseService.guardarFormularioSocio(formularioData);
@@ -384,7 +440,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         ) : (
           <div className="seccion-formulario" >
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Selección de Evento <span style={{ color: 'red' }}>*</span>
+              📅 Evento seleccionado <span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -511,6 +567,74 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
+          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
+            Resumen información formulario
+          </h3>
+          {/* Resumen de personas */}
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            alignItems: 'center',
+            fontSize: '1.08rem',
+            fontWeight: 500
+          }}>
+            <span style={{ fontSize: '0.92em' }}>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
+              {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
+            </span>
+            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{personas.reduce((acc, p) => acc + (p.noches || 0), 0)}</b></span>
+            <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
+              // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
+              const habitaciones = new Set();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    habitaciones.add(ids);
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.add(String(p.id));
+                  }
+                }
+              });
+              return habitaciones.size;
+            })()}</b></span>
+          </div>
+        {/* Tabla resumen de personas */}
+        <div style={{ margin: '1.5rem 0', overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%', background: '#f8fafc', fontSize: '0.75rem' }}>
+            <thead>
+              <tr style={{ background: '#e3f2fd', color: '#1976d2' }}>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Nombre</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Tipo Habitación</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Comparte con</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Llegada</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Salida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {personas.map((p, i) => (
+                <tr key={p.id}>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.tipoHabitacion ? (p.tipoHabitacion.charAt(0).toUpperCase() + p.tipoHabitacion.slice(1)) : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.comparteHabitacion && p.comparteCon ? (() => {
+                    const comp = personas.find(o => String(o.id) === String(p.comparteCon));
+                    return comp ? `${comp.nombre} ${comp.apellido}`.trim() : '';
+                  })() : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaLlegada ? p.fechaLlegada.split('-').reverse().join('/') : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaSalida ? p.fechaSalida.split('-').reverse().join('/') : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
           <h3>
             👥 Personas que asistirán
           </h3>
@@ -652,40 +776,114 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                 }}>
                   🏨 Información de Alojamiento
                 </h5>
+                {/* Mostrar noches y días tomados */}
+                {(persona.fechaLlegada && persona.fechaSalida) && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    marginBottom: 12
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.05rem' }}>
+                      Noches tomadas: {persona.noches || 0}
+                    </div>
+                    <div style={{ fontWeight: 500, color: '#424242', fontSize: '0.98rem' }}>
+                      Días tomados: {(() => {
+                        // Calcular días tomados (array de fechas)
+                        const llegada = new Date(persona.fechaLlegada + 'T00:00:00');
+                        const salida = new Date(persona.fechaSalida + 'T00:00:00');
+                        let dias = [];
+                        let d = new Date(llegada);
+                        // Si noches=0, no mostrar nada
+                        if (!persona.noches || isNaN(llegada) || isNaN(salida)) return '-';
+                        // Si noches=1, solo el día de llegada
+                        if (persona.noches === 1) {
+                          dias.push(llegada.toLocaleDateString('es-AR'));
+                        } else {
+                          for (let i = 0; i < persona.noches; i++) {
+                            dias.push(new Date(d).toLocaleDateString('es-AR'));
+                            d.setDate(d.getDate() + 1);
+                          }
+                        }
+                        return dias.join(', ');
+                      })()}
+                    </div>
+                  </div>
+                )}
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
                   <select
-                    value={persona.tipoHabitacion || ''}
-                    onChange={e => actualizarPersona(persona.id, 'tipoHabitacion', e.target.value)}
-                    required
+                    value={String(persona.tipoHabitacion || '')}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (value === 'no-requiere') {
+                        actualizarPersona(persona.id, null, {
+                          tipoHabitacion: value,
+                          fechaLlegada: '',
+                          horaLlegada: '',
+                          fechaSalida: '',
+                          comparteCon: '',
+                          comparteHabitacion: false
+                        });
+                      } else {
+                        actualizarPersona(persona.id, 'tipoHabitacion', value);
+                      }
+                    }}
+                    required={edicionHabilitada}
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando || !edicionHabilitada}
                   >
                     <option value="">-- Seleccione --</option>
                     <option value="doble">Doble</option>
                     <option value="matrimonial">Single (Matrimonial)</option>
+                    <option value="no-requiere">No requiere</option>
                   </select>
                 </div>
-                {/* Nuevo campo: Comparte habitación con... solo si es doble */}
-                {persona.tipoHabitacion === 'doble' && (
-                  <div className="campo-grupo">
-                    <label>Comparte habitación con:</label>
-                    <select
-                      value={persona.comparteCon || ''}
-                      onChange={e => actualizarPersona(persona.id, 'comparteCon', e.target.value)}
-                      required
-                      onInvalid={e => e.target.setCustomValidity('Por favor seleccione con quién comparte la habitación.')}
-                      onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando || !edicionHabilitada}
-                    >
-                      <option value="">-- Seleccione --</option>
-                      {personas.filter(p => p.id !== persona.id).map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} {p.apellido}
-                        </option>
-                      ))}
-                    </select>
+                {/* Nuevo: ¿Comparte habitación? y Comparte con en la misma línea */}
+                {(persona.tipoHabitacion === 'doble' || persona.tipoHabitacion === 'matrimonial') && (
+                  <div className="campo-fila">
+                    <div className="campo-grupo" style={{ flex: 1, minWidth: 180 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!persona.comparteHabitacion}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            if (!checked) {
+                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
+                            } else {
+                              actualizarPersona(persona.id, 'comparteHabitacion', true);
+                            }
+                          }}
+                          disabled={guardando || !edicionHabilitada}
+                          style={{ marginRight: 8 }}
+                        />
+                        ¿Comparte habitación?
+                      </label>
+                    </div>
+                    <div className="campo-grupo" style={{ flex: 2, minWidth: 220 }}>
+                      <label>Comparte habitación con:</label>
+                      <select
+                        value={persona.comparteCon || ''}
+                        onChange={e => actualizarPersona(persona.id, 'comparteCon', e.target.value)}
+                        required={!!persona.comparteHabitacion}
+                        onInvalid={e => {
+                          if (persona.comparteHabitacion) {
+                            e.target.setCustomValidity('Por favor seleccione con quién comparte la habitación.');
+                          }
+                        }}
+                        onInput={e => e.target.setCustomValidity('')}
+                        disabled={guardando || !edicionHabilitada || !persona.comparteHabitacion}
+                        style={!persona.comparteHabitacion ? { background: '#eee', color: '#888' } : {}}
+                      >
+                        <option value="">-- Seleccione --</option>
+                        {personas.filter(p => p.id !== persona.id).map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.nombre} {p.apellido}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
                 {/* Campo Comentario */}
@@ -695,10 +893,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     type="text"
                     value={persona.comentario || ''}
                     onChange={e => actualizarPersona(persona.id, 'comentario', e.target.value)}
-                    placeholder="Ej: Indique con quién comparte habitación o a quién reemplaza"
-                    required
-                    onInvalid={e => e.target.setCustomValidity('Por favor indique en caso de corresponder o no con quien comparte habitación o a quien reemplaza.')}
-                    onInput={e => e.target.setCustomValidity('')}
+                    placeholder="Ej: Indique cualquier observación sobre la habitación seleccionada (opcional)"
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
@@ -710,10 +905,14 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     <select
                       value={persona.fechaLlegada}
                       onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
-                      required
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.')}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.');
+                        }
+                      }}
                       onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando || !edicionHabilitada}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
@@ -764,10 +963,14 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                       type="time"
                       value={persona.horaLlegada}
                       onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.')}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.');
+                        }
+                      }}
                       onInput={e => e.target.setCustomValidity('')}
-                      required
-                      disabled={guardando || !edicionHabilitada}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
                   </div>
                 </div>
@@ -778,10 +981,14 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     <select
                       value={persona.fechaSalida}
                       onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
-                      required
-                      onInvalid={e => e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.')}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.');
+                        }
+                      }}
                       onInput={e => e.target.setCustomValidity('')}
-                      disabled={guardando || !edicionHabilitada}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
@@ -833,8 +1040,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                       type="time"
                       value="10:00"
                       readOnly
-                      required
-                      disabled={guardando || !edicionHabilitada}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
                   </div>
                 </div>
@@ -1026,7 +1233,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       </form>
 
       {configSocio?.notafin && (
-        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configSocio.notafin }} />
+        <div className="nota-fin-formulario" style={{ margin: '12px 0' }} dangerouslySetInnerHTML={{ __html: configSocio.notafin }} />
       )}
      
     </div>

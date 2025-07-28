@@ -12,6 +12,7 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout }) {
     { key: 'personalizacion', label: 'Personalizar', icon: '🎨' },
     { key: 'tablerocontrol', label: 'Tablero de Control', icon: '📊' },
     { key: 'newsletter', label: 'Newsletter', icon: '📧' },
+    { key: 'listados', label: 'Listados', icon: '📋' },
   ];
 
   return (
