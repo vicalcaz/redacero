@@ -8,6 +8,7 @@ function parseFecha(fecha) {
   return null;
 }
 import { useEffect, useState } from 'react';
+import React from 'react';
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
@@ -15,6 +16,9 @@ import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
 
 function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
+  // Dialog state for room sharing sync
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingSync, setPendingSync] = useState(null); // {personaId, targetId, tipoHabitacion}
   const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
 
   // Admin user selector state
@@ -214,7 +218,21 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   };
 
   // Permite actualizar un campo individual o varios campos a la vez (merge)
+  // Synchronized room sharing logic with dialog
   const actualizarPersona = (id, campo, valor) => {
+    // Detect if this is a room sharing change
+    if ((campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined)) && (valor !== '' && valor !== undefined)) {
+      const targetId = campo === 'comparteCon' ? valor : valor.comparteCon;
+      const persona = personas.find(p => p.id === id);
+      const target = personas.find(p => String(p.id) === String(targetId));
+      if (target && (target.comparteCon !== String(id) || target.tipoHabitacion !== persona.tipoHabitacion || !target.comparteHabitacion)) {
+        // Prompt user to sync or remove
+        setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: persona.tipoHabitacion });
+        setDialogOpen(true);
+        return;
+      }
+    }
+    // Normal update logic
     setPersonas(personas.map(persona => {
       if (persona.id !== id) return persona;
       let nuevaPersona = { ...persona };
@@ -235,7 +253,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           const llegada = new Date(fechaLlegada + 'T00:00:00');
           const salida = new Date(fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
-          // Sumar una noche extra si la hora de salida es > 10:00 y la fecha de salida es mayor a la de llegada
           if (
             nuevaPersona.horaSalida &&
             nuevaPersona.horaSalida > '10:00' &&
@@ -243,7 +260,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           ) {
             noches += 1;
           }
-          // Si no hay horaSalida, setear por defecto '10:00'
           if (!nuevaPersona.horaSalida) {
             nuevaPersona.horaSalida = '10:00';
           }
@@ -253,6 +269,52 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       return nuevaPersona;
     }));
   };
+
+  // Dialog handlers
+  const handleSyncRoom = () => {
+    if (!pendingSync) return;
+    setPersonas(personas => personas.map(p => {
+      if (p.id === pendingSync.personaId) {
+        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.targetId) };
+      }
+      if (p.id === pendingSync.targetId) {
+        return { ...p, comparteHabitacion: true, comparteCon: String(pendingSync.personaId), tipoHabitacion: personas.find(x => x.id === pendingSync.personaId)?.tipoHabitacion || '' };
+      }
+      return p;
+    }));
+    setDialogOpen(false);
+    setPendingSync(null);
+  };
+  const handleRemoveRoom = () => {
+    if (!pendingSync) return;
+    setPersonas(personas => personas.map(p => {
+      if (p.id === pendingSync.personaId) {
+        return { ...p, comparteHabitacion: false, comparteCon: '' };
+      }
+      if (p.id === pendingSync.targetId) {
+        return { ...p, comparteHabitacion: false, comparteCon: '' };
+      }
+      return p;
+    }));
+    setDialogOpen(false);
+    setPendingSync(null);
+  };
+  {/* Room sharing sync dialog */}
+  {dialogOpen && pendingSync && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 400, textAlign: 'center' }}>
+        <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar habitación compartida</h3>
+        <p style={{ fontSize: '1rem', marginBottom: 24 }}>
+          La persona seleccionada no tiene la relación de compartir habitación sincronizada.<br />
+          ¿Desea sincronizar la relación (ambos compartirán la misma habitación y tipo) o eliminar la relación?
+        </p>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+          <button className="btn-primario" onClick={handleSyncRoom} style={{ padding: '0.5rem 1.5rem' }}>Sincronizar</button>
+          <button className="btn-secundario" onClick={handleRemoveRoom} style={{ padding: '0.5rem 1.5rem' }}>Eliminar relación</button>
+        </div>
+      </div>
+    </div>
+  )}
 
   const actualizarDatosEmpresa = (campo, valor) => {
     setDatosEmpresa({ ...datosEmpresa, [campo]: valor });
