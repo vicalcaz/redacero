@@ -11,7 +11,8 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+// Evita inicializar más de una vez
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
@@ -22,7 +23,8 @@ export default async function handler(req, res) {
   try {
     // Actualiza el campo "mailleido" del mailUsuarioEvento en Firestore
     const mailRef = doc(db, 'mailUsuarioEvento', id);
-    await updateDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() });
+    console
+    await setDoc(mailRef, { mailleido: true, fechaleido: new Date().toISOString() });
     // Devuelve un pixel transparente
     res.setHeader('Content-Type', 'image/png');
     const pixel = Buffer.from(
