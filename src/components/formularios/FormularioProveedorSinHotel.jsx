@@ -1,3 +1,30 @@
+  // --- Confirmación de salida si hay cambios no guardados ---
+  const [formDirty, setFormDirty] = useState(false);
+  useEffect(() => {
+    if (!formularioExistente) {
+      setFormDirty(
+        personas.length > 1 ||
+        Object.values(personas[0]).some(v => v) ||
+        Object.values(datosEmpresa).some(v => v) ||
+        comentarios
+      );
+      return;
+    }
+    const personasIguales = JSON.stringify(personas) === JSON.stringify(formularioExistente.personas || []);
+    const empresaIgual = JSON.stringify(datosEmpresa) === JSON.stringify(formularioExistente.datosEmpresa || {});
+    const comentariosIgual = comentarios === (formularioExistente.comentarios || '');
+    setFormDirty(!(personasIguales && empresaIgual && comentariosIgual));
+  }, [personas, datosEmpresa, comentarios, formularioExistente]);
+
+  const handleVolver = () => {
+    if (formDirty) {
+      if (window.confirm('Recuerde guardar los cambios antes de salir del formulario. ¿Desea continuar de todos modos y salir?')) {
+        onCancel && onCancel();
+      }
+    } else {
+      onCancel && onCancel();
+    }
+  };
 import { useEffect, useState } from 'react';
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
@@ -188,7 +215,9 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         cantidad_personas: cantidadPersonas
       };
       // Siempre usar el usuario logueado para usuarioCreador
-      const emailParaGuardar = user?.email || '';
+      const emailParaBuscar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user?.email;
+      
+
       // Asegurar que menuEspecial siempre tenga valor en cada persona
       const personasActualizadas = personas.map(persona => ({
         ...persona,
@@ -201,7 +230,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         personas: personasActualizadas,
         comentarios,
         fechaEnvio: new Date().toISOString(),
-        usuarioCreador: emailParaGuardar.toLowerCase().trim()
+        usuarioCreador: e<mail>ParaGuardar.toLowerCase().trim()
       };
       let idFormularioExistente = formularioExistente?.id;
       if (idFormularioExistente) {
@@ -531,19 +560,6 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
                   >
                     🗑️ Eliminar
                   </button>
-                )}
-              </div>
-              
-              <div className="campo-fila">
-                <div className="campo-grupo">
-                  <label>Nombre:</label>
-                  <input
-                    type="text"
-                    value={persona.nombre}
-                    onChange={(e) => actualizarPersona(persona.id, 'nombre', e.target.value)}
-                    required
-                    disabled={guardando || !edicionHabilitada}
-                  />
                 </div>
                 <div className="campo-grupo">
                   <label>Apellido:</label>
@@ -817,7 +833,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
           <button
             type="button"
             className="btn-secundario"
-            onClick={onCancel}
+            onClick={handleVolver}
             style={{ marginLeft: '1rem' }}
           >
             ← Volver
