@@ -6,84 +6,42 @@ function calcularTotalNochesTomadas(personas) {
   const procesados = new Set();
   let total = 0;
   for (let i = 0; i < personas.length; i++) {
-    const p = personas[i];
-    if (!p.fechaLlegada || !p.fechaSalida) continue;
-    if (
-      p.comparteHabitacion && p.comparteCon &&
-      !procesados.has(p.id) &&
-      (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial')
-    ) {
-      const companero = personas.find(q => String(q.id) === String(p.comparteCon));
-      if (
-        companero &&
-        companero.comparteHabitacion && String(companero.comparteCon) === String(p.id) &&
-        companero.tipoHabitacion === p.tipoHabitacion &&
-        companero.fechaLlegada && companero.fechaSalida
-      ) {
-        const desde = Math.max(toDate(p.fechaLlegada), toDate(companero.fechaLlegada));
-        const hasta = Math.min(toDate(p.fechaSalida), toDate(companero.fechaSalida));
-        let nochesCompartidas = 0;
-        if (desde < hasta) {
-          nochesCompartidas = Math.round((hasta - desde) / (1000 * 60 * 60 * 24));
-        }
-        total += nochesCompartidas;
-        const nochesSoloP = Math.max(0, Math.round((Math.min(desde, toDate(p.fechaSalida)) - toDate(p.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
-          Math.max(0, Math.round((toDate(p.fechaSalida) - Math.max(hasta, toDate(p.fechaLlegada))) / (1000 * 60 * 60 * 24)));
-        const nochesSoloC = Math.max(0, Math.round((Math.min(desde, toDate(companero.fechaSalida)) - toDate(companero.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
-          Math.max(0, Math.round((toDate(companero.fechaSalida) - Math.max(hasta, toDate(companero.fechaLlegada))) / (1000 * 60 * 60 * 24)));
-        total += nochesSoloP + nochesSoloC;
-        procesados.add(p.id);
-        procesados.add(companero.id);
-        continue;
-      }
+  // --- Confirmación de salida si hay cambios no guardados ---
+  const [formDirty, setFormDirty] = useState(false);
+  // Detectar cambios en los datos principales
+  useEffect(() => {
+    if (!formularioExistente) {
+      setFormDirty(
+        personas.length > 1 ||
+        Object.values(personas[0]).some(v => v) ||
+        Object.values(datosEmpresa).some(v => v) ||
+        comentarios
+      );
+      return;
     }
-    const f1 = toDate(p.fechaLlegada);
-    const f2 = toDate(p.fechaSalida);
-    let noches = 0;
-    if (f1 && f2 && f2 > f1) noches = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
-    total += noches;
-    procesados.add(p.id);
-  }
-  return total;
-}
-import { matchSorter } from 'match-sorter';
-import { FirebaseService } from '../../services/FirebaseService';
-import './FormularioBase.css';
+    // Compara datos actuales con los cargados
+    const personasIguales = JSON.stringify(personas) === JSON.stringify(formularioExistente.personas || []);
+    const empresaIgual = JSON.stringify(datosEmpresa) === JSON.stringify(formularioExistente.datosEmpresa || {});
+    const comentariosIgual = comentarios === (formularioExistente.comentarios || '');
+    setFormDirty(!(personasIguales && empresaIgual && comentariosIgual));
+  }, [personas, datosEmpresa, comentarios, formularioExistente]);
 
-import { useEventoDestacado } from "../../context/EventoDestacadoContext";
+  // Handler para botón Volver
+  const handleVolver = () => {
+    if (formDirty) {
+      if (window.confirm('Recuerde guardar los cambios antes de salir del formulario. ¿Desea continuar de todos modos y salir?')) {
+        onCancel && onCancel();
+      }
+    } else {
+      onCancel && onCancel();
+    }
+  };
 
-function FormularioSocio({ user, evento, onSubmit, onCancel }) {
-  // Ref para emails originales de cada persona (para detectar cambios de email)
-  const emailOriginalesRef = useRef({});
-  const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
-
-  // Admin user selector state
-  const [usuarios, setUsuarios] = useState([]);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
-  const [filtroUsuario, setFiltroUsuario] = useState('');
-
-  const [datosEmpresa, setDatosEmpresa] = useState({
-    empresa: '',
-    direccion: '',
-    ciudad: '',
-    paginaWeb: '',
-    codigoPostal: '',
-    rubro: '',
-    cantidad_personas: 0
-  });
-
-  // Estado para controlar si se está guardando el formulario
-  const [guardando, setGuardando] = useState(false);
-
-  const [personas, setPersonas] = useState([{
-    id: 1,
-    nombre: '',
-    apellido: '',
-    cargo: '',
-    celular: '',
-    telefono: '',
-    email: '',
-    dni: '',
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // --- Validación de relaciones de habitación ---
+    for (let persona of personas) {
+      // ...existing code...
     fechaLlegada: '',
     horaLlegada: '',
     fechaSalida: '',
@@ -182,13 +140,11 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   useEffect(() => {
     if (!evento) {
       console.log("Evento aún no está disponible");
-      return;
-    }
-    if (!evento.fechaLimiteEdicion) {
-      setEdicionHabilitada(true);
-      return;
-    }
-    const hoy = new Date();
+  // ...existing code...
+  // En el botón Volver, usar handleVolver en vez de onCancel directo
+  // ...dentro del return del formulario...
+  // ...
+  // <button type="button" className="btn-secundario" onClick={handleVolver} ...> ← Volver </button>
     const fechaLimite = new Date(evento.fechaLimiteEdicion);
     setEdicionHabilitada(hoy <= fechaLimite);
   }, [evento]);
@@ -1665,7 +1621,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           <button
             type="button"
             className="btn-secundario"
-            onClick={onCancel}
+            onClick={handleVolver}
             style={{ marginLeft: '1rem' }}
           >
             ← Volver

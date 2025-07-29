@@ -1,3 +1,8 @@
+/* Forzar color de texto y fondo en todos los campos de formulario para evitar texto invisible en mobile */
+input, textarea, select {
+  color: #222 !important;
+  background: #fff !important;
+}
 :root {
   --color-azul-oscuro: #453796;  
   --color-azul-medio:  #5754a4;  

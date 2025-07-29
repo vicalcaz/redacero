@@ -1,3 +1,8 @@
+/* Forzar color de texto y fondo en todos los campos de formulario para evitar texto invisible en mobile */
+input, textarea, select {
+  color: #222 !important;
+  background: #fff !important;
+}
 /* Asegura que el line-height inline de Quill se respete en las notas de inicio y fin */
 .nota-inicio-formulario [style*="line-height"],
 .nota-fin-formulario [style*="line-height"] {
