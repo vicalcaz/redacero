@@ -629,7 +629,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         ...datosEmpresa,
         cantidad_personas: cantidadPersonas
       };
-      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
+      
+      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : (user?.email || '');
       const formularioData = {
         tipo: 'socio',
         eventoId: eventoSeleccionado,
@@ -1154,20 +1155,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                   <input
                     type="tel"
                     value={persona.telefono}
-                    onChange={(e) => {
-                      // Máscara para teléfono fijo: (011) 4567-8901
-                      let valor = e.target.value.replace(/\D/g, '');
-                      if (valor.length <= 12) {
-                        if (valor.length >= 3) {
-                          valor = `(${valor.slice(0, 3)}) ${valor.slice(3)}`;
-                        }
-                        if (valor.length >= 9) {
-                          valor = valor.replace(/(\(\d{3}\) )(\d{4})(\d{4})/, '$1$2-$3');
-                        }
-                        actualizarPersona(persona.id, 'telefono', valor);
-                      }
-                    }}
-                    placeholder="(011) 4567-8901"
+                    onChange={e => actualizarPersona(persona.id, 'telefono', e.target.value)}
+                    placeholder="Teléfono fijo"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
                     required
                     disabled={guardando || !edicionHabilitada}

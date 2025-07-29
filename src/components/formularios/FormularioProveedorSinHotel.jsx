@@ -187,7 +187,8 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         ...datosEmpresa,
         cantidad_personas: cantidadPersonas
       };
-      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
+      // Siempre usar el usuario logueado para usuarioCreador
+      const emailParaGuardar = user?.email || '';
       // Asegurar que menuEspecial siempre tenga valor en cada persona
       const personasActualizadas = personas.map(persona => ({
         ...persona,

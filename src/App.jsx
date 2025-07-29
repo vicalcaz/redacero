@@ -378,6 +378,7 @@ function App() {
       case 'formulario-socio':
         return (
           <FormularioSocio
+            user={usuario}
             evento={eventoSeleccionado}
             onSubmit={handleFormularioSubmit}
             onCancel={handleFormularioCancel}

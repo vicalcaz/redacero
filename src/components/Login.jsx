@@ -73,7 +73,8 @@ function Login({ onLogin }) {
           </button>
         </form>
         
-        {/* Botón temporal para debugging */}
+        {/* Botón temporal para debugging oculto en producción */}
+        {/*
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <button 
             type="button"
@@ -93,6 +94,7 @@ function Login({ onLogin }) {
             🔧 Login Admin (Dev)
           </button>
         </div>
+        */}
       </div>
     </div>
   );
