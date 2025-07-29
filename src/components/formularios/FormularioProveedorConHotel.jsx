@@ -1,30 +1,3 @@
-  // --- Confirmación de salida si hay cambios no guardados ---
-  const [formDirty, setFormDirty] = useState(false);
-  useEffect(() => {
-    if (!formularioExistente) {
-      setFormDirty(
-        personas.length > 1 ||
-        Object.values(personas[0]).some(v => v) ||
-        Object.values(datosEmpresa).some(v => v) ||
-        comentarios
-      );
-      return;
-    }
-    const personasIguales = JSON.stringify(personas) === JSON.stringify(formularioExistente.personas || []);
-    const empresaIgual = JSON.stringify(datosEmpresa) === JSON.stringify(formularioExistente.datosEmpresa || {});
-    const comentariosIgual = comentarios === (formularioExistente.comentarios || '');
-    setFormDirty(!(personasIguales && empresaIgual && comentariosIgual));
-  }, [personas, datosEmpresa, comentarios, formularioExistente]);
-
-  const handleVolver = () => {
-    if (formDirty) {
-      if (window.confirm('Recuerde guardar los cambios antes de salir del formulario. ¿Desea continuar de todos modos y salir?')) {
-        onCancel && onCancel();
-      }
-    } else {
-      onCancel && onCancel();
-    }
-  };
 // Utilidad robusta para parsear fechas tipo 'YYYY-MM-DD' o Date
 function parseFecha(fecha) {
   if (!fecha) return null;
@@ -809,14 +782,14 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     }}
                   >
                     🗑️ Eliminar
-          <button
-            type="button"
-            className="btn-secundario"
-            onClick={handleVolver}
-            style={{ marginLeft: '1rem' }}
-          >
-             Volver
-          </button>
+                  </button>
+                )}
+              </div>
+              
+              <div className="campo-fila">
+                <div className="campo-grupo">
+                  <label>Nombre:</label>
+                  <input
                     type="text"
                     value={persona.nombre}
                     onChange={(e) => actualizarPersona(persona.id, 'nombre', e.target.value)}
