@@ -194,7 +194,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         menuEspecial: persona.menuEspecial ? persona.menuEspecial : 'Ninguno'
       }));
       const formularioData = {
-        tipo: 'Proveedor-sin-hotel',
+        tipo: 'proveedor-sin-hotel',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
         personas: personasActualizadas,

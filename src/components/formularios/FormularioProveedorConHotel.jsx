@@ -366,7 +366,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       };
       const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
       const formularioData = {
-        tipo: 'Proveedor-con-hotel',
+        tipo: 'proveedor-con-hotel',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
         personas: personasActualizadas,
@@ -691,7 +691,52 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 </tbody>
               </table>
             </div>
-            <span>🛏️ Total noches tomadas: <b>{personas.reduce((acc, p) => acc + (p.noches || 0), 0)}</b></span>
+            <span>🛏️ Total noches tomadas: <b>{(() => {
+              // Lógica igual a FormularioSocio.jsx para habitaciones compartidas
+              const toDate = (str) => str ? new Date(str + 'T00:00:00').getTime() : null;
+              const procesados = new Set();
+              let total = 0;
+              for (let i = 0; i < personas.length; i++) {
+                const p = personas[i];
+                if (!p.fechaLlegada || !p.fechaSalida) continue;
+                if (
+                  p.comparteHabitacion && p.comparteCon &&
+                  !procesados.has(p.id) &&
+                  (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial')
+                ) {
+                  const companero = personas.find(q => String(q.id) === String(p.comparteCon));
+                  if (
+                    companero &&
+                    companero.comparteHabitacion && String(companero.comparteCon) === String(p.id) &&
+                    companero.tipoHabitacion === p.tipoHabitacion &&
+                    companero.fechaLlegada && companero.fechaSalida
+                  ) {
+                    const desde = Math.max(toDate(p.fechaLlegada), toDate(companero.fechaLlegada));
+                    const hasta = Math.min(toDate(p.fechaSalida), toDate(companero.fechaSalida));
+                    let nochesCompartidas = 0;
+                    if (desde < hasta) {
+                      nochesCompartidas = Math.round((hasta - desde) / (1000 * 60 * 60 * 24));
+                    }
+                    total += nochesCompartidas;
+                    const nochesSoloP = Math.max(0, Math.round((Math.min(desde, toDate(p.fechaSalida)) - toDate(p.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+                      Math.max(0, Math.round((toDate(p.fechaSalida) - Math.max(hasta, toDate(p.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+                    const nochesSoloC = Math.max(0, Math.round((Math.min(desde, toDate(companero.fechaSalida)) - toDate(companero.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+                      Math.max(0, Math.round((toDate(companero.fechaSalida) - Math.max(hasta, toDate(companero.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+                    total += nochesSoloP + nochesSoloC;
+                    procesados.add(p.id);
+                    procesados.add(companero.id);
+                    continue;
+                  }
+                }
+                const f1 = toDate(p.fechaLlegada);
+                const f2 = toDate(p.fechaSalida);
+                let noches = 0;
+                if (f1 && f2 && f2 > f1) noches = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
+                total += noches;
+                procesados.add(p.id);
+              }
+              return total;
+            })()}</b></span>
             <span>🏨 Habitaciones tomadas: <b>{personas.filter(p => p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial').length}</b></span>
         <span>🏨 Habitaciones tomadas: <b>{(() => {
           // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte

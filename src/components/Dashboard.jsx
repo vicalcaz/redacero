@@ -80,37 +80,38 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
   const [showHabitacionesDetalle, setShowHabitacionesDetalle] = useState(false);
   const [showUsuariosSinFormDetalle, setShowUsuariosSinFormDetalle] = useState(false);
 
-  // Calcular habitaciones tomadas únicas en todo el evento (no por día)
+  // Calcular noches y habitaciones tomadas sin doble conteo, igual que en FormularioSocio.jsx
   let totalHabitaciones = 0;
   let totalNoches = 0;
-    const habitacionesUnicas = new Set(); // Set de habitaciones únicas (doble compartida, doble individual, matrimonial)
-  const nochesPorHabitacion = new Map(); // habitacionId -> Set de fechas
+  const habitaciones = new Map(); // id único -> noches
   formularios.forEach(f => {
     if (!f.personas || !Array.isArray(f.personas)) return;
     f.personas.forEach(p => {
-      if (!p.fechaLlegada || !p.fechaSalida) return;
-      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida, p.horaSalida);
-      let habitacionId = null;
-      if (p.tipoHabitacion === 'matrimonial') {
-        habitacionId = `matrimonial-${p.id}`;
-      } else if (p.tipoHabitacion === 'doble') {
-        if (p.comparteCon) {
-          // Compartida: id único por pareja
-          habitacionId = `doble-${[String(p.id), String(p.comparteCon)].sort().join('-')}`;
-        } else {
-          // No compartida: id único por persona
-          habitacionId = `doble-${p.id}`;
+      if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+        if (p.comparteHabitacion && p.comparteCon) {
+          // Usar un id único para la pareja (menor id primero)
+          const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+          // Buscar compañero
+          const companero = f.personas.find(o => String(o.id) === String(p.comparteCon));
+          if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
+            // Calcular noches desde la mínima llegada hasta la máxima salida
+            const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
+            const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
+            const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+            if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
+              habitaciones.set(ids, noches);
+            }
+          }
+        } else if (!f.personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+          // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+          habitaciones.set(String(p.id), p.noches || 0);
         }
-      }
-      if (habitacionId) {
-        habitacionesUnicas.add(habitacionId);
-        if (!nochesPorHabitacion.has(habitacionId)) nochesPorHabitacion.set(habitacionId, new Set());
-        fechas.forEach(fch => nochesPorHabitacion.get(habitacionId).add(fch));
       }
     });
   });
-  totalHabitaciones = habitacionesUnicas.size;
-  totalNoches = Array.from(nochesPorHabitacion.values()).reduce((acc, set) => acc + set.size, 0);
+  totalHabitaciones = habitaciones.size;
+  totalNoches = 0;
+  habitaciones.forEach(n => { totalNoches += n; });
 
   return (
     <div className="dashboard-inicio">

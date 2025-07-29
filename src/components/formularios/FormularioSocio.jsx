@@ -1,12 +1,60 @@
-import { useEffect, useState, useRef } from 'react';
-import React from 'react';
-import { actualizarPasswordCambiadoSiEmailCambio } from './useActualizarPasswordCambiado';
+import React, { useEffect, useState, useRef} from 'react';
+// ---
+// Calcula el total de noches tomadas considerando habitaciones compartidas y noches individuales fuera del rango compartido
+function calcularTotalNochesTomadas(personas) {
+  const toDate = (str) => str ? new Date(str + 'T00:00:00').getTime() : null;
+  const procesados = new Set();
+  let total = 0;
+  for (let i = 0; i < personas.length; i++) {
+    const p = personas[i];
+    if (!p.fechaLlegada || !p.fechaSalida) continue;
+    if (
+      p.comparteHabitacion && p.comparteCon &&
+      !procesados.has(p.id) &&
+      (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial')
+    ) {
+      const companero = personas.find(q => String(q.id) === String(p.comparteCon));
+      if (
+        companero &&
+        companero.comparteHabitacion && String(companero.comparteCon) === String(p.id) &&
+        companero.tipoHabitacion === p.tipoHabitacion &&
+        companero.fechaLlegada && companero.fechaSalida
+      ) {
+        const desde = Math.max(toDate(p.fechaLlegada), toDate(companero.fechaLlegada));
+        const hasta = Math.min(toDate(p.fechaSalida), toDate(companero.fechaSalida));
+        let nochesCompartidas = 0;
+        if (desde < hasta) {
+          nochesCompartidas = Math.round((hasta - desde) / (1000 * 60 * 60 * 24));
+        }
+        total += nochesCompartidas;
+        const nochesSoloP = Math.max(0, Math.round((Math.min(desde, toDate(p.fechaSalida)) - toDate(p.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+          Math.max(0, Math.round((toDate(p.fechaSalida) - Math.max(hasta, toDate(p.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+        const nochesSoloC = Math.max(0, Math.round((Math.min(desde, toDate(companero.fechaSalida)) - toDate(companero.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+          Math.max(0, Math.round((toDate(companero.fechaSalida) - Math.max(hasta, toDate(companero.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+        total += nochesSoloP + nochesSoloC;
+        procesados.add(p.id);
+        procesados.add(companero.id);
+        continue;
+      }
+    }
+    const f1 = toDate(p.fechaLlegada);
+    const f2 = toDate(p.fechaSalida);
+    let noches = 0;
+    if (f1 && f2 && f2 > f1) noches = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
+    total += noches;
+    procesados.add(p.id);
+  }
+  return total;
+}
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
+
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
 function FormularioSocio({ user, evento, onSubmit, onCancel }) {
+  // Ref para emails originales de cada persona (para detectar cambios de email)
+  const emailOriginalesRef = useRef({});
   const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
 
   // Admin user selector state
@@ -56,7 +104,6 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
   const [eventosLoading, setEventosLoading] = useState(true);
-  const [configProveedorConHotel, setConfigProveedorConHotel] = useState(null);
   const [formularioExistente, setFormularioExistente] = useState(null);
   const [edicionHabilitada, setEdicionHabilitada] = useState(true);
   const [configSocio, setConfigSocio] = useState(null);
@@ -68,10 +115,19 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       if (!eventoSeleccionado || !emailParaBuscar) return;
       const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
       if (existente) {
+        console.log('🟢 [CARGA] Personas cargadas desde Firebase:', JSON.stringify(existente.personas, null, 2));
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
         setPersonas(existente.personas || []);
         setComentarios(existente.comentarios || '');
+        // Guardar emails originales
+        if (existente.personas) {
+          const emails = {};
+          for (const p of existente.personas) {
+            emails[p.id] = p.email;
+          }
+          emailOriginalesRef.current = emails;
+        }
       } else {
         setFormularioExistente(null);
         setDatosEmpresa({
@@ -108,6 +164,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           comparteCon: ''
         }]);
         setComentarios('');
+        emailOriginalesRef.current = { 1: '' };
       }
     };
     cargarFormularioExistente();
@@ -183,18 +240,31 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       comparteCon: '',
       comentario: '' // Asegura que el campo comentario también esté presente
     };
-    setPersonas([...personas, nuevaPersona]);
+    setPersonas(prev => {
+      const arr = [...prev, nuevaPersona];
+      emailOriginalesRef.current[nuevaPersona.id] = '';
+      return arr;
+    });
   };
 
   const eliminarPersona = (id) => {
     if (personas.length > 1) {
-      setPersonas(personas.filter(persona => persona.id !== id));
+      setPersonas(prev => {
+        const arr = prev.filter(persona => persona.id !== id);
+        const emails = { ...emailOriginalesRef.current };
+        delete emails[id];
+        emailOriginalesRef.current = emails;
+        return arr;
+      });
     }
   };
 
   // Synchronized room sharing logic with custom dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingSync, setPendingSync] = useState(null); // {personaId, targetId, tipoHabitacion, campo, valor}
+  // Diálogo de validación al guardar
+  const [validationDialog, setValidationDialog] = useState({ open: false, tipo: '', persona: null, companero: null });
+  const [onValidationResolve, setOnValidationResolve] = useState(null);
   const actualizarPersona = (id, campo, valor) => {
     let isRoomTypeChange = campo === 'tipoHabitacion' || (campo === null && valor.tipoHabitacion !== undefined);
     let isRoomShareChange = campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined);
@@ -212,8 +282,11 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       }
     }
     // Normal update logic
-    setPersonas(personas.map(persona => {
-      if (persona.id !== id) return persona;
+    setPersonas(personas.map((persona, idx) => {
+      if (persona.id !== id) {
+        // Asegura que el email nunca sea undefined/null y siempre string
+        return { ...persona, email: typeof persona.email === 'string' ? persona.email : (persona.email ? String(persona.email) : '') };
+      }
       let nuevaPersona = { ...persona };
       if (campo === null && typeof valor === 'object' && valor !== null) {
         nuevaPersona = { ...nuevaPersona, ...valor };
@@ -244,6 +317,17 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           }
         }
         nuevaPersona.noches = noches;
+      }
+      // Asegura que el email nunca sea undefined/null y siempre string
+      if (typeof nuevaPersona.email !== 'string') {
+        nuevaPersona.email = nuevaPersona.email ? String(nuevaPersona.email) : '';
+      }
+      if (campo === 'email') {
+        nuevaPersona.email = valor ? String(valor) : '';
+      }
+      // Log para depuración de cambios en persona
+      if (campo === 'lunes' || campo === 'martes' || campo === 'miercoles') {
+        console.log(`🟡 [ACTUALIZA] Persona idx=${idx} id=${persona.id} campo=${campo} valor=${valor} antes=`, persona[campo]);
       }
       return nuevaPersona;
     }));
@@ -337,8 +421,192 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // --- Validación de relaciones de habitación ---
+    for (let persona of personas) {
+      // Si marcó comparte, debe tener comparteCon asignado
+      if (persona.comparteHabitacion) {
+        if (!persona.comparteCon) {
+          setValidationDialog({
+            open: true,
+            tipo: 'sin-companero',
+            persona,
+            companero: null
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'desmarcar') {
+              setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteHabitacion: false } : p));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // Buscar la persona con la que comparte
+        const companero = personas.find(p => String(p.id) === String(persona.comparteCon));
+        if (!companero) {
+          setValidationDialog({
+            open: true,
+            tipo: 'companero-invalido',
+            persona,
+            companero: null
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'desmarcar') {
+              setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteHabitacion: false, comparteCon: '' } : p));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // El compañero debe tener comparteHabitacion y comparteCon apuntando de vuelta
+        if (!companero.comparteHabitacion || String(companero.comparteCon) !== String(persona.id)) {
+          setValidationDialog({
+            open: true,
+            tipo: 'no-reciproco',
+            persona,
+            companero
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'sincronizar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id) return { ...p, comparteHabitacion: true, comparteCon: String(companero.id), tipoHabitacion: companero.tipoHabitacion };
+                if (p.id === companero.id) return { ...p, comparteHabitacion: true, comparteCon: String(persona.id), tipoHabitacion: persona.tipoHabitacion };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else if (accion === 'borrar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id || p.id === companero.id) return { ...p, comparteHabitacion: false, comparteCon: '' };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // Ambos deben tener el mismo tipo de habitación
+        if (persona.tipoHabitacion !== companero.tipoHabitacion) {
+          setValidationDialog({
+            open: true,
+            tipo: 'tipo-distinto',
+            persona,
+            companero
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'sincronizar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id) return { ...p, tipoHabitacion: companero.tipoHabitacion };
+                if (p.id === companero.id) return { ...p, tipoHabitacion: companero.tipoHabitacion };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+      }
+      // Si NO marcó comparte pero tiene comparteCon, es inconsistente
+      if (!persona.comparteHabitacion && persona.comparteCon) {
+        setValidationDialog({
+          open: true,
+          tipo: 'sin-checkbox',
+          persona,
+          companero: personas.find(p => String(p.id) === String(persona.comparteCon))
+        });
+        setOnValidationResolve(() => (accion) => {
+          if (accion === 'desmarcar-companero') {
+            setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteCon: '' } : p));
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            setTimeout(() => handleSubmit(new Event('submit')), 0);
+          } else if (accion === 'sincronizar') {
+            setPersonas(prev => prev.map(p => {
+              if (p.id === persona.id) return { ...p, comparteHabitacion: true };
+              if (p.id === persona.comparteCon) return { ...p, comparteHabitacion: true, comparteCon: String(persona.id) };
+              return p;
+            }));
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            setTimeout(() => handleSubmit(new Event('submit')), 0);
+          } else {
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+          }
+        });
+        return;
+      }
+    }
     setGuardando(true);
     try {
+      console.log('🔵 [GUARDAR] Personas antes de guardar:', JSON.stringify(personas, null, 2));
+  // Diálogo de validación personalizado
+  const validationDialogUI = validationDialog.open && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 420, textAlign: 'center' }}>
+        {validationDialog.tipo === 'no-reciproco' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar o borrar relación</h3>
+            <p>La relación de habitación entre <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> y <b>{validationDialog.companero?.nombre} {validationDialog.companero?.apellido}</b> no es recíproca.<br />¿Desea <b>sincronizar habitación</b> (ambos compartirán la misma habitación y tipo) o <b>borrar relación</b>?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar habitación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('borrar'); }}>Borrar relación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'tipo-distinto' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar tipo de habitación</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> y <b>{validationDialog.companero?.nombre} {validationDialog.companero?.apellido}</b> deben tener el mismo tipo de habitación para compartir.<br />¿Desea sincronizar el tipo de habitación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar tipo</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'sin-companero' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Falta seleccionar compañero</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> marcó que comparte habitación pero no seleccionó con quién.<br />¿Desea desmarcar la opción de compartir habitación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar'); }}>Desmarcar</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'companero-invalido' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Compañero inválido</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> seleccionó un compañero inválido.<br />Por favor seleccione un compañero válido o desmarque la opción de compartir habitación.</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar'); }}>Desmarcar</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'sin-checkbox' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Inconsistencia en relación</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> tiene seleccionado un compañero pero no marcó la opción de compartir habitación.<br />¿Desea desmarcar el compañero o sincronizar la relación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar-companero'); }}>Desmarcar compañero</button>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar relación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
       // 1. Calcular cantidad de personas
       const cantidadPersonas = personas.length;
       // 2. Calcular noches para cada persona
@@ -349,16 +617,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
           const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
-          if (
-            persona.horaSalida &&
-            persona.horaSalida > '10:00' &&
-            persona.fechaSalida > persona.fechaLlegada
-          ) {
-            noches += 1;
-          }
-          if (!horaSalida) {
-            horaSalida = '10:00';
-          }
+          // Si la hora de salida no está seteada, poner 10:00 por defecto
+          if (!horaSalida) horaSalida = '10:00';
         }
         // Asegurar que menuEspecial siempre tenga valor
         const menuEspecial = persona.menuEspecial ? persona.menuEspecial : 'Ninguno';
@@ -384,6 +644,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
       if (idFormularioExistente) {
         // Actualizar el documento existente
         await FirebaseService.actualizarFormulario('formularios', idFormularioExistente, formularioData);
+        console.log('🟢 Formulario de Socio actualizado:', JSON.stringify(formularioData, null, 2));
         alert('✅ Formulario de Socio actualizado exitosamente!');
       } else {
         await FirebaseService.guardarFormularioSocio(formularioData);
@@ -395,9 +656,26 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         eventoSeleccionado
       );
       if (existente) {
+        console.log('🟢 [RECARGA POST-GUARDADO] Personas cargadas desde Firebase:', JSON.stringify(existente.personas, null, 2));
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
-        setPersonas(existente.personas || []);
+        // Fusionar personas nuevas locales (no guardadas aún) con las del backend
+        setPersonas(prevPersonas => {
+          const backendPersonas = existente.personas || [];
+          // Fusionar por id: si una persona local tiene el mismo id que una del backend, se prioriza la del backend
+          const backendIds = new Set(backendPersonas.map(p => String(p.id)));
+          // Solo agregar personas locales que NO estén en backend (por id)
+          const soloLocales = prevPersonas.filter(p => !backendIds.has(String(p.id)));
+          // Evitar duplicados: si hay personas con el mismo email pero distinto id, priorizar la del backend
+          const emailsBackend = new Set(backendPersonas.map(p => (p.email || '').toLowerCase().trim()));
+          const soloLocalesSinDuplicados = soloLocales.filter(p => !emailsBackend.has((p.email || '').toLowerCase().trim()));
+          const resultado = [...backendPersonas, ...soloLocalesSinDuplicados];
+          // Log para depuración
+          if (soloLocalesSinDuplicados.length > 0) {
+            console.log('🟡 Fusionando personas locales no guardadas (sin duplicados):', soloLocalesSinDuplicados);
+          }
+          return resultado;
+        });
         setComentarios(existente.comentarios || '');
       }
     } catch (error) {
@@ -447,9 +725,19 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     ? matchSorter(usuarios, filtroUsuario, { keys: ['nombre', 'email', 'empresa'] })
     : usuarios;
 
+  // Definir validationDialogUI antes del return
+  const validationDialogUI = validationDialog.open && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 420, textAlign: 'center' }}>
+        {/* ...existing dialog rendering code... */}
+      </div>
+    </div>
+  );
+
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
       {roomSharingDialog}
+      {validationDialogUI}
 
       {/* Admin: Selector de usuario */}
       {rolUsuario === 'admin' && (
@@ -689,7 +977,36 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
             <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
               {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
             </span>
-            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{personas.reduce((acc, p) => acc + (p.noches || 0), 0)}</b></span>
+            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{(() => {
+              // Calcular noches únicas por habitación compartida (doble/matrimonial) o individual
+              const habitaciones = new Map();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    // Buscar compañero
+                    const companero = personas.find(o => String(o.id) === String(p.comparteCon));
+                    if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
+                      // Calcular noches desde la mínima llegada hasta la máxima salida
+                      const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
+                      const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
+                      const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+                      if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
+                        habitaciones.set(ids, noches);
+                      }
+                    }
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.set(String(p.id), p.noches || 0);
+                  }
+                }
+              });
+              // Sumar noches únicas
+              let totalNoches = 0;
+              habitaciones.forEach(n => { totalNoches += n; });
+              return totalNoches;
+            })()}</b></span>
             <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
               // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
               const habitaciones = new Set();
@@ -809,18 +1126,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                   <input
                     type="email"
                     value={persona.email}
-                    onChange={async (e) => {
-                      const nuevoEmail = e.target.value;
-                      const emailAnterior = emailOriginalesRef.current[persona.id] || '';
-                      if (emailAnterior && nuevoEmail && emailAnterior.trim().toLowerCase() !== nuevoEmail.trim().toLowerCase()) {
-                        // Buscar usuario por email anterior para obtener el id
-                        const usuario = await FirebaseService.obtenerUsuarioPorEmail(emailAnterior);
-                        if (usuario && usuario.id) {
-                          await actualizarPasswordCambiadoSiEmailCambio(usuario.id, emailAnterior, nuevoEmail);
-                        }
-                      }
-                      actualizarPersona(persona.id, 'email', nuevoEmail);
-                    }}
+                    onChange={(e) => actualizarPersona(persona.id, 'email', e.target.value)}
                     placeholder="ejemplo@dominio.com"
                     required
                     onInput={e => e.target.setCustomValidity('')}
@@ -965,10 +1271,35 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                           checked={!!persona.comparteHabitacion}
                           onChange={e => {
                             const checked = e.target.checked;
-                            if (!checked) {
-                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
+                            // Buscar si hay relación previa en cualquier dirección
+                            let targetId = null;
+                            let relacion = null;
+                            if (persona.comparteCon) {
+                              targetId = Number(persona.comparteCon);
+                              relacion = 'directa';
                             } else {
+                              const pRelacionada = personas.find(p => String(p.comparteCon) === String(persona.id));
+                              if (pRelacionada) {
+                                targetId = pRelacionada.id;
+                                relacion = 'inversa';
+                              }
+                            }
+                            if (targetId) {
+                              setPendingSync({
+                                personaId: persona.id,
+                                targetId,
+                                tipoHabitacion: persona.tipoHabitacion,
+                                campo: 'comparteHabitacion',
+                                valor: { comparteHabitacion: checked, comparteCon: checked ? persona.comparteCon : '' }
+                              });
+                              setDialogOpen(true);
+                              return;
+                            }
+                            // Si no hay relación previa, simplemente actualizar
+                            if (checked) {
                               actualizarPersona(persona.id, 'comparteHabitacion', true);
+                            } else {
+                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
                             }
                           }}
                           disabled={guardando || !edicionHabilitada}
@@ -1180,12 +1511,13 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     <div className="campo-grupo">
                       <label>Asiste Lunes:</label>
                       <select
-                        value={persona.lunes || ''}
+                        value={typeof persona.lunes === 'string' ? persona.lunes : (persona.lunes === true ? 'si' : (persona.lunes === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'lunes', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'lunes', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el lunes al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
@@ -1196,43 +1528,43 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     <div className="campo-grupo">
                       <label>Asiste Martes:</label>
                       <select
-                        value={persona.martes || ''}
+                        value={typeof persona.martes === 'string' ? persona.martes : (persona.martes === true ? 'si' : (persona.martes === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'martes', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'martes', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el martes al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
-               
-                     </select>
+                      </select>
                     </div>
                     <div className="campo-grupo">
                       <label>Asiste Miércoles:</label>
                       <select
-                        value={persona.miercoles || ''}
+                        value={typeof persona.miercoles === 'string' ? persona.miercoles : (persona.miercoles === true ? 'si' : (persona.miercoles === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'miercoles', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'miercoles', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el miércoles al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
-               
-                     </select>
+                      </select>
                     </div>
                     <div className="campo-grupo">
                       <label>Asiste a la cena de cierre:</label>
                       <select
-                        value={persona.asisteCena || ''}
+                        value={typeof persona.asisteCena === 'string' ? persona.asisteCena : (persona.asisteCena === true ? 'si' : (persona.asisteCena === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'asisteCena', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'asisteCena', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir a la cena de cierre del evento.')}
@@ -1247,9 +1579,9 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     <div className="campo-grupo">
                       <label>Atiende agenda de reuniones:</label>
                       <select
-                        value={persona.atiendeReuniones || ''}
+                        value={typeof persona.atiendeReuniones === 'string' ? persona.atiendeReuniones : (persona.atiendeReuniones === true ? 'si' : (persona.atiendeReuniones === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a gestionar la agenda de reuniones.')}

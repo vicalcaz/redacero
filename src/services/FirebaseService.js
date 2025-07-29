@@ -44,7 +44,7 @@ class FirebaseServiceClass {
   async actualizarFormulario(coleccion, id, data) {
     try {
       const docRef = doc(db, coleccion, id);
-      await updateDoc(docRef, {
+        await updateDoc(docRef, {
         ...data,
         fechaActualizacion: new Date().toISOString(),
         fechaActualizacionString: new Date().toLocaleString('es-AR')
