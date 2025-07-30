@@ -1060,7 +1060,6 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     placeholder="Teléfono fijo"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    required
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
