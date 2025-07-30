@@ -1221,6 +1221,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     </div>
                   </div>
                 )}
+                <div className="campo-fila">
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
                   <select
@@ -1252,9 +1253,9 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                 </div>
                 {/* Nuevo: ¿Comparte habitación? y Comparte con en la misma línea */}
                 {(persona.tipoHabitacion === 'doble' || persona.tipoHabitacion === 'matrimonial') && (
-                  <div className="campo-fila">
-                    <div className="campo-grupo" style={{ flex: 1, minWidth: 180 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                  <>
+                  <div className="campo-grupo" >
+                      <label>
                         <input
                           type="checkbox"
                           checked={!!persona.comparteHabitacion}
@@ -1292,12 +1293,13 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                             }
                           }}
                           disabled={guardando || !edicionHabilitada}
-                          style={{ marginRight: 8 }}
+                          style={{ marginRight: 8,textAlign: 'left' }}
                         />
                         ¿Comparte habitación?
                       </label>
                     </div>
-                    <div className="campo-grupo" style={{ flex: 2, minWidth: 220 }}>
+                    <div className="campo-grupo" >
+                      
                       <label>Comparte habitación con:</label>
                       <select
                         value={persona.comparteCon || ''}
@@ -1319,9 +1321,14 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                           </option>
                         ))}
                       </select>
+                      <div style={{ marginTop: 0, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
+                        <span style={{ color: '#453796', fontSize: '0.7em' }}>si es la primera persona, al cargar la segunda le aparecerá con quien compartir.</span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
+               </div>
                 {/* Campo Comentario */}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
@@ -1557,6 +1564,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir a la cena de cierre del evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
@@ -1564,7 +1572,24 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                         <option value="si">Sí</option>
                
                      </select>
-                    </div>                    
+                    </div>       
+                    {/* Campo Menú Especial */}
+              <div className="campo-grupo" >
+                <label>Menú Especial cena de cierre:</label>
+                <select
+                  value={persona.menuEspecial || ''}
+                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
+                  required
+                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
+                  disabled={guardando || !edicionHabilitada}
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Vegano">Vegano</option>
+                  <option value="Sin gluten">Sin gluten</option>
+                  <option value="Sin Lactosa">Sin Lactosa</option>
+                </select>
+              </div>             
                     <div className="campo-grupo">
                       <label>Atiende agenda de reuniones:</label>
                       <select
@@ -1586,23 +1611,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                 </div>
               </div>
 
-              {/* Campo Menú Especial */}
-              <div className="campo-grupo" style={{ marginTop: '1.5rem' }}>
-                <label>Menú Especial cena de cierre:</label>
-                <select
-                  value={persona.menuEspecial || ''}
-                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  required
-                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
-                  disabled={guardando || !edicionHabilitada}
-                >
-                  <option value="Ninguno">Ninguno</option>
-                  <option value="Vegetariano">Vegetariano</option>
-                  <option value="Vegano">Vegano</option>
-                  <option value="Sin gluten">Sin gluten</option>
-                  <option value="Sin Lactosa">Sin Lactosa</option>
-                </select>
-              </div>
+              
             </div>
           ))}
           
