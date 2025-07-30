@@ -1130,8 +1130,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                     onChange={(e) => actualizarPersona(persona.id, 'email', e.target.value)}
                     placeholder="ejemplo@dominio.com"
                     required
-                    onInput={e => e.target.setCustomValidity('')}
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese un email válido')}
+                    onInput={e => e.target.setCustomValidity('')}
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
@@ -1582,6 +1582,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                   onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
                   required
                   onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
+                  onInput={e => e.target.setCustomValidity('')}
                   disabled={guardando || !edicionHabilitada}
                 >
                   <option value="Ninguno">Ninguno</option>
@@ -1600,6 +1601,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a gestionar la agenda de reuniones.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
