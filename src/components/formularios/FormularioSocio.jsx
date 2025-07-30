@@ -957,107 +957,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
-          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
-            Resumen información formulario
-          </h3>
-          {/* Resumen de personas */}
-          <div style={{
-            background: '#e3f2fd',
-            border: '1px solid #90caf9',
-            borderRadius: 8,
-            padding: '1rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '2rem',
-            alignItems: 'center',
-            fontSize: '1.08rem',
-            fontWeight: 500
-          }}>
-            <span style={{ fontSize: '0.92em' }}>👥 Personas registradas: <b>{personas.length}</b></span>
-            <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
-              {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
-            </span>
-            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{(() => {
-              // Calcular noches únicas por habitación compartida (doble/matrimonial) o individual
-              const habitaciones = new Map();
-              personas.forEach(p => {
-                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
-                  if (p.comparteHabitacion && p.comparteCon) {
-                    // Usar un id único para la pareja (menor id primero)
-                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
-                    // Buscar compañero
-                    const companero = personas.find(o => String(o.id) === String(p.comparteCon));
-                    if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
-                      // Calcular noches desde la mínima llegada hasta la máxima salida
-                      const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
-                      const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
-                      const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
-                      if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
-                        habitaciones.set(ids, noches);
-                      }
-                    }
-                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
-                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
-                    habitaciones.set(String(p.id), p.noches || 0);
-                  }
-                }
-              });
-              // Sumar noches únicas
-              let totalNoches = 0;
-              habitaciones.forEach(n => { totalNoches += n; });
-              return totalNoches;
-            })()}</b></span>
-            <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
-              // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
-              const habitaciones = new Set();
-              personas.forEach(p => {
-                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
-                  if (p.comparteHabitacion && p.comparteCon) {
-                    // Usar un id único para la pareja (menor id primero)
-                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
-                    habitaciones.add(ids);
-                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
-                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
-                    habitaciones.add(String(p.id));
-                  }
-                }
-              });
-              return habitaciones.size;
-            })()}</b></span>
-          </div>
-        {/* Tabla resumen de personas */}
-        <div style={{ margin: '1.5rem 0', overflowX: 'auto' }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%', background: '#f8fafc', fontSize: '0.75rem' }}>
-            <thead>
-              <tr style={{ background: '#e3f2fd', color: '#1976d2' }}>
-                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Nombre</th>
-                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Tipo Habitación</th>
-                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Comparte con</th>
-                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Llegada</th>
-                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Salida</th>
-              </tr>
-            </thead>
-            <tbody>
-              {personas.map((p, i) => (
-                <tr key={p.id}>
-                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
-                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.tipoHabitacion ? (p.tipoHabitacion.charAt(0).toUpperCase() + p.tipoHabitacion.slice(1)) : ''}</td>
-                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.comparteHabitacion && p.comparteCon ? (() => {
-                    const comp = personas.find(o => String(o.id) === String(p.comparteCon));
-                    return comp ? `${comp.nombre} ${comp.apellido}`.trim() : '';
-                  })() : ''}</td>
-                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaLlegada ? p.fechaLlegada.split('-').reverse().join('/') : ''}</td>
-                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaSalida ? p.fechaSalida.split('-').reverse().join('/') : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        <div style={{ marginTop: 16, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
-          <span style={{ color: '#453796', fontSize: '0.7em' }}>recuerde que solo tiene una habitación sin cargo.</span>
-        </div>
-        </div>
+     
+   
           <h3>
             👥 Personas que asistirán
           </h3>
@@ -1664,7 +1565,107 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
             />
           </div>
         </div>
-
+     {/* Tabla resumen de personas */}
+          <h3 style={{ marginBottom: '1.2rem', color: '#f7d205ff', fontWeight: 700, fontSize: '1.25rem' }}>
+            Resumen información formulario
+          </h3>
+          {/* Resumen de personas */}
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            alignItems: 'center',
+            fontSize: '1.08rem',
+            fontWeight: 500
+          }}>
+            <span style={{ fontSize: '0.92em' }}>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
+              {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
+            </span>
+            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{(() => {
+              // Calcular noches únicas por habitación compartida (doble/matrimonial) o individual
+              const habitaciones = new Map();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    // Buscar compañero
+                    const companero = personas.find(o => String(o.id) === String(p.comparteCon));
+                    if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
+                      // Calcular noches desde la mínima llegada hasta la máxima salida
+                      const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
+                      const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
+                      const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+                      if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
+                        habitaciones.set(ids, noches);
+                      }
+                    }
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.set(String(p.id), p.noches || 0);
+                  }
+                }
+              });
+              // Sumar noches únicas
+              let totalNoches = 0;
+              habitaciones.forEach(n => { totalNoches += n; });
+              return totalNoches;
+            })()}</b></span>
+            <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
+              // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
+              const habitaciones = new Set();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    habitaciones.add(ids);
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.add(String(p.id));
+                  }
+                }
+              });
+              return habitaciones.size;
+            })()}</b></span>
+          </div>
+        <div style={{ margin: '1.5rem 0', overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%', background: '#f8fafc', fontSize: '0.75rem' }}>
+            <thead>
+              <tr style={{ background: '#e3f2fd', color: '#1976d2' }}>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Nombre</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Tipo Habitación</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Comparte con</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Llegada</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Salida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {personas.map((p, i) => (
+                <tr key={p.id}>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.tipoHabitacion ? (p.tipoHabitacion.charAt(0).toUpperCase() + p.tipoHabitacion.slice(1)) : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.comparteHabitacion && p.comparteCon ? (() => {
+                    const comp = personas.find(o => String(o.id) === String(p.comparteCon));
+                    return comp ? `${comp.nombre} ${comp.apellido}`.trim() : '';
+                  })() : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaLlegada ? p.fechaLlegada.split('-').reverse().join('/') : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaSalida ? p.fechaSalida.split('-').reverse().join('/') : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        <div style={{ marginTop: 16, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
+          <span style={{ color: '#453796', fontSize: '0.7em' }}>recuerde que solo tiene una habitación sin cargo.</span>
+        </div>
+        </div>
 
         <div className="formulario-acciones">
           <button
