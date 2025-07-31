@@ -1486,6 +1486,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   disabled={guardando || !edicionHabilitada}
                 >
                   <option value="Ninguno">Ninguno</option>
+                  <option value="Diabético">Diabético</option>
                   <option value="Vegetariano">Vegetariano</option>
                   <option value="Vegano">Vegano</option>
                   <option value="Sin gluten">Sin gluten</option>
