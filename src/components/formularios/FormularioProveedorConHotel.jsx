@@ -632,7 +632,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       
       const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : (user?.email || '');
       const formularioData = {
-        tipo: 'proveedor-con-hotel ',
+        tipo: 'proveedor-con-hotel',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
         personas: personasActualizadas,
