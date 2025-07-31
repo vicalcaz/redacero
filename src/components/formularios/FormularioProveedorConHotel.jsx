@@ -1,24 +1,60 @@
-// Utilidad robusta para parsear fechas tipo 'YYYY-MM-DD' o Date
-function parseFecha(fecha) {
-  if (!fecha) return null;
-  if (fecha instanceof Date) return fecha;
-  if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
-    return new Date(fecha);
+import React, { useEffect, useState, useRef} from 'react';
+// ---
+// Calcula el total de noches tomadas considerando habitaciones compartidas y noches individuales fuera del rango compartido
+function calcularTotalNochesTomadas(personas) {
+  const toDate = (str) => str ? new Date(str + 'T00:00:00').getTime() : null;
+  const procesados = new Set();
+  let total = 0;
+  for (let i = 0; i < personas.length; i++) {
+    const p = personas[i];
+    if (!p.fechaLlegada || !p.fechaSalida) continue;
+    if (
+      p.comparteHabitacion && p.comparteCon &&
+      !procesados.has(p.id) &&
+      (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial')
+    ) {
+      const companero = personas.find(q => String(q.id) === String(p.comparteCon));
+      if (
+        companero &&
+        companero.comparteHabitacion && String(companero.comparteCon) === String(p.id) &&
+        companero.tipoHabitacion === p.tipoHabitacion &&
+        companero.fechaLlegada && companero.fechaSalida
+      ) {
+        const desde = Math.max(toDate(p.fechaLlegada), toDate(companero.fechaLlegada));
+        const hasta = Math.min(toDate(p.fechaSalida), toDate(companero.fechaSalida));
+        let nochesCompartidas = 0;
+        if (desde < hasta) {
+          nochesCompartidas = Math.round((hasta - desde) / (1000 * 60 * 60 * 24));
+        }
+        total += nochesCompartidas;
+        const nochesSoloP = Math.max(0, Math.round((Math.min(desde, toDate(p.fechaSalida)) - toDate(p.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+          Math.max(0, Math.round((toDate(p.fechaSalida) - Math.max(hasta, toDate(p.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+        const nochesSoloC = Math.max(0, Math.round((Math.min(desde, toDate(companero.fechaSalida)) - toDate(companero.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
+          Math.max(0, Math.round((toDate(companero.fechaSalida) - Math.max(hasta, toDate(companero.fechaLlegada))) / (1000 * 60 * 60 * 24)));
+        total += nochesSoloP + nochesSoloC;
+        procesados.add(p.id);
+        procesados.add(companero.id);
+        continue;
+      }
+    }
+    const f1 = toDate(p.fechaLlegada);
+    const f2 = toDate(p.fechaSalida);
+    let noches = 0;
+    if (f1 && f2 && f2 > f1) noches = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
+    total += noches;
+    procesados.add(p.id);
   }
-  return null;
+  return total;
 }
-import { useEffect, useState } from 'react';
-import React from 'react';
 import { matchSorter } from 'match-sorter';
 import { FirebaseService } from '../../services/FirebaseService';
 import './FormularioBase.css';
+
 import { useEventoDestacado } from "../../context/EventoDestacadoContext";
 
-
 function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
-  // Dialog state for room sharing sync
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingSync, setPendingSync] = useState(null); // {personaId, targetId, tipoHabitacion}
+  // Ref para emails originales de cada persona (para detectar cambios de email)
+  const emailOriginalesRef = useRef({});
   const { rolUsuario, eventoId, evento: eventoContext, setEvento } = useEventoDestacado();
 
   // Admin user selector state
@@ -35,6 +71,9 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     rubro: '',
     cantidad_personas: 0
   });
+
+  // Estado para controlar si se está guardando el formulario
+  const [guardando, setGuardando] = useState(false);
 
   const [personas, setPersonas] = useState([{
     id: 1,
@@ -62,29 +101,12 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   }]);
 
   const [comentarios, setComentarios] = useState('');
-  const [guardando, setGuardando] = useState(false);
   const [eventos, setEventos] = useState([]);
   const [eventoSeleccionado, setEventoSeleccionado] = useState('');
   const [eventosLoading, setEventosLoading] = useState(true);
-  const [configProveedorConHotel, setConfigProveedorConHotel] = useState(null);
   const [formularioExistente, setFormularioExistente] = useState(null);
   const [edicionHabilitada, setEdicionHabilitada] = useState(true);
-
-// ...existing code...
-
-  // Cargar configuración de formulario proveedor-con-hotel (imageninicio, notainicio, notafin)
-  useEffect(() => {
-    const cargarConfig = async () => {
-      try {
-        const config = await FirebaseService.obtenerConfiguracionFormularioProveedorConHotel();
-        setConfigProveedorConHotel(config);
-      } catch (error) {
-        console.error("Error cargando configuración proveedor con hotel:", error);
-      }
-    };
-    cargarConfig();
-  }, []);
-// ...existing code...
+  const [configSocio, setConfigSocio] = useState(null);
 
   // Al montar, buscar si ya existe formulario para este usuario y evento
   useEffect(() => {
@@ -93,10 +115,19 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       if (!eventoSeleccionado || !emailParaBuscar) return;
       const existente = await FirebaseService.obtenerFormularioProveedorConHotelPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
       if (existente) {
+        console.log('🟢 [CARGA] Personas cargadas desde Firebase:', JSON.stringify(existente.personas, null, 2));
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
         setPersonas(existente.personas || []);
         setComentarios(existente.comentarios || '');
+        // Guardar emails originales
+        if (existente.personas) {
+          const emails = {};
+          for (const p of existente.personas) {
+            emails[p.id] = p.email;
+          }
+          emailOriginalesRef.current = emails;
+        }
       } else {
         setFormularioExistente(null);
         setDatosEmpresa({
@@ -133,6 +164,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           comparteCon: ''
         }]);
         setComentarios('');
+        emailOriginalesRef.current = { 1: '' };
       }
     };
     cargarFormularioExistente();
@@ -149,7 +181,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   // Controlar si la edición está habilitada según la fecha límite
   useEffect(() => {
     if (!evento) {
-      console.log("evento aún no está disponible");
+      console.log("Evento aún no está disponible");
       return;
     }
     if (!evento.fechaLimiteEdicion) {
@@ -181,7 +213,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   }, []);
 
   const agregarPersona = () => {
-    const nuevaPersona = {
+    const nuevaPersona = { 
       id: personas.length + 1,
       nombre: '',
       apellido: '',
@@ -206,34 +238,55 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
       acompanantes: 0,
       comparteHabitacion: false, // Por defecto false
       comparteCon: '',
-      comentario: ''
+      comentario: '' // Asegura que el campo comentario también esté presente
     };
-    setPersonas([...personas, nuevaPersona]);
+    setPersonas(prev => {
+      const arr = [...prev, nuevaPersona];
+      emailOriginalesRef.current[nuevaPersona.id] = '';
+      return arr;
+    });
   };
 
   const eliminarPersona = (id) => {
     if (personas.length > 1) {
-      setPersonas(personas.filter(persona => persona.id !== id));
+      setPersonas(prev => {
+        const arr = prev.filter(persona => persona.id !== id);
+        const emails = { ...emailOriginalesRef.current };
+        delete emails[id];
+        emailOriginalesRef.current = emails;
+        return arr;
+      });
     }
   };
 
-  // Permite actualizar un campo individual o varios campos a la vez (merge)
-  // Synchronized room sharing logic with dialog and improved message
+  // Synchronized room sharing logic with custom dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingSync, setPendingSync] = useState(null); // {personaId, targetId, tipoHabitacion, campo, valor}
+  // Diálogo de validación al guardar
+  const [validationDialog, setValidationDialog] = useState({ open: false, tipo: '', persona: null, companero: null });
+  const [onValidationResolve, setOnValidationResolve] = useState(null);
   const actualizarPersona = (id, campo, valor) => {
-    // Detect if this is a room sharing change
-    if ((campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined)) && (valor !== '' && valor !== undefined)) {
-      const targetId = campo === 'comparteCon' ? valor : valor.comparteCon;
+    let isRoomTypeChange = campo === 'tipoHabitacion' || (campo === null && valor.tipoHabitacion !== undefined);
+    let isRoomShareChange = campo === 'comparteCon' || (campo === null && valor.comparteCon !== undefined);
+    if (isRoomTypeChange || isRoomShareChange) {
       const persona = personas.find(p => p.id === id);
-      const target = personas.find(p => String(p.id) === String(targetId));
-      if (target && (target.comparteCon !== String(id) || target.tipoHabitacion !== persona.tipoHabitacion || !target.comparteHabitacion)) {
-        setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: persona.tipoHabitacion, campo, valor });
-        setDialogOpen(true);
-        return;
+      let nextTipo = isRoomTypeChange ? (campo === 'tipoHabitacion' ? valor : valor.tipoHabitacion) : persona.tipoHabitacion;
+      let nextComparteCon = isRoomShareChange ? (campo === 'comparteCon' ? valor : valor.comparteCon) : persona.comparteCon;
+      if (nextComparteCon) {
+        const target = personas.find(p => String(p.id) === String(nextComparteCon));
+        if (target && (target.comparteCon !== String(id) || target.tipoHabitacion !== nextTipo || !target.comparteHabitacion)) {
+          setPendingSync({ personaId: id, targetId: target.id, tipoHabitacion: nextTipo, campo, valor });
+          setDialogOpen(true);
+          return;
+        }
       }
     }
     // Normal update logic
-    setPersonas(personas.map(persona => {
-      if (persona.id !== id) return persona;
+    setPersonas(personas.map((persona, idx) => {
+      if (persona.id !== id) {
+        // Asegura que el email nunca sea undefined/null y siempre string
+        return { ...persona, email: typeof persona.email === 'string' ? persona.email : (persona.email ? String(persona.email) : '') };
+      }
       let nuevaPersona = { ...persona };
       if (campo === null && typeof valor === 'object' && valor !== null) {
         nuevaPersona = { ...nuevaPersona, ...valor };
@@ -265,6 +318,17 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         }
         nuevaPersona.noches = noches;
       }
+      // Asegura que el email nunca sea undefined/null y siempre string
+      if (typeof nuevaPersona.email !== 'string') {
+        nuevaPersona.email = nuevaPersona.email ? String(nuevaPersona.email) : '';
+      }
+      if (campo === 'email') {
+        nuevaPersona.email = valor ? String(valor) : '';
+      }
+      // Log para depuración de cambios en persona
+      if (campo === 'lunes' || campo === 'martes' || campo === 'miercoles') {
+        console.log(`🟡 [ACTUALIZA] Persona idx=${idx} id=${persona.id} campo=${campo} valor=${valor} antes=`, persona[campo]);
+      }
       return nuevaPersona;
     }));
   };
@@ -279,6 +343,31 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           nuevaPersona = { ...nuevaPersona, ...pendingSync.valor };
         } else {
           nuevaPersona = { ...nuevaPersona, [pendingSync.campo]: pendingSync.valor };
+        }
+        // Recalcular noches si corresponde
+        if (
+          pendingSync.campo === 'fechaLlegada' || pendingSync.campo === 'fechaSalida' || pendingSync.campo === 'tipoHabitacion' ||
+          (pendingSync.campo === null && (pendingSync.valor.fechaLlegada !== undefined || pendingSync.valor.fechaSalida !== undefined || pendingSync.valor.tipoHabitacion !== undefined))
+        ) {
+          const fechaLlegada = nuevaPersona.fechaLlegada;
+          const fechaSalida = nuevaPersona.fechaSalida;
+          let noches = 0;
+          if (fechaLlegada && fechaSalida) {
+            const llegada = new Date(fechaLlegada + 'T00:00:00');
+            const salida = new Date(fechaSalida + 'T00:00:00');
+            noches = Math.max(1, Math.round((salida - llegada) / (1000 * 60 * 60 * 24)));
+            if (
+              nuevaPersona.horaSalida &&
+              nuevaPersona.horaSalida > '10:00' &&
+              fechaSalida > fechaLlegada
+            ) {
+              noches += 1;
+            }
+            if (!nuevaPersona.horaSalida) {
+              nuevaPersona.horaSalida = '10:00';
+            }
+          }
+          nuevaPersona.noches = noches;
         }
         return { ...nuevaPersona, comparteHabitacion: true, comparteCon: String(pendingSync.targetId), tipoHabitacion: pendingSync.tipoHabitacion };
       }
@@ -309,8 +398,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     setDialogOpen(false);
     setPendingSync(null);
   };
-  {/* Room sharing sync dialog */}
-  {dialogOpen && pendingSync && (
+  // Room sharing sync dialog as a variable
+  const roomSharingDialog = dialogOpen && pendingSync && (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 400, textAlign: 'center' }}>
         <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar habitación compartida</h3>
@@ -324,7 +413,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         </div>
       </div>
     </div>
-  )}
+  );
 
   const actualizarDatosEmpresa = (campo, valor) => {
     setDatosEmpresa({ ...datosEmpresa, [campo]: valor });
@@ -332,8 +421,192 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // --- Validación de relaciones de habitación ---
+    for (let persona of personas) {
+      // Si marcó comparte, debe tener comparteCon asignado
+      if (persona.comparteHabitacion) {
+        if (!persona.comparteCon) {
+          setValidationDialog({
+            open: true,
+            tipo: 'sin-companero',
+            persona,
+            companero: null
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'desmarcar') {
+              setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteHabitacion: false } : p));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // Buscar la persona con la que comparte
+        const companero = personas.find(p => String(p.id) === String(persona.comparteCon));
+        if (!companero) {
+          setValidationDialog({
+            open: true,
+            tipo: 'companero-invalido',
+            persona,
+            companero: null
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'desmarcar') {
+              setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteHabitacion: false, comparteCon: '' } : p));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // El compañero debe tener comparteHabitacion y comparteCon apuntando de vuelta
+        if (!companero.comparteHabitacion || String(companero.comparteCon) !== String(persona.id)) {
+          setValidationDialog({
+            open: true,
+            tipo: 'no-reciproco',
+            persona,
+            companero
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'sincronizar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id) return { ...p, comparteHabitacion: true, comparteCon: String(companero.id), tipoHabitacion: companero.tipoHabitacion };
+                if (p.id === companero.id) return { ...p, comparteHabitacion: true, comparteCon: String(persona.id), tipoHabitacion: persona.tipoHabitacion };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else if (accion === 'borrar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id || p.id === companero.id) return { ...p, comparteHabitacion: false, comparteCon: '' };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+        // Ambos deben tener el mismo tipo de habitación
+        if (persona.tipoHabitacion !== companero.tipoHabitacion) {
+          setValidationDialog({
+            open: true,
+            tipo: 'tipo-distinto',
+            persona,
+            companero
+          });
+          setOnValidationResolve(() => (accion) => {
+            if (accion === 'sincronizar') {
+              setPersonas(prev => prev.map(p => {
+                if (p.id === persona.id) return { ...p, tipoHabitacion: companero.tipoHabitacion };
+                if (p.id === companero.id) return { ...p, tipoHabitacion: companero.tipoHabitacion };
+                return p;
+              }));
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+              setTimeout(() => handleSubmit(new Event('submit')), 0);
+            } else {
+              setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            }
+          });
+          return;
+        }
+      }
+      // Si NO marcó comparte pero tiene comparteCon, es inconsistente
+      if (!persona.comparteHabitacion && persona.comparteCon) {
+        setValidationDialog({
+          open: true,
+          tipo: 'sin-checkbox',
+          persona,
+          companero: personas.find(p => String(p.id) === String(persona.comparteCon))
+        });
+        setOnValidationResolve(() => (accion) => {
+          if (accion === 'desmarcar-companero') {
+            setPersonas(prev => prev.map(p => p.id === persona.id ? { ...p, comparteCon: '' } : p));
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            setTimeout(() => handleSubmit(new Event('submit')), 0);
+          } else if (accion === 'sincronizar') {
+            setPersonas(prev => prev.map(p => {
+              if (p.id === persona.id) return { ...p, comparteHabitacion: true };
+              if (p.id === persona.comparteCon) return { ...p, comparteHabitacion: true, comparteCon: String(persona.id) };
+              return p;
+            }));
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+            setTimeout(() => handleSubmit(new Event('submit')), 0);
+          } else {
+            setValidationDialog({ open: false, tipo: '', persona: null, companero: null });
+          }
+        });
+        return;
+      }
+    }
     setGuardando(true);
     try {
+      console.log('🔵 [GUARDAR] Personas antes de guardar:', JSON.stringify(personas, null, 2));
+  // Diálogo de validación personalizado
+  const validationDialogUI = validationDialog.open && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 420, textAlign: 'center' }}>
+        {validationDialog.tipo === 'no-reciproco' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar o borrar relación</h3>
+            <p>La relación de habitación entre <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> y <b>{validationDialog.companero?.nombre} {validationDialog.companero?.apellido}</b> no es recíproca.<br />¿Desea <b>sincronizar habitación</b> (ambos compartirán la misma habitación y tipo) o <b>borrar relación</b>?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar habitación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('borrar'); }}>Borrar relación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'tipo-distinto' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Sincronizar tipo de habitación</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> y <b>{validationDialog.companero?.nombre} {validationDialog.companero?.apellido}</b> deben tener el mismo tipo de habitación para compartir.<br />¿Desea sincronizar el tipo de habitación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar tipo</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'sin-companero' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Falta seleccionar compañero</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> marcó que comparte habitación pero no seleccionó con quién.<br />¿Desea desmarcar la opción de compartir habitación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar'); }}>Desmarcar</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'companero-invalido' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Compañero inválido</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> seleccionó un compañero inválido.<br />Por favor seleccione un compañero válido o desmarque la opción de compartir habitación.</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar'); }}>Desmarcar</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+        {validationDialog.tipo === 'sin-checkbox' && (
+          <>
+            <h3 style={{ color: '#453796', marginBottom: 16 }}>Inconsistencia en relación</h3>
+            <p>La persona <b>{validationDialog.persona?.nombre} {validationDialog.persona?.apellido}</b> tiene seleccionado un compañero pero no marcó la opción de compartir habitación.<br />¿Desea desmarcar el compañero o sincronizar la relación?</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('desmarcar-companero'); }}>Desmarcar compañero</button>
+              <button className="btn-primario" onClick={() => { onValidationResolve && onValidationResolve('sincronizar'); }}>Sincronizar relación</button>
+              <button className="btn-secundario" onClick={() => { onValidationResolve && onValidationResolve('cancelar'); }}>Cancelar</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
       // 1. Calcular cantidad de personas
       const cantidadPersonas = personas.length;
       // 2. Calcular noches para cada persona
@@ -344,29 +617,22 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           const fechaLlegada = new Date(persona.fechaLlegada + 'T00:00:00');
           const fechaSalida = new Date(persona.fechaSalida + 'T00:00:00');
           noches = Math.max(1, Math.round((fechaSalida - fechaLlegada) / (1000 * 60 * 60 * 24)));
-          if (
-            persona.horaSalida &&
-            persona.horaSalida > '10:00' &&
-            persona.fechaSalida > persona.fechaLlegada
-          ) {
-            noches += 1;
-          }
-          if (!horaSalida) {
-            horaSalida = '10:00';
-          }
+          // Si la hora de salida no está seteada, poner 10:00 por defecto
+          if (!horaSalida) horaSalida = '10:00';
         }
         // Asegurar que menuEspecial siempre tenga valor
         const menuEspecial = persona.menuEspecial ? persona.menuEspecial : 'Ninguno';
-        return { ...persona, noches, horaSalida, menuEspecial };
+        return { ...persona, noches, horaSalida, comparteCon: persona.comparteCon || null, menuEspecial };
       });
       // 3. Guardar cantidad_personas en datosEmpresa
       const datosEmpresaActualizados = {
         ...datosEmpresa,
         cantidad_personas: cantidadPersonas
       };
-      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user.email;
+      
+      const emailParaGuardar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : (user?.email || '');
       const formularioData = {
-        tipo: 'proveedor-con-hotel',
+        tipo: 'proveedor-con-hotel ',
         eventoId: eventoSeleccionado,
         datosEmpresa: datosEmpresaActualizados,
         personas: personasActualizadas,
@@ -375,9 +641,11 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         usuarioCreador: emailParaGuardar.toLowerCase().trim()
       };
       let idFormularioExistente = formularioExistente?.id;
-      // Usar siempre la colección 'formularios' para guardar y actualizar
+      // Si existe, actualizar, si no, crear nuevo
       if (idFormularioExistente) {
+        // Actualizar el documento existente
         await FirebaseService.actualizarFormulario('formularios', idFormularioExistente, formularioData);
+        console.log('🟢 Formulario de Proveedor actualizado:', JSON.stringify(formularioData, null, 2));
         alert('✅ Formulario de Proveedor actualizado exitosamente!');
       } else {
         await FirebaseService.guardarFormularioProveedorConHotel(formularioData);
@@ -389,9 +657,26 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         eventoSeleccionado
       );
       if (existente) {
+        console.log('🟢 [RECARGA POST-GUARDADO] Personas cargadas desde Firebase:', JSON.stringify(existente.personas, null, 2));
         setFormularioExistente(existente);
         setDatosEmpresa(existente.datosEmpresa || {});
-        setPersonas(existente.personas || []);
+        // Fusionar personas nuevas locales (no guardadas aún) con las del backend
+        setPersonas(prevPersonas => {
+          const backendPersonas = existente.personas || [];
+          // Fusionar por id: si una persona local tiene el mismo id que una del backend, se prioriza la del backend
+          const backendIds = new Set(backendPersonas.map(p => String(p.id)));
+          // Solo agregar personas locales que NO estén en backend (por id)
+          const soloLocales = prevPersonas.filter(p => !backendIds.has(String(p.id)));
+          // Evitar duplicados: si hay personas con el mismo email pero distinto id, priorizar la del backend
+          const emailsBackend = new Set(backendPersonas.map(p => (p.email || '').toLowerCase().trim()));
+          const soloLocalesSinDuplicados = soloLocales.filter(p => !emailsBackend.has((p.email || '').toLowerCase().trim()));
+          const resultado = [...backendPersonas, ...soloLocalesSinDuplicados];
+          // Log para depuración
+          if (soloLocalesSinDuplicados.length > 0) {
+            console.log('🟡 Fusionando personas locales no guardadas (sin duplicados):', soloLocalesSinDuplicados);
+          }
+          return resultado;
+        });
         setComentarios(existente.comentarios || '');
       }
     } catch (error) {
@@ -409,8 +694,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     return date.toISOString().slice(0, 10);
   }
 
-  const minFecha = addDays(eventoContext?.fechaDesde, -2);
-  const maxFecha = addDays(eventoContext?.fechaHasta, 2);
+  const minFecha = addDays(evento?.fechaDesde, -2);
+  const maxFecha = addDays(evento?.fechaHasta, 2);
 
   useEffect(() => {
     if (!eventoSeleccionado || eventos.length === 0) return;
@@ -420,13 +705,40 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
     }
   }, [eventoSeleccionado, eventos, setEvento]);
 
+  useEffect(() => {
+    const cargarConfigSocio = async () => {
+      try {
+        const config = await FirebaseService.obtenerConfiguracionFormularioProveedorConHotel();
+        setConfigSocio(config);
+      } catch (error) {
+        console.error("Error cargando configuración de proveedor:", error);
+      }
+    };
+    cargarConfigSocio();
+  }, []);
+
+  const onFormularioProveedorConHotel = (evento) => {
+    // lógica para mostrar el formulario de proveedor
+};
+
   // Filtrado de usuarios para admin
   const usuariosFiltrados = filtroUsuario
     ? matchSorter(usuarios, filtroUsuario, { keys: ['nombre', 'email', 'empresa'] })
     : usuarios;
 
+  // Definir validationDialogUI antes del return
+  const validationDialogUI = validationDialog.open && (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 32, boxShadow: '0 2px 16px #888', maxWidth: 420, textAlign: 'center' }}>
+        {/* ...existing dialog rendering code... */}
+      </div>
+    </div>
+  );
+
   return (
     <div className="formulario-container"> {/* ✅ Clase principal del CSS */}
+      {roomSharingDialog}
+      {validationDialogUI}
 
       {/* Admin: Selector de usuario */}
       {rolUsuario === 'admin' && (
@@ -496,10 +808,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
 
       <form className="formulario-form" onSubmit={handleSubmit}>
         {/* Imagen de inicio */}
-        {configProveedorConHotel?.imageninicio && (
+        {configSocio?.imageninicio && (
           <div style={{ margin: '12px 0' }}>
             <img
-              src={configProveedorConHotel.imageninicio}
+              src={configSocio.imageninicio}
               alt="Imagen de inicio"
               style={{ maxWidth: '100%', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
                     borderRadius: '12px' }}
@@ -508,8 +820,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         )}
 
         {/* Nota de inicio */}
-        {configProveedorConHotel?.notainicio && (
-          <div className="nota-inicio-formulario" dangerouslySetInnerHTML={{ __html: configProveedorConHotel.notainicio }} />
+        {configSocio?.notainicio && (
+          <div className="nota-inicio-formulario" dangerouslySetInnerHTML={{ __html: configSocio.notainicio }} />
         )}
 
         {/* Sección Selección de Evento - Color Amarillo */}
@@ -518,7 +830,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         ) : (
           <div className="seccion-formulario" >
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Evento Seleccionado <span style={{ color: 'red' }}>*</span>
+              📅 Evento seleccionado <span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -533,7 +845,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
               }}
               disabled={rolUsuario !== 'admin' || guardando} // Solo admin puede modificar
             >
-              <option value="">-- Evento seleccionado --</option>
+              <option value="">-- Seleccione un evento --</option>
               {eventos.map(ev => (
                 <option key={ev.id} value={ev.id}>
                   {ev.nombre} ({ev.fechaDesde?.split('-').reverse().join('/')} - {ev.fechaHasta?.split('-').reverse().join('/')})
@@ -588,25 +900,28 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                />
              </div>
              <div className="campo-grupo">
-              <label>Página Web:</label>
-              <input
-                type="text"
-                value={datosEmpresa.paginaWeb}
-                onChange={e => {
-                  let valor = e.target.value;
-                  if (valor === '') {
-                    valor = 'www.';
-                  }
-                  valor = valor.replace(/^https?:\/\//, '');
-                  if (!valor.startsWith('www.')) {
-                    valor = 'www.' + valor.replace(/^www\./, '');
-                  }
-                  actualizarDatosEmpresa('paginaWeb', valor);
-                }}
-                placeholder="ej.: www.articulos_del_hogar.com.ar"
-                required
-                disabled={guardando || !edicionHabilitada}
-              />
+               <label>Página Web:</label>
+               <input
+                 type="text"
+                 value={datosEmpresa.paginaWeb}
+                 onChange={e => {
+                   let valor = e.target.value;
+                   // Si el campo está vacío, precompletar con 'www.'
+                   if (valor === '') {
+                     valor = 'www.';
+                   }
+                   // Si el usuario escribe 'http://' o 'https://', eliminarlo
+                   valor = valor.replace(/^https?:\/\//, '');
+                   // Si no empieza con 'www.', agregarlo
+                   if (!valor.startsWith('www.')) {
+                     valor = 'www.' + valor.replace(/^www\./, '');
+                   }
+                   actualizarDatosEmpresa('paginaWeb', valor);
+                 }}
+                 placeholder="ej.: www.articulos_del_hogar.com.ar"
+                 required
+                 disabled={guardando || !edicionHabilitada}
+               />
              </div>
           </div>  
           <div className="campo-fila"> 
@@ -642,119 +957,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           marginBottom: '2rem',
           boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
         }}>
-          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
-            Resumen información formulario
-          </h3>
-          {/* Resumen de personas */}
-          <div style={{
-            background: '#e3f2fd',
-            border: '1px solid #90caf9',
-            borderRadius: 8,
-            padding: '1rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '2rem',
-            alignItems: 'center',
-            fontSize: '1.08rem',
-            fontWeight: 500
-          }}>
-            <span>👥 Personas registradas: <b>{personas.length}</b></span>
-            {/* Tabla resumen de personas */}
-            <div style={{ width: '100%', marginTop: 8 }}>
-              <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.75rem', background: '#fff', borderRadius: 6, overflow: 'hidden', boxShadow: '0 1px 4px #bbb' }}>
-                <thead style={{ background: '#e3f2fd' }}>
-                  <tr>
-                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Nombre</th>
-                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Tipo Habitación</th>
-                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Comparte con</th>
-                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Fecha Llegada</th>
-                    <th style={{ padding: 6, border: '1px solid #90caf9' }}>Fecha Salida</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {personas.map((p) => (
-                    <tr key={p.id}>
-                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
-                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.tipoHabitacion || '-'}</td>
-                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{(() => {
-                        if (p.comparteHabitacion && p.comparteCon) {
-                          const comp = personas.find(o => o.id === Number(p.comparteCon));
-                          return comp ? `${comp.nombre} ${comp.apellido}`.trim() : p.comparteCon;
-                        }
-                        return '-';
-                      })()}</td>
-                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.fechaLlegada || '-'}</td>
-                      <td style={{ padding: 6, border: '1px solid #e3f2fd' }}>{p.fechaSalida || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <span>🛏️ Total noches tomadas: <b>{(() => {
-              // Lógica igual a FormularioSocio.jsx para habitaciones compartidas
-              const toDate = (str) => str ? new Date(str + 'T00:00:00').getTime() : null;
-              const procesados = new Set();
-              let total = 0;
-              for (let i = 0; i < personas.length; i++) {
-                const p = personas[i];
-                if (!p.fechaLlegada || !p.fechaSalida) continue;
-                if (
-                  p.comparteHabitacion && p.comparteCon &&
-                  !procesados.has(p.id) &&
-                  (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial')
-                ) {
-                  const companero = personas.find(q => String(q.id) === String(p.comparteCon));
-                  if (
-                    companero &&
-                    companero.comparteHabitacion && String(companero.comparteCon) === String(p.id) &&
-                    companero.tipoHabitacion === p.tipoHabitacion &&
-                    companero.fechaLlegada && companero.fechaSalida
-                  ) {
-                    const desde = Math.max(toDate(p.fechaLlegada), toDate(companero.fechaLlegada));
-                    const hasta = Math.min(toDate(p.fechaSalida), toDate(companero.fechaSalida));
-                    let nochesCompartidas = 0;
-                    if (desde < hasta) {
-                      nochesCompartidas = Math.round((hasta - desde) / (1000 * 60 * 60 * 24));
-                    }
-                    total += nochesCompartidas;
-                    const nochesSoloP = Math.max(0, Math.round((Math.min(desde, toDate(p.fechaSalida)) - toDate(p.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
-                      Math.max(0, Math.round((toDate(p.fechaSalida) - Math.max(hasta, toDate(p.fechaLlegada))) / (1000 * 60 * 60 * 24)));
-                    const nochesSoloC = Math.max(0, Math.round((Math.min(desde, toDate(companero.fechaSalida)) - toDate(companero.fechaLlegada)) / (1000 * 60 * 60 * 24))) +
-                      Math.max(0, Math.round((toDate(companero.fechaSalida) - Math.max(hasta, toDate(companero.fechaLlegada))) / (1000 * 60 * 60 * 24)));
-                    total += nochesSoloP + nochesSoloC;
-                    procesados.add(p.id);
-                    procesados.add(companero.id);
-                    continue;
-                  }
-                }
-                const f1 = toDate(p.fechaLlegada);
-                const f2 = toDate(p.fechaSalida);
-                let noches = 0;
-                if (f1 && f2 && f2 > f1) noches = Math.round((f2 - f1) / (1000 * 60 * 60 * 24));
-                total += noches;
-                procesados.add(p.id);
-              }
-              return total;
-            })()}</b></span>
-            <span>🏨 Habitaciones tomadas: <b>{personas.filter(p => p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial').length}</b></span>
-        <span>🏨 Habitaciones tomadas: <b>{(() => {
-          // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
-          const habitaciones = new Set();
-          personas.forEach(p => {
-            if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
-              if (p.comparteHabitacion && p.comparteCon) {
-                // Usar un id único para la pareja (menor id primero)
-                const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
-                habitaciones.add(ids);
-              } else {
-                habitaciones.add(String(p.id));
-              }
-            }
-          });
-          return habitaciones.size;
-        })()}</b></span>
-          </div>
+     
+   
           <h3>
             👥 Personas que asistirán
           </h3>
@@ -827,8 +1031,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     onChange={(e) => actualizarPersona(persona.id, 'email', e.target.value)}
                     placeholder="ejemplo@dominio.com"
                     required
-                    onInput={e => e.target.setCustomValidity('')}
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese un email válido')}
+                    onInput={e => e.target.setCustomValidity('')}
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
@@ -856,7 +1060,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     placeholder="Teléfono fijo"
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el teléfono fijo.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    required
                     disabled={guardando || !edicionHabilitada}
                   />
                 </div>
@@ -885,10 +1088,45 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 }}>
                   🏨 Información de Alojamiento
                 </h5>
+                {/* Mostrar noches y días tomados */}
+                {(persona.fechaLlegada && persona.fechaSalida) && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    marginBottom: 12
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.05rem' }}>
+                      Noches tomadas: {persona.noches || 0}
+                    </div>
+                    <div style={{ fontWeight: 500, color: '#424242', fontSize: '0.98rem' }}>
+                      Días tomados: {(() => {
+                        // Calcular días tomados (array de fechas)
+                        const llegada = new Date(persona.fechaLlegada + 'T00:00:00');
+                        const salida = new Date(persona.fechaSalida + 'T00:00:00');
+                        let dias = [];
+                        let d = new Date(llegada);
+                        // Si noches=0, no mostrar nada
+                        if (!persona.noches || isNaN(llegada) || isNaN(salida)) return '-';
+                        // Si noches=1, solo el día de llegada
+                        if (persona.noches === 1) {
+                          dias.push(llegada.toLocaleDateString('es-AR'));
+                        } else {
+                          for (let i = 0; i < persona.noches; i++) {
+                            dias.push(new Date(d).toLocaleDateString('es-AR'));
+                            d.setDate(d.getDate() + 1);
+                          }
+                        }
+                        return dias.join(', ');
+                      })()}
+                    </div>
+                  </div>
+                )}
+                <div className="campo-fila">
                 <div className="campo-grupo">
                   <label>Tipo de Habitación:</label>
                   <select
-                    value={persona.tipoHabitacion || ''}
+                    value={String(persona.tipoHabitacion || '')}
                     onChange={e => {
                       const value = e.target.value;
                       if (value === 'no-requiere') {
@@ -904,40 +1142,65 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                         actualizarPersona(persona.id, 'tipoHabitacion', value);
                       }
                     }}
-                    required
+                    required={edicionHabilitada}
                     onInvalid={e => e.target.setCustomValidity('Por favor ingrese el tipo de habitación.')}
                     onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando || !edicionHabilitada}
                   >
                     <option value="">-- Seleccione --</option>
                     <option value="doble">Doble</option>
-                    <option value="matrimonial">single (Matrimonial)</option>
+                    <option value="matrimonial">Single (Matrimonial)</option>
                     <option value="no-requiere">No requiere</option>
                   </select>
                 </div>
                 {/* Nuevo: ¿Comparte habitación? y Comparte con en la misma línea */}
                 {(persona.tipoHabitacion === 'doble' || persona.tipoHabitacion === 'matrimonial') && (
-                  <div className="campo-fila">
-                    <div className="campo-grupo" style={{ flex: 1, minWidth: 180 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                        ¿Comparte habitación?
+                  <>
+                  <div className="campo-grupo" >
+                      <label>
                         <input
                           type="checkbox"
                           checked={!!persona.comparteHabitacion}
                           onChange={e => {
                             const checked = e.target.checked;
-                            if (!checked) {
-                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
+                            // Buscar si hay relación previa en cualquier dirección
+                            let targetId = null;
+                            let relacion = null;
+                            if (persona.comparteCon) {
+                              targetId = Number(persona.comparteCon);
+                              relacion = 'directa';
                             } else {
+                              const pRelacionada = personas.find(p => String(p.comparteCon) === String(persona.id));
+                              if (pRelacionada) {
+                                targetId = pRelacionada.id;
+                                relacion = 'inversa';
+                              }
+                            }
+                            if (targetId) {
+                              setPendingSync({
+                                personaId: persona.id,
+                                targetId,
+                                tipoHabitacion: persona.tipoHabitacion,
+                                campo: 'comparteHabitacion',
+                                valor: { comparteHabitacion: checked, comparteCon: checked ? persona.comparteCon : '' }
+                              });
+                              setDialogOpen(true);
+                              return;
+                            }
+                            // Si no hay relación previa, simplemente actualizar
+                            if (checked) {
                               actualizarPersona(persona.id, 'comparteHabitacion', true);
+                            } else {
+                              actualizarPersona(persona.id, null, {comparteHabitacion: false, comparteCon: ''});
                             }
                           }}
                           disabled={guardando || !edicionHabilitada}
-                          style={{ marginLeft: 8 }}
+                          style={{ marginRight: 8,textAlign: 'left' }}
                         />
+                        ¿Comparte habitación?
                       </label>
                     </div>
-                    <div className="campo-grupo" style={{ flex: 2, minWidth: 220 }}>
+                    <div className="campo-grupo" >
+                      
                       <label>Comparte habitación con:</label>
                       <select
                         value={persona.comparteCon || ''}
@@ -959,9 +1222,15 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                           </option>
                         ))}
                       </select>
+                      <div style={{ marginTop: 0, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
+                        <span style={{ color: '#453796', fontSize: '0.7em' }}>si es la primera persona, al cargar la segunda le aparecerá con quien compartir.</span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
+               </div>
+                {/* Campo Comentario */}
                 <div className="campo-grupo">
                   <label>Comentario sobre tipo de habitación seleccionada:</label>
                   <input
@@ -978,33 +1247,40 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Fecha de Llegada:</label>
                     <select
-                    value={persona.fechaLlegada}
-                    onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
-                    required={persona.tipoHabitacion !== 'no-requiere'}
-                    onInvalid={e => {
-                      if (persona.tipoHabitacion !== 'no-requiere') {
-                        e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.');
-                      }
-                    }}
-                    onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
+                      value={persona.fechaLlegada}
+                      onChange={e => actualizarPersona(persona.id, 'fechaLlegada', e.target.value)}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la fecha de llegada al hotel.');
+                        }
+                      }}
+                      onInput={e => e.target.setCustomValidity('')}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
-                        const desde = parseFecha(eventoContext?.fechaDesde);
-                        const hasta = parseFecha(eventoContext?.fechaHasta);
-                        if (!desde || !hasta) return null;
-                        const dias = [];
-                        // Convertir fecha a string UTC (YYYY-MM-DD) y crear Date con 'T00:00:00Z'
+                        // Lógica robusta UTC/context igual que en ProveedorConHotel
+                        function parseFecha(fecha) {
+                          if (!fecha) return null;
+                          if (fecha instanceof Date) return fecha;
+                          if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+                            return new Date(fecha);
+                          }
+                          return null;
+                        }
                         function toUTCDate(fecha) {
                           if (!fecha) return null;
                           if (typeof fecha === 'string') {
                             return new Date(fecha + 'T00:00:00Z');
                           }
-                          // Si ya es Date, formatear a ISO y volver a crear en UTC
                           const iso = fecha.toISOString().slice(0, 10);
                           return new Date(iso + 'T00:00:00Z');
                         }
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
+                        const dias = [];
                         let d = toUTCDate(eventoContext?.fechaDesde);
                         const hastaUTC = toUTCDate(eventoContext?.fechaHasta);
                         while (d && hastaUTC && d <= hastaUTC) {
@@ -1028,17 +1304,17 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Hora de Llegada:</label>
                     <input
-                    type="time"
-                    value={persona.horaLlegada}
-                    onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
-                    onInvalid={e => {
-                      if (persona.tipoHabitacion !== 'no-requiere') {
-                        e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.');
-                      }
-                    }}
-                    onInput={e => e.target.setCustomValidity('')}
-                    required={persona.tipoHabitacion !== 'no-requiere'}
-                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
+                      type="time"
+                      value={persona.horaLlegada}
+                      onChange={(e) => actualizarPersona(persona.id, 'horaLlegada', e.target.value)}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la hora de llegada al hotel.');
+                        }
+                      }}
+                      onInput={e => e.target.setCustomValidity('')}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
                   </div>
                 </div>
@@ -1047,24 +1323,27 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Fecha de Salida:</label>
                     <select
-                    value={persona.fechaSalida}
-                    onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
-                    required={persona.tipoHabitacion !== 'no-requiere'}
-                    onInvalid={e => {
-                      if (persona.tipoHabitacion !== 'no-requiere') {
-                        e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.');
-                      }
-                    }}
-                    onInput={e => e.target.setCustomValidity('')}
-                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
+                      value={persona.fechaSalida}
+                      onChange={e => actualizarPersona(persona.id, 'fechaSalida', e.target.value)}
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      onInvalid={e => {
+                        if (persona.tipoHabitacion !== 'no-requiere') {
+                          e.target.setCustomValidity('Por favor indique la fecha de salida al hotel.');
+                        }
+                      }}
+                      onInput={e => e.target.setCustomValidity('')}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     >
                       <option value="">-- Seleccione --</option>
                       {(() => {
-                        const desde = parseFecha(eventoContext?.fechaDesde);
-                        const hasta = parseFecha(eventoContext?.fechaHasta);
-                        if (!desde || !hasta) return null;
-                        const dias = [];
-                        // Convertir fecha a string UTC (YYYY-MM-DD) y crear Date con 'T00:00:00Z'
+                        function parseFecha(fecha) {
+                          if (!fecha) return null;
+                          if (fecha instanceof Date) return fecha;
+                          if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+                            return new Date(fecha);
+                          }
+                          return null;
+                        }
                         function toUTCDate(fecha) {
                           if (!fecha) return null;
                           if (typeof fecha === 'string') {
@@ -1073,6 +1352,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                           const iso = fecha.toISOString().slice(0, 10);
                           return new Date(iso + 'T00:00:00Z');
                         }
+                        const desde = parseFecha(eventoContext?.fechaDesde);
+                        const hasta = parseFecha(eventoContext?.fechaHasta);
+                        if (!desde || !hasta) return null;
+                        const dias = [];
                         let d = toUTCDate(eventoContext?.fechaDesde);
                         if (d) d.setUTCDate(d.getUTCDate() + 1); // salida es al menos un día después de llegada
                         const hastaSalida = toUTCDate(eventoContext?.fechaHasta);
@@ -1098,13 +1381,12 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   <div className="campo-grupo">
                     <label>Hora de Salida:</label>
                     <input
-                    type="time"
-                    value="10:00"
-                    readOnly
-                    required={persona.tipoHabitacion !== 'no-requiere'}
-                    disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
+                      type="time"
+                      value="10:00"
+                      readOnly
+                      required={persona.tipoHabitacion !== 'no-requiere'}
+                      disabled={guardando || !edicionHabilitada || persona.tipoHabitacion === 'no-requiere'}
                     />
-                  
                   </div>
                 </div>
               </div>
@@ -1126,12 +1408,13 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     <div className="campo-grupo">
                       <label>Asiste Lunes:</label>
                       <select
-                        value={persona.lunes || ''}
+                        value={typeof persona.lunes === 'string' ? persona.lunes : (persona.lunes === true ? 'si' : (persona.lunes === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'lunes', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'lunes', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el lunes al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
@@ -1142,46 +1425,47 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                     <div className="campo-grupo">
                       <label>Asiste Martes:</label>
                       <select
-                        value={persona.martes || ''}
+                        value={typeof persona.martes === 'string' ? persona.martes : (persona.martes === true ? 'si' : (persona.martes === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'martes', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'martes', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el martes al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
-               
-                     </select>
+                      </select>
                     </div>
                     <div className="campo-grupo">
                       <label>Asiste Miércoles:</label>
                       <select
-                        value={persona.miercoles || ''}
+                        value={typeof persona.miercoles === 'string' ? persona.miercoles : (persona.miercoles === true ? 'si' : (persona.miercoles === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'miercoles', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'miercoles', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir o no el miércoles al evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
                         <option value="no">No</option>
                         <option value="si">Sí</option>
-               
-                     </select>
+                      </select>
                     </div>
                     <div className="campo-grupo">
                       <label>Asiste a la cena de cierre:</label>
                       <select
-                        value={persona.asisteCena || ''}
+                        value={typeof persona.asisteCena === 'string' ? persona.asisteCena : (persona.asisteCena === true ? 'si' : (persona.asisteCena === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'asisteCena', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'asisteCena', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a asistir a la cena de cierre del evento.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
@@ -1189,16 +1473,35 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                         <option value="si">Sí</option>
                
                      </select>
-                    </div>                    
+                    </div>       
+                    {/* Campo Menú Especial */}
+              <div className="campo-grupo" >
+                <label>Menú Especial cena de cierre:</label>
+                <select
+                  value={persona.menuEspecial || ''}
+                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
+                  required
+                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
+                  onInput={e => e.target.setCustomValidity('')}
+                  disabled={guardando || !edicionHabilitada}
+                >
+                  <option value="Ninguno">Ninguno</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Vegano">Vegano</option>
+                  <option value="Sin gluten">Sin gluten</option>
+                  <option value="Sin Lactosa">Sin Lactosa</option>
+                </select>
+              </div>             
                     <div className="campo-grupo">
                       <label>Atiende agenda de reuniones:</label>
                       <select
-                        value={persona.atiendeReuniones || ''}
+                        value={typeof persona.atiendeReuniones === 'string' ? persona.atiendeReuniones : (persona.atiendeReuniones === true ? 'si' : (persona.atiendeReuniones === false ? 'no' : ''))}
                         onChange={e => {
-                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value === '' ? null : e.target.value);
+                          actualizarPersona(persona.id, 'atiendeReuniones', e.target.value);
                         }}
                         required
                         onInvalid={e => e.target.setCustomValidity('Por favor indique si va a gestionar la agenda de reuniones.')}
+                        onInput={e => e.target.setCustomValidity('')}
                         disabled={guardando || !edicionHabilitada}
                       >
                         <option value="">-- Seleccione --</option>
@@ -1211,23 +1514,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 </div>
               </div>
 
-              {/* Campo Menú Especial */}
-              <div className="campo-grupo" style={{ marginTop: '1.5rem' }}>
-                <label>Menú Especial cena de cierre:</label>
-                <select
-                  value={persona.menuEspecial || ''}
-                  onChange={e => actualizarPersona(persona.id, 'menuEspecial', e.target.value)}
-                  required
-                  onInvalid={e => e.target.setCustomValidity('Por favor seleccione una opción de menú especial.')}
-                  disabled={guardando || !edicionHabilitada}
-                >
-                  <option value="Ninguno">Ninguno</option>
-                  <option value="Vegetariano">Vegetariano</option>
-                  <option value="Vegano">Vegano</option>
-                  <option value="Sin gluten">Sin gluten</option>
-                  <option value="Sin Lactosa">Sin Lactosa</option>
-                </select>
-              </div>
+              
             </div>
           ))}
           
@@ -1277,7 +1564,107 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
             />
           </div>
         </div>
-
+     {/* Tabla resumen de personas */}
+          <h3 style={{ marginBottom: '1.2rem', color: '#f7d205ff', fontWeight: 700, fontSize: '1.25rem' }}>
+            Resumen información formulario
+          </h3>
+          {/* Resumen de personas */}
+          <div style={{
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            alignItems: 'center',
+            fontSize: '1.08rem',
+            fontWeight: 500
+          }}>
+            <span style={{ fontSize: '0.92em' }}>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
+              {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
+            </span>
+            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{(() => {
+              // Calcular noches únicas por habitación compartida (doble/matrimonial) o individual
+              const habitaciones = new Map();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    // Buscar compañero
+                    const companero = personas.find(o => String(o.id) === String(p.comparteCon));
+                    if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
+                      // Calcular noches desde la mínima llegada hasta la máxima salida
+                      const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
+                      const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
+                      const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+                      if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
+                        habitaciones.set(ids, noches);
+                      }
+                    }
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.set(String(p.id), p.noches || 0);
+                  }
+                }
+              });
+              // Sumar noches únicas
+              let totalNoches = 0;
+              habitaciones.forEach(n => { totalNoches += n; });
+              return totalNoches;
+            })()}</b></span>
+            <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
+              // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
+              const habitaciones = new Set();
+              personas.forEach(p => {
+                if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+                  if (p.comparteHabitacion && p.comparteCon) {
+                    // Usar un id único para la pareja (menor id primero)
+                    const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
+                    habitaciones.add(ids);
+                  } else if (!personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
+                    // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
+                    habitaciones.add(String(p.id));
+                  }
+                }
+              });
+              return habitaciones.size;
+            })()}</b></span>
+          </div>
+        <div style={{ margin: '1.5rem 0', overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%', background: '#f8fafc', fontSize: '0.75rem' }}>
+            <thead>
+              <tr style={{ background: '#e3f2fd', color: '#1976d2' }}>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Nombre</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Tipo Habitación</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Comparte con</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Llegada</th>
+                <th style={{ padding: '8px', border: '1px solid #90caf9' }}>Fecha Salida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {personas.map((p, i) => (
+                <tr key={p.id}>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{`${p.nombre} ${p.apellido}`.trim()}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.tipoHabitacion ? (p.tipoHabitacion.charAt(0).toUpperCase() + p.tipoHabitacion.slice(1)) : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.comparteHabitacion && p.comparteCon ? (() => {
+                    const comp = personas.find(o => String(o.id) === String(p.comparteCon));
+                    return comp ? `${comp.nombre} ${comp.apellido}`.trim() : '';
+                  })() : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaLlegada ? p.fechaLlegada.split('-').reverse().join('/') : ''}</td>
+                  <td style={{ padding: '8px', border: '1px solid #bbdefb' }}>{p.fechaSalida ? p.fechaSalida.split('-').reverse().join('/') : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* <<div style={{ marginTop: 16, background: '#fffbe6', borderRadius: 6, padding: '0.75rem 1rem', border: '1px solid #ffe066', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: 'var(--color-naranja)', fontWeight: 'bold', fontSize: '1rem' }}>Nota:</span>
+          <span style={{ color: '#453796', fontSize: '0.7em' }}>recuerde que solo tiene una habitación sin cargo.</span>
+          </div>> */}
+        </div>
 
         <div className="formulario-acciones">
           <button
@@ -1298,16 +1685,13 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         </div>
       </form>
 
-      {configProveedorConHotel?.notafin && (
-        <div className="nota-fin-formulario" style={{ margin: '12px 0', color: '#453796', fontWeight: 500 }} dangerouslySetInnerHTML={{ __html: configProveedorConHotel.notafin }} />
+      {configSocio?.notafin && (
+        <div className="nota-fin-formulario" style={{ margin: '12px 0' }} dangerouslySetInnerHTML={{ __html: configSocio.notafin }} />
       )}
-      <small>
-        Solo puedes elegir entre {minFecha} y {maxFecha}
-      </small>
+     
     </div>
   );
 }
 
 export default FormularioProveedorConHotel;
-
 

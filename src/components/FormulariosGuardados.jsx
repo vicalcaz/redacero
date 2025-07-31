@@ -137,11 +137,6 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   };
 
   const eliminarFormulario = async (id) => {
-    if (userPerfil !== 'admin') {
-      alert('Solo los administradores pueden eliminar formularios');
-      return;
-    }
-
     if (window.confirm('¿Estás seguro de eliminar este formulario?')) {
       try {
         await FirebaseService.eliminarFormulario(id);
@@ -349,15 +344,14 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                       >
                         ✏️
                       </button>
-                      {userPerfil === 'admin' && (
-                        <button 
+                      <button 
                           className="btn-eliminar" 
                           onClick={() => eliminarFormulario(formulario.id)}
                           title="Eliminar"
-                        >
-                          🗑️
+                      >
+                        🗑️
                         </button>
-                      )}
+                        
                     </div>
                   </td>
                 </tr>

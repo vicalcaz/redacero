@@ -27,6 +27,7 @@ function UserManagement() {
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
+  const [filtroPrimeraVez, setFiltroPrimeraVez] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -431,7 +432,9 @@ function UserManagement() {
   let filteredUsuarios = usuarios.filter(u =>
     (!filtroNombre || (u.nombre && u.nombre.toLowerCase().includes(filtroNombre.toLowerCase()))) &&
     (!filtroEmpresa || (u.empresa && u.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase()))) &&
-    (!filtroRol || (u.rol && u.rol === filtroRol))
+    (!filtroRol || (u.rol && u.rol === filtroRol)) &&
+    (filtroPrimeraVez === '' ||
+      (filtroPrimeraVez === 'si' ? !u.passwordCambiado : u.passwordCambiado))
   );
 
   // Ordenar usuarios según sortConfig
@@ -508,6 +511,15 @@ function UserManagement() {
           <option value="proveedor-con-hotel">Proveedor con hotel</option>
           <option value="proveedor-sin-hotel">Proveedor sin hotel</option>
         </select>
+        <select
+          value={filtroPrimeraVez}
+          onChange={e => setFiltroPrimeraVez(e.target.value)}
+          style={{ maxWidth: 180 }}
+        >
+          <option value="">¿Primera vez?</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
       </div>
 
       <div style={{ marginBottom: 8, fontWeight: 500, color: '#2c3e50', fontSize: 15 }}>
@@ -536,10 +548,11 @@ function UserManagement() {
           <tbody>
             {sortedUsuarios.map((usuario) => (
               <tr key={usuario.id}>
-                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{usuario.nombre}</td>
-                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{usuario.email}</td>
-                <td style={{ textAlign: 'left', paddingLeft: 12 }}>{(usuario.empresa && String(usuario.empresa).trim()) ? usuario.empresa : <span style={{color:'#bbb'}}>-</span>}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12,minWidth: 220, maxWidth: 250, wordBreak: 'break-all'  }}>{usuario.nombre}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12, minWidth: 220, maxWidth: 250, wordBreak: 'break-all' }}>{usuario.email}</td>
+                <td style={{ textAlign: 'left', paddingLeft: 12, minWidth: 200, maxWidth: 200, wordBreak: 'break-all' }}>{(usuario.empresa && String(usuario.empresa).trim()) ? usuario.empresa : <span style={{color:'#bbb'}}>-</span>}</td>
                 <td>
+                  
                   <span className={`rol-badge ${usuario.rol}`}>
                     {usuario.rol === 'admin' ? '🔧 Administrador' : 
                      usuario.rol === 'socio' ? '🏪 Socio' :

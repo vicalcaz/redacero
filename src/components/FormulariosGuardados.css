@@ -122,55 +122,33 @@
 }
 
 .tabla-formularios table {
+  font-size: 70%;           /* Reduce la letra un 40% */
   width: 100%;
-  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.tabla-formularios th {
-  background: #2c3e50;
-  color: white;
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
+.tabla-formularios th,
 .tabla-formularios td {
-  padding: 1rem;
-  border-bottom: 1px solid #ecf0f1;
-  vertical-align: middle;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left; /* Indenta el texto a la izquierda */
 }
 
-.tabla-formularios tr:hover {
-  background: #f8f9fa;
-}
-
-.tipo-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tipo-badge.socio {
-  background: #e8f5e8;
-  color: #27ae60;
-}
-
-.tipo-badge.proveedor-con-hotel {
-  background: #e3f2fd;
-  color: #2196f3;
-}
-
-.tipo-badge.proveedor-sin-hotel {
-  background: #fff3e0;
-  color: #ff9800;
-}
+/* Ajusta el ancho de las columnas principales */
+.tabla-formularios th:nth-child(1),
+.tabla-formularios td:nth-child(1) { width: 70px; }
+.tabla-formularios th:nth-child(2),
+.tabla-formularios td:nth-child(2) { width: 60px; }
+.tabla-formularios th:nth-child(3),
+.tabla-formularios td:nth-child(3) { width: 100px; }
+.tabla-formularios th:nth-child(4),
+.tabla-formularios td:nth-child(4) { width: 60px; }
+.tabla-formularios th:nth-child(5),
+.tabla-formularios td:nth-child(5) { width: 100px; }
+.tabla-formularios th:nth-child(6),
+.tabla-formularios td:nth-child(6) { width: 80px; }
 
 .acciones {
   display: flex;

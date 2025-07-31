@@ -9,18 +9,42 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 0;
 }
 
 .modal-detalle {
   background: white;
   border-radius: 12px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
+  width: 98vw;
+  max-width: 100vw;
+  min-width: 0;
+  height: 96vh;         /* Nuevo: ocupa casi toda la altura */
+  max-height: 98vh;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
+  resize: horizontal;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Asegura que el contenido ocupe todo el ancho disponible */
+.modal-content {
+  padding: 2rem;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+}
+
+/* Haz que los grids internos usen el ancho disponible */
+.info-general,
+.form-grid {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @keyframes modalSlideIn {
@@ -70,8 +94,12 @@
 
 .modal-content {
   padding: 2rem;
-  max-height: 60vh;
+  height: 100%;
+  max-height: none;
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 1 auto;
 }
 
 .modal-content::-webkit-scrollbar {
@@ -94,13 +122,15 @@
 
 .info-general {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 4px solid #3498db;
+  width: 100%;           /* Asegura que use todo el ancho */
+  box-sizing: border-box;
 }
 
 .info-item {
@@ -352,12 +382,69 @@
   box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
 }
 
+.detalle-formulario-resumen {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.08);
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem 0;
+  margin-bottom: 1rem;
+  justify-items: start; /* Alinea todo a la izquierda */
+}
+
+.tabla-personas-resumen {
+  font-size: 0.85em;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  table-layout: auto; /* Permite que las columnas crezcan */
+}
+
+.tabla-personas-resumen th,
+.tabla-personas-resumen td {
+  padding: 8px 14px;
+  min-width: 80px;
+  /* max-width: 300px; */ /* Puedes comentar o quitar esto */
+  white-space: normal;      /* Permite que el contenido se expanda en varias líneas */
+  text-overflow: initial;
+  overflow: visible;
+}
+
+.resumen-final {
+  margin-top: 1.5rem;
+  font-size: 1.1em;
+  background: #e3f2fd;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  gap: 2rem;
+}
+
+/* Si usas un div con overflowX: auto, asegúrate que tenga width: 100% */
+.tabla-personas-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .modal-detalle {
-    width: 95%;
+    width: 98vw;
+    min-width: 0;
+    max-width: 100vw;
     margin: 1rem;
     max-height: 95vh;
+  }
+  .modal-content {
+    padding: 1rem;
+    max-height: 75vh;
+    width: 100%;
   }
   
   .modal-header {

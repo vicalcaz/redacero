@@ -1,0 +1,92 @@
+.modal-referentes-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-referentes {
+  background: #fff;
+  width: 98vw;
+  max-width: 1400px;
+  height: 96vh;
+  max-height: 98vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-referentes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: #2c3e50;
+  color: white;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-referentes-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: #f8f9fa;
+}
+
+.modal-referentes-filtros input,
+.modal-referentes-filtros select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.modal-referentes-table-wrapper {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 1rem 2rem;
+}
+
+.modal-referentes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.modal-referentes-table th,
+.modal-referentes-table td {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .modal-referentes {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .modal-referentes-header,
+  .modal-referentes-filtros,
+  .modal-referentes-table-wrapper {
+    padding: 1rem;
+  }
+  .modal-referentes-filtros {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

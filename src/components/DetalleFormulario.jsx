@@ -72,6 +72,31 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
               {/* Remove duplicated Editar/Cerrar buttons here */}
             </div>
             <div className="form-group">
+              <label>Empresa:</label>
+              {editandoActivo ? (
+                <input
+                  type="text"
+                  value={formularioEditado.datosEmpresa?.empresa || ''}
+                  onChange={e => actualizarDatosEmpresa('empresa', e.target.value)}
+                />
+              ) : (
+                <span>{formulario.datosEmpresa?.empresa || 'N/A'}</span>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Dirección:</label>
+              {editandoActivo ? (
+                <input
+                  type="text"
+                  value={formularioEditado.datosEmpresa?.direccion || ''}
+                  onChange={e => actualizarDatosEmpresa('direccion', e.target.value)}
+                />
+              ) : (
+                <span>{formulario.datosEmpresa?.direccion || 'N/A'}</span>
+              )}
+            </div>
+
+            <div className="form-group">
               <label>Ciudad:</label>
               {editandoActivo ? (
                 <input
@@ -111,176 +136,266 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
 
           <div className="seccion">
             <h4>Personas ({formulario.personas?.length || 0})</h4>
-            {formulario.personas?.map((persona, index) => (
-              <div key={index} className="persona-detalle">
-                <h5>Persona {index + 1}</h5>
-                <div className="form-grid">
-          <div className="form-group">
-            <label>Nombre:</label>
-            {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.nombre || ''} onChange={e => actualizarPersona(index, 'nombre', e.target.value)} />
-            ) : (<span>{persona.nombre || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Apellido:</label>
-            {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.apellido || ''} onChange={e => actualizarPersona(index, 'apellido', e.target.value)} />
-            ) : (<span>{persona.apellido || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Email:</label>
-            {editandoActivo ? (
-              <input type="email" value={formularioEditado.personas[index]?.email || ''} onChange={e => actualizarPersona(index, 'email', e.target.value)} />
-            ) : (<span>{persona.email || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Teléfono:</label>
-            {editandoActivo ? (
-              <input type="tel" value={formularioEditado.personas[index]?.telefono || ''} onChange={e => actualizarPersona(index, 'telefono', e.target.value)} />
-            ) : (<span>{persona.telefono || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>DNI:</label>
-            {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.dni || ''} onChange={e => actualizarPersona(index, 'dni', e.target.value)} />
-            ) : (<span>{persona.dni || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Empresa:</label>
-            {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.empresa || ''} onChange={e => actualizarPersona(index, 'empresa', e.target.value)} />
-            ) : (<span>{persona.empresa || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Cargo:</label>
-            {editandoActivo ? (
-              <input type="text" value={formularioEditado.personas[index]?.cargo || ''} onChange={e => actualizarPersona(index, 'cargo', e.target.value)} />
-            ) : (<span>{persona.cargo || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Fecha llegada:</label>
-            {editandoActivo ? (
-              <input type="date" value={formularioEditado.personas[index]?.fechaLlegada || ''} onChange={e => actualizarPersona(index, 'fechaLlegada', e.target.value)} />
-            ) : (<span>{persona.fechaLlegada || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Hora llegada:</label>
-            {editandoActivo ? (
-              <input type="time" value={formularioEditado.personas[index]?.horaLlegada || ''} onChange={e => actualizarPersona(index, 'horaLlegada', e.target.value)} />
-            ) : (<span>{persona.horaLlegada || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Fecha salida:</label>
-            {editandoActivo ? (
-              <input type="date" value={formularioEditado.personas[index]?.fechaSalida || ''} onChange={e => actualizarPersona(index, 'fechaSalida', e.target.value)} />
-            ) : (<span>{persona.fechaSalida || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Hora salida:</label>
-            {editandoActivo ? (
-              <input type="time" value={formularioEditado.personas[index]?.horaSalida || ''} onChange={e => actualizarPersona(index, 'horaSalida', e.target.value)} />
-            ) : (<span>{persona.horaSalida || 'N/A'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Asiste cena:</label>
-            {editandoActivo ? (
-              <select value={formularioEditado.personas[index]?.asisteCena || ''} onChange={e => actualizarPersona(index, 'asisteCena', e.target.value)}>
-                <option value="">--</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-            ) : (<span>{persona.asisteCena === 'si' ? 'Sí' : persona.asisteCena === 'no' ? 'No' : '--'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Atiende reuniones:</label>
-            {editandoActivo ? (
-              <select value={formularioEditado.personas[index]?.atendeReuniones || ''} onChange={e => actualizarPersona(index, 'atendeReuniones', e.target.value)}>
-                <option value="">--</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-            ) : (<span>{persona.atendeReuniones === 'si' ? 'Sí' : persona.atendeReuniones === 'no' ? 'No' : '--'}</span>)}
-          </div>
-          <div className="form-group">
-            <label>Menú especial:</label>
-            {editandoActivo ? (
-              <select
-                value={formularioEditado.personas[index]?.menuEspecial || 'Ninguno'}
-                onChange={e => actualizarPersona(index, 'menuEspecial', e.target.value)}
-              >
-                <option value="Ninguno">Ninguno</option>
-                <option value="Vegetariano">Vegetariano</option>
-                <option value="Vegano">Vegano</option>
-                <option value="Sin gluten">Sin gluten</option>
-                <option value="Sin Lactosa">Sin Lactosa</option>
-              </select>
-            ) : (<span>{persona.menuEspecial || 'Ninguno'}</span>)}
-          </div>
-                </div>
-                
-                <div className="dias-evento">
-                  <strong>Días de asistencia:</strong>
-                  <div className="checkboxes">
-                    {['lunes', 'martes', 'miercoles'].map(dia => (
-                      <label key={dia}>
-                        {editandoActivo ? (
-                          <select
-                            value={formularioEditado.personas[index]?.[dia] || ''}
-                            onChange={e => actualizarPersona(index, dia, e.target.value)}
-                          >
-                            <option value="">--</option>
-                            <option value="si">Sí</option>
-                            <option value="no">No</option>
-                          </select>
-                        ) : (
-                          <span>
-                            {persona[dia] === 'si' ? 'Sí' : persona[dia] === 'no' ? 'No' : '--'}
-                          </span>
-                        )}
-                        {dia.charAt(0).toUpperCase() + dia.slice(1)}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Campos específicos según tipo */}
-                {formulario.tipo === 'Proveedor con hotel' && (
-                  <div className="hotel-info">
-                    <strong>Información de Hotel:</strong>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label>Tipo de habitación:</label>
-                        <span>{persona.tipoHabitacion || 'N/A'}</span>
-                      </div>
-                      <div className="form-group">
-                        <label>Noches:</label>
-                        <span>{persona.noches || 'N/A'}</span>
-                      </div>
-                      <div className="form-group">
-                        <label>Acompañantes:</label>
-                        <span>{persona.acompanantes || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {formulario.tipo === 'Proveedor sin hotel' && (
-                  <div className="transporte-info">
-                    <strong>Transporte y Alojamiento:</strong>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label>Transporte propio:</label>
-                        <span>{persona.transportePropio ? 'Sí' : 'No'}</span>
-                      </div>
-                      <div className="form-group">
-                        <label>Alojamiento externo:</label>
-                        <span>{persona.alojamientoExterno || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+            {/* TABLA DE PERSONAS CON SCROLL HORIZONTAL */}
+            <div style={{ overflowX: 'auto', marginBottom: 24 }}>
+              <table className="tabla-personas-resumen">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Cargo</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>DNI</th>
+                    <th>Empresa</th>
+                    <th>Fecha llegada</th>
+                    <th>Hora llegada</th>
+                    <th>Fecha salida</th>
+                    <th>Hora salida</th>
+                    <th>Tipo Habitación</th>
+                    <th>Comparte con</th>
+                    <th>Noches</th>
+                    <th>Asiste cena</th>
+                    <th>Atiende reuniones</th>
+                    <th>Menú especial</th>
+                    <th>Lunes</th>
+                    <th>Martes</th>
+                    <th>Miércoles</th>
+                    {/* Agrega más columnas si lo necesitas */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(editandoActivo ? formularioEditado.personas : formulario.personas)?.map((p, i, arr) => {
+                    // --- INICIO: Colores para parejas que comparten habitación ---
+                    // Creamos un mapa para asignar un color único a cada pareja
+                    if (!window._parejaColorMap) window._parejaColorMap = {};
+                    const pastel = [
+                      '#ffe0b2', '#b2dfdb', '#c5cae9', '#f8bbd0', '#dcedc8', '#fff9c4', '#b3e5fc', '#f0f4c3'
+                    ];
+                    let parejaKey = null;
+                    let parejaColor = '';
+                    if (p.comparteCon) {
+                      // La clave de pareja es el id menor + '_' + id mayor (para que ambos tengan la misma)
+                      const ids = [String(p.id), String(p.comparteCon)].sort();
+                      parejaKey = ids.join('_');
+                      if (!window._parejaColorMap[parejaKey]) {
+                        // Asigna un color de la paleta
+                        window._parejaColorMap[parejaKey] = pastel[Object.keys(window._parejaColorMap).length % pastel.length];
+                      }
+                      parejaColor = window._parejaColorMap[parejaKey];
+                    }
+                    // --- FIN: Colores para parejas que comparten habitación ---
+                    return (
+                      <tr key={i} style={parejaColor ? { background: parejaColor } : {}}>
+                        <td>{i + 1}</td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.nombre}
+                              onChange={e => actualizarPersona(i, 'nombre', e.target.value)}
+                            />
+                          ) : p.nombre}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.apellido}
+                              onChange={e => actualizarPersona(i, 'apellido', e.target.value)}
+                            />
+                          ) : p.apellido}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.cargo}
+                              onChange={e => actualizarPersona(i, 'cargo', e.target.value)}
+                            />
+                          ) : p.cargo}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="email"
+                              value={p.email}
+                              onChange={e => actualizarPersona(i, 'email', e.target.value)}
+                            />
+                          ) : p.email}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="tel"
+                              value={p.telefono}
+                              onChange={e => actualizarPersona(i, 'telefono', e.target.value)}
+                            />
+                          ) : p.telefono}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.dni}
+                              onChange={e => actualizarPersona(i, 'dni', e.target.value)}
+                            />
+                          ) : p.dni}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.empresa}
+                              onChange={e => actualizarPersona(i, 'empresa', e.target.value)}
+                            />
+                          ) : p.empresa}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="date"
+                              value={p.fechaLlegada || ''}
+                              onChange={e => actualizarPersona(i, 'fechaLlegada', e.target.value)}
+                            />
+                          ) : p.fechaLlegada}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="time"
+                              value={p.horaLlegada || ''}
+                              onChange={e => actualizarPersona(i, 'horaLlegada', e.target.value)}
+                            />
+                          ) : p.horaLlegada}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="date"
+                              value={p.fechaSalida || ''}
+                              onChange={e => actualizarPersona(i, 'fechaSalida', e.target.value)}
+                            />
+                          ) : p.fechaSalida}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="time"
+                              value={p.horaSalida || ''}
+                              onChange={e => actualizarPersona(i, 'horaSalida', e.target.value)}
+                            />
+                          ) : p.horaSalida}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.tipoHabitacion}
+                              onChange={e => actualizarPersona(i, 'tipoHabitacion', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="doble">Doble</option>
+                              <option value="matrimonial">Single (Matrimonial)</option>
+                              <option value="no-requiere">No requiere</option>
+                            </select>
+                          ) : p.tipoHabitacion}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.comparteCon || ''}
+                              onChange={e => actualizarPersona(i, 'comparteCon', e.target.value)}
+                              placeholder="ID o nombre"
+                            />
+                          ) : (p.comparteCon ? obtenerNombrePorId(p.comparteCon, formulario.personas) : '')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="number"
+                              value={p.noches || ''}
+                              onChange={e => actualizarPersona(i, 'noches', Number(e.target.value))}
+                              min={0}
+                            />
+                          ) : p.noches}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.asisteCena || ''}
+                              onChange={e => actualizarPersona(i, 'asisteCena', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="si">Sí</option>
+                              <option value="no">No</option>
+                            </select>
+                          ) : (p.asisteCena === 'si' ? 'Sí' : p.asisteCena === 'no' ? 'No' : '--')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.atendeReuniones || ''}
+                              onChange={e => actualizarPersona(i, 'atendeReuniones', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="si">Sí</option>
+                              <option value="no">No</option>
+                            </select>
+                          ) : (p.atendeReuniones === 'si' ? 'Sí' : p.atendeReuniones === 'no' ? 'No' : '--')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <input
+                              type="text"
+                              value={p.menuEspecial || ''}
+                              onChange={e => actualizarPersona(i, 'menuEspecial', e.target.value)}
+                            />
+                          ) : (p.menuEspecial || 'Ninguno')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.lunes || ''}
+                              onChange={e => actualizarPersona(i, 'lunes', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="si">Sí</option>
+                              <option value="no">No</option>
+                            </select>
+                          ) : (p.lunes === 'si' ? 'Sí' : p.lunes === 'no' ? 'No' : '--')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.martes || ''}
+                              onChange={e => actualizarPersona(i, 'martes', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="si">Sí</option>
+                              <option value="no">No</option>
+                            </select>
+                          ) : (p.martes === 'si' ? 'Sí' : p.martes === 'no' ? 'No' : '--')}
+                        </td>
+                        <td>
+                          {editandoActivo ? (
+                            <select
+                              value={p.miercoles || ''}
+                              onChange={e => actualizarPersona(i, 'miercoles', e.target.value)}
+                            >
+                              <option value="">--</option>
+                              <option value="si">Sí</option>
+                              <option value="no">No</option>
+                            </select>
+                          ) : (p.miercoles === 'si' ? 'Sí' : p.miercoles === 'no' ? 'No' : '--')}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="seccion">
@@ -295,6 +410,73 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
               <p>{formulario.comentarios || 'Sin comentarios'}</p>
             )}
           </div>
+
+          <div className="detalle-formulario-resumen">
+  <h2>Resumen del Formulario</h2>
+  <div className="resumen-grid">
+    <div>
+      <strong>Empresa:</strong> {formulario.datosEmpresa?.empresa}
+    </div>
+    <div>
+      <strong>Tipo:</strong> {formulario.tipo}
+    </div>
+    <div>
+      <strong>Personas:</strong> {formulario.personas?.length}
+    </div>
+    <div>
+      <strong>Usuario Creador:</strong> {formulario.usuarioCreador}
+    </div>
+    {/* Puedes agregar más campos clave aquí si lo deseas */}
+  </div>
+  <hr />
+ <h3>Personas</h3>
+  <div style={{overflowX: 'auto'}}>
+    <table className="tabla-personas-resumen">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Cargo</th>
+          <th>Email</th>
+          <th>Tipo Habitación</th>
+          <th>Comparte con</th>
+          <th>Fecha Llegada</th>
+          <th>Fecha Salida</th>
+          <th>Atiende reuniones</th> {/* <-- Agrega esta columna */}
+          {/* ...otros campos si necesitas... */}
+        </tr>
+      </thead>
+      <tbody>
+        {formulario.personas?.map((p, i) => (
+          <tr key={i}>
+            <td>{p.nombre}</td>
+            <td>{p.apellido}</td>
+            <td>{p.cargo}</td>
+            <td>{p.email}</td>
+            <td>{p.tipoHabitacion}</td>
+            <td>{p.comparteCon ? obtenerNombrePorId(p.comparteCon, formulario.personas) : ''}</td>
+            <td>{p.fechaLlegada}</td>
+            <td>{p.fechaSalida}</td>
+            <td>
+              {p.atendeReuniones === 'si'
+                ? 'Sí'
+                : p.atendeReuniones === 'no'
+                ? 'No'
+                : '--'}
+            </td>
+            {/* ... */}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <hr />
+  <div className="resumen-final">
+    <strong>Total noches:</strong> {calcularNoches(formulario.personas)}
+    <strong>Habitaciones tomadas:</strong> {calcularHabitaciones(formulario.personas)}
+    {/* ...otros totales/resúmenes... */}
+  </div>
+</div>
         </div>
 
         <div className="modal-footer">
@@ -324,6 +506,35 @@ function DetalleFormulario({ formulario, modoEdicion, onCerrar, onGuardar, puede
       </div>
     </div>
   );
+}
+
+function obtenerNombrePorId(id, personas) {
+  const persona = personas.find(p => String(p.id) === String(id));
+  return persona ? `${persona.nombre} ${persona.apellido}` : '';
+}
+
+function calcularNoches(personas) {
+  if (!Array.isArray(personas)) return 0;
+  return personas.reduce((total, p) => {
+    // Si el campo noches existe y es un número, lo suma
+    if (typeof p.noches === 'number') return total + p.noches;
+    // Si no, intenta calcularlo a partir de fechas
+    if (p.fechaLlegada && p.fechaSalida) {
+      const llegada = new Date(p.fechaLlegada);
+      const salida = new Date(p.fechaSalida);
+      const diff = (salida - llegada) / (1000 * 60 * 60 * 24);
+      return total + (diff > 0 ? diff : 0);
+    }
+    return total;
+  }, 0);
+}
+
+function calcularHabitaciones(personas) {
+  if (!Array.isArray(personas)) return 0;
+  // Cuenta personas con tipoHabitacion distinto de "no-requiere" y que no comparten o son el "dueño" de la habitación
+  return personas.filter(
+    p => p.tipoHabitacion && p.tipoHabitacion !== 'no-requiere' && (!p.comparteCon || p.comparteCon === '')
+  ).length;
 }
 
 export default DetalleFormulario;
