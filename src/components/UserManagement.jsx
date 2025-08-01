@@ -515,8 +515,8 @@ function capitalizarPalabras(str) {
           <option value="">Filtrar por rol</option>
           <option value="admin">Administrador</option>
           <option value="socio">Socio</option>
-          <option value="proveedor-con-hotel">Proveedor con hotel</option>
-          <option value="proveedor-sin-hotel">Proveedor sin hotel</option>
+          <option value="proveedor-con-hotel">Proveedor CH</option>
+          <option value="proveedor-sin-hotel">Proveedor SH</option>
         </select>
         <select
           value={filtroPrimeraVez}

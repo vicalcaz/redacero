@@ -219,27 +219,33 @@
 }
 
 
-.tipo-badge {
+.rol-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.5rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 0.25em 0.7em;
+  border-radius: 10px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  background: #7f8c8d;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
 }
 
+/* Agregar estilos para los nuevos roles */
 .tipo-badge.socio {
-  background: #e8f5e8;
-  color: #27ae60;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
 }
 
-.tipo-badge.proveedor-con-hotel {
-  background: #e3f2fd;
-  color: #2196f3;
+..tipo-badge.proveedor-con-hotel {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
 }
 
-.tipo-badge.proveedor-sin-hotel {
-  background: #fff3e0;
-  color: #ff9800;
+..tipo-badge.proveedor-sin-hotel {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
 }
+
