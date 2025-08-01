@@ -47,6 +47,13 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
     }
   };
 
+  // Función para capitalizar la primera letra de cada palabra
+function capitalizarPalabras(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, l => l.toUpperCase());
+}
   const exportarAExcel = async () => {
     const formulariosFiltrados = filtroTipo === 'todos' 
       ? formularios 
@@ -73,21 +80,22 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
             'Usuario': formulario.usuarioCreador || 'N/A',
             
             // Datos empresa
-            'Empresa - Dirección': formulario.datosEmpresa?.direccion || '',
-            'Empresa - Ciudad': formulario.datosEmpresa?.ciudad || '',
-            'Empresa - Web': formulario.datosEmpresa?.paginaWeb || '',
+            'Empresa - Nombre': capitalizarPalabras(formulario.datosEmpresa?.empresa) || '',
+            'Empresa - Dirección': capitalizarPalabras(formulario.datosEmpresa?.direccion) || '',
+            'Empresa - Ciudad': capitalizarPalabras(formulario.datosEmpresa?.ciudad) || '',
+            'Empresa - Web': capitalizarPalabras(formulario.datosEmpresa?.paginaWeb) || '',
             'Empresa - Código Postal': formulario.datosEmpresa?.codigoPostal || '',
-            'Empresa - Rubro': formulario.datosEmpresa?.rubro || '',
+            'Empresa - Rubro': capitalizarPalabras(formulario.datosEmpresa?.rubro) || '',
             
             // Datos persona
             'Persona #': index + 1,
-            'Nombre': persona.nombre || '',
-            'Apellido': persona.apellido || '',
+            'Nombre': capitalizarPalabras(persona.nombre) || '',
+            'Apellido': capitalizarPalabras(persona.apellido) || '',
             'Email': persona.email || '',
             'Teléfono': persona.telefono || '',
             'DNI': persona.dni || '',
             'Empresa Persona': persona.empresa || '',
-            'Cargo': persona.cargo || '',
+            'Cargo': capitalizarPalabras(persona.cargo) || '',
             
             // Fechas
             'Fecha Llegada': persona.fechaLlegada || '',
@@ -325,7 +333,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
                       {formulario.tipo}
                     </span>
                   </td>
-                  <td>{formulario.datosEmpresa?.empresa || 'N/A'}</td>
+                  <td>{capitalizarPalabras(formulario.datosEmpresa?.empresa) || 'N/A'}</td>
                   <td>{formulario.personas?.length || 0}</td>
                   <td>{formulario.usuarioCreador || 'N/A'}</td>
                   <td>

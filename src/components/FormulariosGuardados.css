@@ -217,3 +217,29 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+.tipo-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.5rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tipo-badge.socio {
+  background: #e8f5e8;
+  color: #27ae60;
+}
+
+.tipo-badge.proveedor-con-hotel {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+.tipo-badge.proveedor-sin-hotel {
+  background: #fff3e0;
+  color: #ff9800;
+}

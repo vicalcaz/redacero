@@ -242,7 +242,7 @@ function UserManagement() {
     setFormData({
       nombre: usuario.nombre || '',
       email: usuario.email || '',
-      empresa: (typeof usuario.empresa === 'string' && usuario.empresa !== undefined && usuario.empresa !== null) ? usuario.empresa : (usuario.empresa ? String(usuario.empresa) : ''),
+      empresa: (typeof usuario.empresa === 'string' && usuario.empresa !== undefined && usuario.empresa !== null) ? usuario.empresa : (usuario.empresa ? capitalizarPalabras(String(usuario.empresa)) : ''),
       password: '', // No mostrar password actual
       rol: usuario.rol || 'socio',
       activo: usuario.activo !== undefined ? usuario.activo : true,
@@ -281,6 +281,13 @@ function UserManagement() {
     resetPasswordForm();
   };
 
+  // Función para capitalizar la primera letra de cada palabra
+function capitalizarPalabras(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, l => l.toUpperCase());
+}
   // Función para marcar que el usuario ya cambió su contraseña (solo para casos especiales)
   const marcarPasswordCambiado = async (usuario) => {
     if (window.confirm(`¿Marcar que "${usuario.nombre}" ya cambió su contraseña inicial?\n\nEsto se hace automáticamente cuando cambian la contraseña.`)) {

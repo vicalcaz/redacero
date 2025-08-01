@@ -112,6 +112,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
   useEffect(() => {
     const cargarFormularioExistente = async () => {
       const emailParaBuscar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user?.email;
+      console.log('🟢Entró',eventoSeleccionado,emailParaBuscar)
       if (!eventoSeleccionado || !emailParaBuscar) return;
       const existente = await FirebaseService.obtenerFormularioProveedorConHotelPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
       if (existente) {
@@ -791,7 +792,6 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           La edición del formulario ya no está permitida (fecha límite: {evento?.fechaLimiteEdicion}).
         </div>
       )}
-
       {formularioExistente && (
   <div style={{
     background: '#fff3cd',
@@ -1163,7 +1163,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                           onChange={e => {
                             const checked = e.target.checked;
                             // Buscar si hay relación previa en cualquier dirección
-                            let targetId = null;
+                           /* let targetId = null;
                             let relacion = null;
                             if (persona.comparteCon) {
                               targetId = Number(persona.comparteCon);
@@ -1175,7 +1175,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                                 relacion = 'inversa';
                               }
                             }
-                            if (targetId) {
+                              if (targetId) {
                               setPendingSync({
                                 personaId: persona.id,
                                 targetId,
@@ -1185,7 +1185,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                               });
                               setDialogOpen(true);
                               return;
-                            }
+                            }*/
                             // Si no hay relación previa, simplemente actualizar
                             if (checked) {
                               actualizarPersona(persona.id, 'comparteHabitacion', true);

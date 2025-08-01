@@ -388,7 +388,7 @@ function App() {
       case 'formulario-proveedor-con-hotel':
         return (
           <FormularioProveedorConHotel
-            
+            user={usuario}
             evento={eventoSeleccionado}
             onSubmit={handleFormularioSubmit}
             onCancel={handleFormularioCancel} // <-- aquí pasas la función
@@ -398,6 +398,7 @@ function App() {
       case 'formulario-proveedor-sin-hotel':
         return (
           <FormularioProveedorSinHotel
+            user={usuario}
             evento={eventoSeleccionado}
             onSubmit={handleFormularioSubmit}
             onCancel={handleFormularioCancel}
