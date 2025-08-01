@@ -273,23 +273,23 @@ function capitalizarPalabras(str) {
       </div>
 
       <div className="stats">
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => setFiltroTipo('todos')} style={{ cursor: 'pointer' }}>
           <h4>Total Formularios</h4>
           <span className="stat-number">{formulariosFiltrados.length}</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => setFiltroTipo('socio')} style={{ cursor: 'pointer' }}>
           <h4>Socios</h4>
           <span className="stat-number">
             {formulariosFiltrados.filter(f => f.tipo === 'socio').length}
           </span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => setFiltroTipo('proveedor-con-hotel')} style={{ cursor: 'pointer' }}>
           <h4>Prov. con Hotel</h4>
           <span className="stat-number">
             {formulariosFiltrados.filter(f => f.tipo === 'proveedor-con-hotel').length}
           </span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => setFiltroTipo('proveedor-sin-hotel')} style={{ cursor: 'pointer' }}>
           <h4>Prov. sin Hotel</h4>
           <span className="stat-number">
             {formulariosFiltrados.filter(f => f.tipo === 'proveedor-sin-hotel').length}

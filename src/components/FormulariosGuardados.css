@@ -239,12 +239,12 @@
   color: white;
 }
 
-..tipo-badge.proveedor-con-hotel {
+.tipo-badge.proveedor-con-hotel {
   background: linear-gradient(135deg, #f39c12, #e67e22);
   color: white;
 }
 
-..tipo-badge.proveedor-sin-hotel {
+.tipo-badge.proveedor-sin-hotel {
   background: linear-gradient(135deg, #9b59b6, #8e44ad);
   color: white;
 }
