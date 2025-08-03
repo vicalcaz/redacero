@@ -1,3 +1,7 @@
+.tabla-resumen-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -7,20 +11,23 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: left;
   z-index: 1000;
-  padding: 0;
+  padding: 0 !important;
+  width: 100vw;
+  height: 100vh;
 }
 
 .modal-detalle {
   background: white;
+  font-size: small;
   border-radius: 12px;
   width: 98vw;
   max-width: 100vw;
   min-width: 0;
-  height: 96vh;         /* Nuevo: ocupa casi toda la altura */
+  height: 98vh;
   max-height: 98vh;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
   resize: horizontal;
@@ -30,13 +37,17 @@
 
 /* Asegura que el contenido ocupe todo el ancho disponible */
 .modal-content {
-  padding: 2rem;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 80vh;
   height: 100%;
-  max-height: none;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2rem;
   overflow-y: auto;
-  width: 100%;
-  box-sizing: border-box;
-  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Haz que los grids internos usen el ancho disponible */
@@ -58,20 +69,6 @@
   }
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: #2c3e50;
-  color: white;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 600;
-}
 
 .btn-cerrar {
   background: none;
@@ -92,15 +89,6 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-.modal-content {
-  padding: 2rem;
-  height: 100%;
-  max-height: none;
-  overflow-y: auto;
-  width: 100%;
-  box-sizing: border-box;
-  flex: 1 1 auto;
-}
 
 .modal-content::-webkit-scrollbar {
   width: 8px;
@@ -125,15 +113,17 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
-  padding: 1.5rem;
+  padding: 0.8rem;
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 4px solid #3498db;
   width: 100%;           /* Asegura que use todo el ancho */
   box-sizing: border-box;
+  font-size: 0.65em;
 }
 
 .info-item {
+  font-size: 0.65rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -141,7 +131,7 @@
 
 .info-item strong {
   color: #7f8c8d;
-  font-size: 0.85rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -149,12 +139,13 @@
 
 .info-item span {
   color: #2c3e50;
-  font-size: 1rem;
+  font-size: 0.65rem;
   font-weight: 500;
 }
 
 .seccion {
   margin-bottom: 2rem;
+  font-size: 0.9rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #ecf0f1;
 }
@@ -167,7 +158,7 @@
 .seccion h4 {
   color: #2c3e50;
   margin-bottom: 1rem;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   border-left: 4px solid #3498db;
   padding-left: 1rem;
   font-weight: 600;
@@ -182,6 +173,7 @@
 
 .form-group {
   display: flex;
+  font-size: 0.65rem;
   flex-direction: column;
   gap: 0.5rem;
 }
@@ -189,7 +181,7 @@
 .form-group label {
   font-weight: 500;
   color: #7f8c8d;
-  font-size: 0.9rem;
+  font-size: 0.6rem;
   margin-bottom: 0.25rem;
 }
 
@@ -198,7 +190,7 @@
   padding: 0.75rem;
   border: 2px solid #dee2e6;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   transition: all 0.3s ease;
   font-family: inherit;
 }
@@ -208,6 +200,7 @@
   outline: none;
   border-color: #3498db;
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  font-size: 0.8rem;
 }
 
 .form-value {
@@ -215,7 +208,7 @@
   background: #f8f9fa;
   border-radius: 6px;
   color: #2c3e50;
-  font-size: 0.9rem;
+  font-size: 0.6rem;
   border: 2px solid #ecf0f1;
   min-height: 1.2rem;
   display: flex;
@@ -225,6 +218,7 @@
 .persona-detalle {
   background: #f8f9fa;
   padding: 1.5rem;
+   font-size: 2.8rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   border: 1px solid #dee2e6;
@@ -233,7 +227,7 @@
 .persona-detalle h5 {
   color: #2c3e50;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 0.6rem;
   font-weight: 600;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #3498db;
@@ -241,6 +235,7 @@
 
 .dias-evento {
   margin: 1rem 0;
+   font-size: 0.8rem;
   padding: 1rem;
   background: white;
   border-radius: 6px;
@@ -251,7 +246,7 @@
   display: block;
   margin-bottom: 0.75rem;
   color: #7f8c8d;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -301,13 +296,15 @@
 }
 
 .modal-content textarea {
+  width: 95vw;
+  max-width: 1400px;
   width: 100%;
   min-height: 100px;
   padding: 1rem;
   border: 2px solid #dee2e6;
   border-radius: 6px;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   resize: vertical;
   transition: border-color 0.3s ease;
 }
@@ -323,7 +320,7 @@
   background: #f8f9fa;
   border-radius: 6px;
   color: #2c3e50;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   border: 2px solid #ecf0f1;
   margin: 0;
   line-height: 1.5;
@@ -336,6 +333,9 @@
   padding: 1.5rem 2rem;
   background: #f8f9fa;
   border-top: 1px solid #dee2e6;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .modal-footer button {
@@ -351,7 +351,8 @@
 
 .btn-success {
   background: #27ae60;
-  color: white;
+  color: #fff;
+  border: 2px solid #219a52;
 }
 
 .btn-success:hover {
@@ -362,7 +363,8 @@
 
 .btn-primary {
   background: #3498db;
-  color: white;
+  color: #fff;
+  border: 2px solid #2980b9;
 }
 
 .btn-primary:hover {
@@ -373,7 +375,8 @@
 
 .btn-secondary {
   background: #95a5a6;
-  color: white;
+  color: #fff;
+  border: 2px solid #7f8c8d;
 }
 
 .btn-secondary:hover {
@@ -386,6 +389,7 @@
   background: #f8fafc;
   border-radius: 12px;
   padding: 2rem;
+   font-size: 0.8rem;
   margin-bottom: 2rem;
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.08);
 }
@@ -401,24 +405,68 @@
 .tabla-personas-resumen {
   font-size: 0.85em;
   width: 100%;
-  min-width: 0;
+  min-width: 1200px;
   box-sizing: border-box;
   table-layout: auto; /* Permite que las columnas crezcan */
 }
 
 .tabla-personas-resumen th,
 .tabla-personas-resumen td {
-  padding: 8px 14px;
-  min-width: 80px;
+  padding: 2px 4px;
+  min-width: 140px;
   /* max-width: 300px; */ /* Puedes comentar o quitar esto */
   white-space: normal;      /* Permite que el contenido se expanda en varias líneas */
   text-overflow: initial;
   overflow: visible;
+  font-size: 0.8rem;
+}
+
+/* Reduce el ancho mínimo de las celdas de respuesta corta */
+.tabla-personas-resumen th.lunes,
+.tabla-personas-resumen th.martes,
+.tabla-personas-resumen th.miercoles,
+.tabla-personas-resumen td.lunes,
+.tabla-personas-resumen td.martes,
+.tabla-personas-resumen td.miercoles {
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 80px;
+  padding: 2px 0px 2px 2px;
+}
+
+/* Campos de respuesta corta (Si/No) */
+.tabla-personas-resumen td input[type="checkbox"],
+.tabla-personas-resumen td select.si-no,
+.tabla-personas-resumen td select.agenda-dia {
+  min-width: 60px;
+  max-width: 60px;
+  font-size: 1em;
+  padding: 2px 0px 2px 2px; /* arriba 2px, derecha 0px, abajo 2px, izquierda 2px */
+  min-height: 32px;
+}
+.tabla-personas-resumen td .camposlargos {
+  width: 100%;
+  min-width: 60px;
+  max-width: 120px;
+  font-size: 0.9em;
+  padding: 2px 0px 2px 2px; /* arriba 2px, derecha 0px, abajo 2px, izquierda 2px */
+  min-height: 32px;
+}
+/* Campos normales (texto, email, etc) */
+.tabla-personas-resumen td input:not([type="checkbox"]),
+.tabla-personas-resumen td select:not(.si-no):not(.agenda-dia):not(.camposlargos),
+.tabla-personas-resumen td textarea {
+  width: 100%;
+  min-width: 80px;
+  font-size: 1.1em;
+  padding: 2px 2x;
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .resumen-final {
   margin-top: 1.5rem;
-  font-size: 1.1em;
+  font-size: 0.65;
   background: #e3f2fd;
   border-radius: 8px;
   padding: 1rem;
@@ -435,16 +483,21 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .modal-detalle {
-    width: 98vw;
+    width: 100vw;
     min-width: 0;
     max-width: 100vw;
-    margin: 1rem;
-    max-height: 95vh;
+    margin: 0;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
   }
   .modal-content {
     padding: 1rem;
-    max-height: 75vh;
-    width: 100%;
+    max-height: 100vh;
+    min-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
   }
   
   .modal-header {
@@ -452,7 +505,7 @@
   }
   
   .modal-header h3 {
-    font-size: 1.2rem;
+    font-size: 0.8rem;
   }
   
   .modal-content {
@@ -490,17 +543,23 @@
 
 @media (max-width: 480px) {
   .modal-overlay {
-    padding: 0.5rem;
+    padding: 0 !important;
+    width: 100vw;
+    height: 100vh;
   }
-  
   .modal-detalle {
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     max-height: 100vh;
     border-radius: 0;
+    margin: 0;
   }
-  
   .modal-content {
-    max-height: calc(100vh - 140px);
+    max-height: 100vh;
+    min-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+    padding: 0.5rem;
   }
 }

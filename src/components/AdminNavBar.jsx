@@ -56,9 +56,9 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout, usuarios }) {
                   <button className="dropdown-item" onClick={() => onViewChange('agenda')}>
                     Listado de personas para Agenda
                   </button>
-                  <button className="dropdown-item" onClick={() => onViewChange('rooming')}>
+                <button className="dropdown-item" onClick={() => onViewChange('roomingList')}>
                     Rooming List
-                  </button>
+                </button>
                   <button className="dropdown-item" onClick={() => onViewChange('referentes')}>
                     Listado de control de usuarios referentes (sin Login/Formulario)
                   </button>

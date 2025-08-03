@@ -11,6 +11,7 @@ import EventosDestacados from './EventosDestacados';
 import { FirebaseService } from '../services/FirebaseService';
 import Newsletter from './Newsletter';
 import './Dashboard.css';
+import RoomingList from './RoomingList.jsx';
 
 // Utilidad para obtener rango de fechas entre dos strings YYYY-MM-DD (inclusive)
 // Recibe opcionalmente horaSalida. Si horaSalida <= '10:00', no incluye el día de salida.
@@ -30,29 +31,72 @@ function getRangoFechas(desde, hasta, horaSalida) {
 }
 
 function ResumenHabitaciones({ formularios }) {
-  // Map: { fecha: { dobles: Set de pares únicos, matrimoniales: count } }
-  const ocupacion = {};
+  // Map: { fecha: { dobles: count, matrimoniales: count } }
+  // Nuevo algoritmo: para cada día, contar habitaciones únicas (dobles y matrimoniales) sin doble conteo
+  const habitacionesPorDia = {};
   formularios.forEach(f => {
     if (!f.personas || !Array.isArray(f.personas)) return;
+    // Agrupar personas por habitación (doble: pareja o individual, matrimonial)
+    const grupos = {};
     f.personas.forEach(p => {
       if (!p.fechaLlegada || !p.fechaSalida) return;
-      // Rango de fechas ocupadas por esta persona (ajustado por hora de salida)
-      const fechas = getRangoFechas(p.fechaLlegada, p.fechaSalida, p.horaSalida);
+      if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+        let key;
+        if (p.comparteHabitacion && p.comparteCon) {
+          const ids = [String(p.id), String(p.comparteCon)].sort();
+          key = ids.join('_');
+        } else {
+          key = String(p.id);
+        }
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(p);
+      }
+    });
+    // Para cada grupo, asignar fechas ocupadas y tipo
+    Object.values(grupos).forEach(grupo => {
+      const tipos = grupo.map(p => p.tipoHabitacion).filter(t => t);
+      let tipo = tipos.length > 0 ? tipos[0] : '';
+      if (tipos.length > 1 && !tipos.every(t => t === tipo)) tipo = 'varios';
+      // Obtener mínima fecha de llegada y máxima fecha de salida
+      let minLlegada = null, maxSalida = null;
+      grupo.forEach(p => {
+        if (p.fechaLlegada) {
+          const llegada = new Date(p.fechaLlegada);
+          if (!minLlegada || llegada < minLlegada) minLlegada = llegada;
+        }
+        if (p.fechaSalida) {
+          const salida = new Date(p.fechaSalida);
+          if (!maxSalida || salida > maxSalida) maxSalida = salida;
+        }
+      });
+      // Rango de fechas ocupadas por este grupo
+      const fechas = (minLlegada && maxSalida) ? getRangoFechas(minLlegada.toISOString().slice(0,10), maxSalida.toISOString().slice(0,10), grupo[0].horaSalida) : [];
       fechas.forEach(fecha => {
-        if (!ocupacion[fecha]) ocupacion[fecha] = { dobles: new Set(), matrimoniales: 0 };
-        if (p.tipoHabitacion === 'matrimonial') {
-          ocupacion[fecha].matrimoniales += 1;
-        } else if (p.tipoHabitacion === 'doble' && p.comparteCon) {
-          // Para evitar duplicados, crear un id de pareja ordenado
-          const pareja = [String(p.id), String(p.comparteCon)].sort().join('-');
-          ocupacion[fecha].dobles.add(pareja);
+        if (!habitacionesPorDia[fecha]) habitacionesPorDia[fecha] = { dobles: 0, matrimoniales: 0 };
+        if (tipo === 'doble') {
+          habitacionesPorDia[fecha].dobles += 1;
+        } else if (tipo === 'matrimonial') {
+          habitacionesPorDia[fecha].matrimoniales += 1;
         }
       });
     });
   });
+  // Copiar a ocupacion para mantener el resto del código igual
+  const ocupacion = habitacionesPorDia;
   // Mostrar tabla por día
   const fechas = Object.keys(ocupacion).sort();
   if (fechas.length === 0) return <p>No hay habitaciones ocupadas registradas.</p>;
+  // Calcular totales
+  let totalDobles = 0, totalMatrimoniales = 0, totalHabitaciones = 0;
+  const filas = fechas.map(fecha => {
+    const dobles = ocupacion[fecha].dobles;
+    const matrimoniales = ocupacion[fecha].matrimoniales;
+    const total = dobles + matrimoniales;
+    totalDobles += dobles;
+    totalMatrimoniales += matrimoniales;
+    totalHabitaciones += total;
+    return { fecha, dobles, matrimoniales, total };
+  });
   return (
     <table className="tabla-habitaciones" style={{width: '100%', borderCollapse: 'collapse', marginTop: 12}}>
       <thead>
@@ -60,22 +104,226 @@ function ResumenHabitaciones({ formularios }) {
           <th style={{borderBottom: '1px solid #90caf9'}}>Fecha</th>
           <th style={{borderBottom: '1px solid #90caf9'}}>Dobles</th>
           <th style={{borderBottom: '1px solid #90caf9'}}>Matrimoniales</th>
+          <th style={{borderBottom: '1px solid #90caf9'}}>Total habitaciones</th>
         </tr>
       </thead>
       <tbody>
-        {fechas.map(fecha => (
+        {filas.map(({ fecha, dobles, matrimoniales, total }) => (
           <tr key={fecha}>
             <td style={{padding: 4}}>{fecha.split('-').reverse().join('/')}</td>
-            <td style={{padding: 4, textAlign: 'center'}}>{ocupacion[fecha].dobles.size}</td>
-            <td style={{padding: 4, textAlign: 'center'}}>{ocupacion[fecha].matrimoniales}</td>
+            <td style={{padding: 4, textAlign: 'center'}}>{dobles}</td>
+            <td style={{padding: 4, textAlign: 'center'}}>{matrimoniales}</td>
+            <td style={{padding: 4, textAlign: 'center', fontWeight: 600}}>{total}</td>
           </tr>
         ))}
       </tbody>
+      <tfoot>
+        <tr style={{background:'#bbdefb', fontWeight:'bold'}}>
+          <td style={{padding: 4}}>Totales</td>
+          <td style={{padding: 4, textAlign: 'center'}}>{totalDobles}</td>
+          <td style={{padding: 4, textAlign: 'center'}}>{totalMatrimoniales}</td>
+          <td style={{padding: 4, textAlign: 'center', fontWeight: 600}}>{totalHabitaciones}</td>
+        </tr>
+      </tfoot>
     </table>
   );
 }
 
 function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onNavigateToEventos, usuariosSinFormulario, formularios }) {
+  // Exportar detalle a Excel
+  function exportarDetalleHabitacionesExcel() {
+    const filas = [];
+    Object.entries(detallePorFormulario).forEach(([tipoForm, grupos]) => {
+      grupos.forEach(g => {
+        filas.push({
+          'Tipo de formulario': tipoForm,
+          'Empresa': g.empresa || '',
+          'Personas': g.personas,
+          'Tipo de habitación': g.tipo,
+          'Fecha llegada': g.fechaLlegada || '',
+          'Hora llegada': g.horaLlegada || '',
+          'Fecha salida': g.fechaSalida || '',
+          'Hora salida': g.horaSalida || '',
+          'Noches': g.noches
+        });
+      });
+    });
+    import('xlsx').then(XLSX => {
+      const ws = XLSX.utils.json_to_sheet(filas);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Detalle Habitaciones');
+      XLSX.writeFile(wb, 'detalle_habitaciones.xlsx');
+    });
+  }
+
+  // Exportar detalle a HTML
+  function exportarDetalleHabitacionesHTML() {
+    let html = `<!DOCTYPE html><html><head><meta charset='utf-8'><title>Detalle Habitaciones</title>
+    <style>
+      body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; padding: 2em; }
+      table { border-collapse: collapse; width: 100%; background: #fff; font-size: 0.92em; }
+      th, td { border: 1px solid #90caf9; padding: 6px; text-align: left; }
+      thead tr { background: #e3f2fd; }
+      tfoot tr { background: #bbdefb; font-weight: bold; }
+      .alt-row { background: #e3f2fd; }
+    </style>
+    </head><body>
+    <h2>Detalle de habitaciones por grupo</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo de formulario</th>
+          <th>Empresa</th>
+          <th>Personas</th>
+          <th>Tipo de habitación</th>
+          <th>Fecha llegada</th>
+          <th>Hora llegada</th>
+          <th>Fecha salida</th>
+          <th>Hora salida</th>
+          <th>Noches</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    let lastEmpresa = null;
+    let colorToggle = false;
+    detalleFilas.forEach((g, idx) => {
+      if (g.empresa !== lastEmpresa) {
+        colorToggle = !colorToggle;
+        lastEmpresa = g.empresa;
+      }
+      html += `<tr class='${colorToggle ? "alt-row" : ""}'>` +
+        `<td>${g.tipoFormulario}</td>` +
+        `<td>${g.empresa || ''}</td>` +
+        `<td>${g.personas}</td>` +
+        `<td>${g.tipo}</td>` +
+        `<td>${g.fechaLlegada || ''}</td>` +
+        `<td>${g.horaLlegada || ''}</td>` +
+        `<td>${g.fechaSalida || ''}</td>` +
+        `<td>${g.horaSalida || ''}</td>` +
+        `<td>${g.noches}</td>` +
+        `</tr>`;
+    });
+    // Totales
+    html += `</tbody><tfoot>`;
+    html += `<tr><td>Totales</td>` +
+      `<td>Empresas: ${Array.from(new Set(detalleFilas.map(f => f.empresa && f.empresa.trim()).filter(e => e))).length}</td>` +
+      `<td></td>` +
+      `<td>Dobles: ${detalleFilas.filter(f => f.tipo === 'doble').length} | Matrimoniales: ${detalleFilas.filter(f => f.tipo === 'matrimonial').length}</td>` +
+      `<td colspan='5'>Total habitaciones: ${detalleFilas.length}</td></tr>`;
+    html += `<tr style='background:#e3f2fd;'><td>Por tipo de formulario</td>` +
+      `<td colspan='4'>` +
+      Object.entries(detallePorFormulario).map(([tipo, grupos], i) => (
+        `<span style='margin-right:16px;'>${tipo}: <b>${grupos.length}</b></span>`
+      )).join(' ') +
+      `</td></tr>`;
+    html += `</tfoot></table></body></html>`;
+    // Descargar archivo
+    const blob = new Blob([html], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'detalle_habitaciones.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  // Función para capitalizar la primera letra y poner el resto en minúsculas
+  function capitalizar(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/(^|\s|\.|-|_)([a-záéíóúüñ])/g, (m, sep, c) => sep + c.toUpperCase());
+  }
+
+  // Agrupar habitaciones por tipo de formulario y preparar lista ordenada para la tabla
+  const detallePorFormulario = {};
+  let detalleFilas = [];
+  formularios.forEach(f => {
+    if (!f.personas || !Array.isArray(f.personas)) return;
+    const gruposForm = {};
+    f.personas.forEach(p => {
+      if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+        let key;
+        if (p.comparteHabitacion && p.comparteCon) {
+          const ids = [String(p.id), String(p.comparteCon)].sort();
+          key = ids.join('_');
+        } else {
+          key = String(p.id);
+        }
+        if (!gruposForm[key]) gruposForm[key] = [];
+        gruposForm[key].push(p);
+      }
+    });
+    // Calcular noches y tipo por grupo en este formulario
+    const gruposDetalle = [];
+    Object.entries(gruposForm).forEach(([key, grupo]) => {
+      const tipos = grupo.map(p => p.tipoHabitacion).filter(t => t);
+      let tipo = tipos.length > 0 ? tipos[0] : '';
+      if (tipos.length > 1 && !tipos.every(t => t === tipo)) tipo = 'varios';
+
+      // Obtener mínima fecha de llegada y máxima fecha de salida entre todos los que comparten
+      let minLlegada = null, maxSalida = null;
+      let horaLlegada = '', horaSalida = '';
+      grupo.forEach(p => {
+        if (p.fechaLlegada) {
+          const llegada = new Date(p.fechaLlegada);
+          if (!minLlegada || llegada < minLlegada) {
+            minLlegada = llegada;
+            horaLlegada = p.horaLlegada || '';
+          }
+        }
+        if (p.fechaSalida) {
+          const salida = new Date(p.fechaSalida);
+          if (!maxSalida || salida > maxSalida) {
+            maxSalida = salida;
+            horaSalida = p.horaSalida || '';
+          }
+        }
+      });
+      // Formatear fechas para mostrar en la tabla
+      const fechaLlegada = minLlegada ? minLlegada.toISOString().slice(0, 10) : '';
+      const fechaSalida = maxSalida ? maxSalida.toISOString().slice(0, 10) : '';
+
+      let noches = 0;
+      if (minLlegada && maxSalida) {
+        noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+      } else {
+        grupo.forEach(p => {
+          if (typeof p.noches === 'number') noches += p.noches;
+        });
+      }
+      // Buscar empresa del grupo (puede estar en p.empresa, f.empresa o f.datosEmpresa.empresa)
+      let empresa = '';
+      if (grupo.length > 0 && grupo[0].empresa) {
+        empresa = grupo[0].empresa;
+      } else if (f.empresa) {
+        empresa = f.empresa;
+      } else if (f.datosEmpresa && f.datosEmpresa.empresa) {
+        empresa = f.datosEmpresa.empresa;
+      }
+      const fila = {
+        tipoFormulario: f.tipo,
+        empresa: capitalizar(empresa),
+        personas: grupo.map(p => capitalizar(`${p.nombre} ${p.apellido}`)).join(' y '),
+        tipo,
+        noches,
+        fechaLlegada,
+        horaLlegada,
+        fechaSalida,
+        horaSalida
+      };
+      gruposDetalle.push(fila);
+      detalleFilas.push(fila);
+    });
+    detallePorFormulario[f.tipo] = detallePorFormulario[f.tipo] || [];
+    detallePorFormulario[f.tipo].push(...gruposDetalle);
+  });
+  // Ordenar por empresa y tipo de habitación
+  detalleFilas.sort((a, b) => {
+    if (a.empresa < b.empresa) return -1;
+    if (a.empresa > b.empresa) return 1;
+    if (a.tipo < b.tipo) return -1;
+    if (a.tipo > b.tipo) return 1;
+    return 0;
+  });
 
   const [showHabitacionesDetalle, setShowHabitacionesDetalle] = useState(false);
   const [showUsuariosSinFormDetalle, setShowUsuariosSinFormDetalle] = useState(false);
@@ -83,35 +331,70 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
   // Calcular noches y habitaciones tomadas sin doble conteo, igual que en FormularioSocio.jsx
   let totalHabitaciones = 0;
   let totalNoches = 0;
-  const habitaciones = new Map(); // id único -> noches
+  // Agrupar personas por habitación (pareja o individual)
+  const grupos = {};
   formularios.forEach(f => {
     if (!f.personas || !Array.isArray(f.personas)) return;
     f.personas.forEach(p => {
       if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+        let key;
         if (p.comparteHabitacion && p.comparteCon) {
-          // Usar un id único para la pareja (menor id primero)
-          const ids = [p.id, Number(p.comparteCon)].sort((a, b) => a - b).join('-');
-          // Buscar compañero
-          const companero = f.personas.find(o => String(o.id) === String(p.comparteCon));
-          if (companero && companero.fechaLlegada && companero.fechaSalida && p.fechaLlegada && p.fechaSalida) {
-            // Calcular noches desde la mínima llegada hasta la máxima salida
-            const minLlegada = Math.min(new Date(p.fechaLlegada + 'T00:00:00').getTime(), new Date(companero.fechaLlegada + 'T00:00:00').getTime());
-            const maxSalida = Math.max(new Date(p.fechaSalida + 'T00:00:00').getTime(), new Date(companero.fechaSalida + 'T00:00:00').getTime());
-            const noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
-            if (!habitaciones.has(ids) || noches > habitaciones.get(ids)) {
-              habitaciones.set(ids, noches);
-            }
-          }
-        } else if (!f.personas.some(o => o.comparteHabitacion && Number(o.comparteCon) === p.id)) {
-          // Solo agregar si no es el "compañero" de otra persona (evita doble conteo)
-          habitaciones.set(String(p.id), p.noches || 0);
+          // Clave única para la pareja
+          const ids = [String(p.id), String(p.comparteCon)].sort();
+          key = ids.join('_');
+        } else {
+          key = String(p.id);
         }
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(p);
       }
     });
   });
-  totalHabitaciones = habitaciones.size;
+  // Calcular noches y tipo por grupo
+  const habitaciones = new Map(); // key -> { noches, tipo }
+  Object.entries(grupos).forEach(([key, grupo]) => {
+    // Tipo de habitación: si todos igual, ese tipo; si no, "varios"
+    const tipos = grupo.map(p => p.tipoHabitacion).filter(t => t);
+    let tipo = tipos.length > 0 ? tipos[0] : '';
+    if (tipos.length > 1 && !tipos.every(t => t === tipo)) tipo = 'varios';
+    // Calcular noches: desde la mínima llegada hasta la máxima salida
+    let minLlegada = null, maxSalida = null;
+    grupo.forEach(p => {
+      if (p.fechaLlegada) {
+        const llegada = new Date(p.fechaLlegada);
+        if (!minLlegada || llegada < minLlegada) minLlegada = llegada;
+      }
+      if (p.fechaSalida) {
+        const salida = new Date(p.fechaSalida);
+        if (!maxSalida || salida > maxSalida) maxSalida = salida;
+      }
+    });
+    let noches = 0;
+    if (minLlegada && maxSalida) {
+      noches = Math.max(1, Math.round((maxSalida - minLlegada) / (1000 * 60 * 60 * 24)));
+    } else {
+      grupo.forEach(p => {
+        if (typeof p.noches === 'number') noches += p.noches;
+      });
+    }
+    habitaciones.set(key, { noches, tipo });
+  });
+  totalHabitaciones = detalleFilas.length;
   totalNoches = 0;
-  habitaciones.forEach(n => { totalNoches += n; });
+  const nochesPorTipo = { doble: 0, matrimonial: 0 };
+  const habitacionesPorTipo = {
+    doble: detalleFilas.filter(f => f.tipo === 'doble').length,
+    matrimonial: detalleFilas.filter(f => f.tipo === 'matrimonial').length
+  };
+  habitaciones.forEach(({ noches, tipo }) => {
+    totalNoches += noches;
+    if (tipo === 'doble') {
+      nochesPorTipo.doble += noches;
+    }
+    if (tipo === 'matrimonial') {
+      nochesPorTipo.matrimonial += noches;
+    }
+  });
 
   return (
     <div className="dashboard-inicio">
@@ -207,6 +490,16 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               <div>
                 <h3 style={{margin: 0}}>Noches ocupadas</h3>
                 <span className="stat-number" style={{fontSize: '2rem'}}>{totalNoches}</span>
+                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2, display:'flex', gap:32}}>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Dobles</span>
+                    <span style={{fontWeight:600}}>{nochesPorTipo.doble}</span>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Matrimoniales</span>
+                    <span style={{fontWeight:600}}>{nochesPorTipo.matrimonial}</span>
+                  </div>
+                </div>
                 <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
                   <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Cada noche ocupada por una habitación doble compartida o matrimonial se suma una vez.</span>
                 </div>
@@ -221,6 +514,16 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               <div>
                 <h3 style={{margin: 0}}>Habitaciones tomadas</h3>
                 <span className="stat-number" style={{fontSize: '2rem'}}>{totalHabitaciones}</span>
+                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2, display:'flex', gap:32}}>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Dobles</span>
+                    <span style={{fontWeight:600}}>{habitacionesPorTipo.doble}</span>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Matrimoniales</span>
+                    <span style={{fontWeight:600}}>{habitacionesPorTipo.matrimonial}</span>
+                  </div>
+                </div>
                 <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2}}>
                   <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Si una habitación doble es compartida por varias noches, se cuenta solo una vez en el total.</span>
                 </div>
@@ -310,6 +613,91 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
         <div className="habitaciones-resumen" style={{margin: '2rem 0', padding: '1rem', background: '#e3f2fd', border: '1px solid #90caf9', borderRadius: 8}}>
           <h4>Habitaciones ocupadas por día</h4>
           <ResumenHabitaciones formularios={formularios} />
+          <hr />
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem'}}>
+            <h4 style={{marginBottom:0}}>Detalle de habitaciones por grupo</h4>
+            <div style={{display:'flex', gap:12}}>
+              <button 
+                onClick={exportarDetalleHabitacionesExcel} 
+                style={{padding:'0.4em 1em', background:'#1976d2', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>
+                Exportar a Excel
+              </button>
+              <button 
+                onClick={exportarDetalleHabitacionesHTML} 
+                style={{padding:'0.4em 1em', background:'#388e3c', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}
+                title="Al exportar a HTML y luego abrirlo con Excel, mantiene el formato visto en pantalla."
+              >
+                Exportar a HTML
+              </button>
+            </div>
+          </div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%', borderCollapse:'collapse', background:'#fff', fontSize:'0.82em'}}>
+              <thead>
+                <tr style={{background:'#e3f2fd'}}>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Tipo de formulario</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Empresa</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Personas</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'60px'}}>Tipo de habitación</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'80px'}}>Fecha llegada</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Hora llegada</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'100px', maxWidth:'140px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>Fecha salida</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Hora salida</th>
+                  <th style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Noches</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  let lastEmpresa = null;
+                  let colorToggle = false;
+                  return detalleFilas.map((g, idx) => {
+                    if (g.empresa !== lastEmpresa) {
+                      colorToggle = !colorToggle;
+                      lastEmpresa = g.empresa;
+                    }
+                    return (
+                      <tr key={idx} style={{background: colorToggle ? '#e3f2fd' : '#fff'}}>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.tipoFormulario}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.empresa || ''}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.personas}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'60px'}}>{g.tipo}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'80px'}}>{g.fechaLlegada || ''}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaLlegada || ''}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'100px', maxWidth:'140px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{g.fechaSalida || ''}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaSalida || ''}</td>
+                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.noches}</td>
+                      </tr>
+                    );
+                  });
+                })()}
+              </tbody>
+              <tfoot>
+                <tr style={{background:'#bbdefb', fontWeight:'bold'}}>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Totales</td>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
+                    Empresas: {Array.from(new Set(detalleFilas.map(f => f.empresa && f.empresa.trim()).filter(e => e))).length}
+                  </td>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}></td>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
+                    Dobles: {detalleFilas.filter(f => f.tipo === 'doble').length} | Matrimoniales: {detalleFilas.filter(f => f.tipo === 'matrimonial').length}
+                  </td>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
+                    Total habitaciones: {detalleFilas.length}
+                  </td>
+                </tr>
+                <tr style={{background:'#e3f2fd', fontWeight:'bold'}}>
+                  <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Por tipo de formulario</td>
+                  <td colSpan={4} style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
+                    {Object.entries(detallePorFormulario).map(([tipo, grupos], i) => (
+                      <span key={tipo} style={{marginRight:16}}>
+                        {tipo}: <b>{grupos.length}</b>
+                      </span>
+                    ))}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       )}
 
@@ -339,7 +727,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             <span className="action-icon">➕</span>
             <span>Crear Evento</span>
           </button>
-          
           <button 
             onClick={() => handleViewChange('usuarios')}
             className="quick-action-btn secondary"
@@ -347,7 +734,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             <span className="action-icon">👤</span>
             <span>Nuevo Usuario</span>
           </button>
-          
           <button 
             onClick={() => handleViewChange('formularios')}
             className="quick-action-btn tertiary"
@@ -355,7 +741,13 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             <span className="action-icon">📊</span>
             <span>Ver Formularios</span>
           </button>
-          
+          <button 
+            onClick={() => handleViewChange('roomingList')}
+            className="quick-action-btn quinary"
+          >
+            <span className="action-icon">🏨</span>
+            <span>Rooming List</span>
+          </button>
           <button 
             onClick={() => handleViewChange('personalizacion')}
             className="quick-action-btn quaternary"
@@ -466,6 +858,8 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         return <PersonalizacionFormularios user={usuario} />;
       case 'newsletter':
         return <Newsletter />;
+      case 'roomingList':
+        return <RoomingList formularios={formularios} />;
       case 'inicio':
       default:
         return (
