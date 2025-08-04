@@ -11,6 +11,7 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   const [formularios, setFormularios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroEmpresa, setFiltroEmpresa] = useState('');
   const [formularioSeleccionado, setFormularioSeleccionado] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
@@ -145,7 +146,26 @@ function capitalizarPalabras(str) {
   };
 
   const eliminarFormulario = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este formulario?')) {
+    const formulario = formularios.find(f => f.id === id);
+    if (!formulario) {
+      alert('No se encontró el formulario.');
+      return;
+    }
+    // Datos básicos para mostrar
+    const empresa = formulario.datosEmpresa?.empresa || 'N/A';
+    const usuarioCreador = formulario.usuarioCreador || 'N/A';
+    const personas = Array.isArray(formulario.personas) && formulario.personas.length > 0
+      ? formulario.personas.map(p => `${p.nombre} ${p.apellido}`).join(', ')
+      : 'N/A';
+    const fechaCreacion = formulario.fechaCreacionString || formulario.fechaCreacion || 'N/A';
+    const tipoFormulario = formulario.tipo || 'N/A';
+    const mensaje = `¿Estás seguro de eliminar este formulario?\n\n` +
+      `Usuario creador: ${usuarioCreador}\n` +
+      `Empresa: ${empresa}\n` +
+      `Personas asociadas: ${personas}\n` +
+      `Fecha creación: ${fechaCreacion}\n` +
+      `Tipo de formulario: ${tipoFormulario}`;
+    if (window.confirm(mensaje)) {
       try {
         await FirebaseService.eliminarFormulario(id);
         cargarFormularios();
@@ -180,9 +200,54 @@ function capitalizarPalabras(str) {
     }
   };
 
-  const formulariosFiltrados = filtroTipo === 'todos' 
-    ? formularios 
-    : formularios.filter(f => f.tipo === filtroTipo);
+  const formulariosFiltrados = formularios.filter(f => {
+    const tipoOk = filtroTipo === 'todos' ? true : f.tipo === filtroTipo;
+    const empresaOk = !filtroEmpresa ? true : (f.datosEmpresa?.empresa || '').toLowerCase().includes(filtroEmpresa.toLowerCase());
+    return tipoOk && empresaOk;
+  });
+  // Exportar a HTML con formato
+  function exportarAHtml() {
+    const style = `
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; }
+        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.95em; }
+        th, td { border: 1px solid #90caf9; padding: 8px; text-align: left; }
+        thead tr { background: #e3f2fd; }
+        tfoot tr { background: #bbdefb; font-weight: bold; }
+        tbody tr.alt { background: #e3f2fd; }
+      </style>
+    `;
+    let html = `<html><head><meta charset='utf-8'>${style}</head><body>`;
+    html += '<table><thead><tr>';
+    html += '<th>Fecha</th><th>Tipo</th><th>Empresa</th><th>Personas</th><th>Usuario Creador</th>';
+    html += '</tr></thead><tbody>';
+    let lastEmpresa = null;
+    let colorToggle = false;
+    function toTitleCase(str) {
+      return String(str).toLowerCase().replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+    }
+    formulariosFiltrados.forEach((f, idx) => {
+      const empresa = toTitleCase(f.datosEmpresa?.empresa || '');
+      const personas = f.personas?.length || 0;
+      if (empresa !== lastEmpresa) {
+        colorToggle = !colorToggle;
+        lastEmpresa = empresa;
+      }
+      html += `<tr${colorToggle ? ' class="alt"' : ''}>` +
+        `<td>${f.fechaCreacionString || 'N/A'}</td><td>${f.tipo}</td><td>${empresa}</td><td>${personas}</td><td>${f.usuarioCreador || 'N/A'}</td>` +
+        '</tr>';
+    });
+    html += '</tbody>';
+    html += `<tfoot><tr><td colspan="5">Total formularios: ${formulariosFiltrados.length}</td></tr></tfoot>`;
+    html += '</table></body></html>';
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'formularios_guardados.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   // Usuarios no admin que no completaron formulario
   const usuariosSinFormulario = usuarios.filter(u =>
@@ -243,7 +308,7 @@ function capitalizarPalabras(str) {
     <div className="formularios-guardados">
       <div className="header">
         <h2>Formularios Guardados</h2>
-        <div className="controles">
+        <div className="controles" style={{display:'flex', gap:'1rem', flexWrap:'wrap'}}>
           <select 
             value={filtroTipo} 
             onChange={(e) => setFiltroTipo(e.target.value)}
@@ -255,7 +320,13 @@ function capitalizarPalabras(str) {
               </option>
             ))}
           </select>
-
+          <input
+            type="text"
+            value={filtroEmpresa}
+            onChange={e => setFiltroEmpresa(e.target.value)}
+            placeholder="Filtrar por empresa"
+            style={{minWidth:180}}
+          />
           {userPerfil === 'admin' && (
             <button
               className="btn-export"
@@ -265,7 +336,9 @@ function capitalizarPalabras(str) {
               📊 Exportar a Excel
             </button>
           )}
-          
+          <button className="btn-export" onClick={exportarAHtml} disabled={formulariosFiltrados.length === 0}>
+            🖨️ Exportar a HTML
+          </button>
           <button className="btn-refresh" onClick={cargarFormularios}>
             🔄 Actualizar
           </button>

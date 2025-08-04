@@ -12,6 +12,7 @@ import { FirebaseService } from '../services/FirebaseService';
 import Newsletter from './Newsletter';
 import './Dashboard.css';
 import RoomingList from './RoomingList.jsx';
+import ListadoReferentes from './ListadoReferentes.jsx';
 
 // Utilidad para obtener rango de fechas entre dos strings YYYY-MM-DD (inclusive)
 // Recibe opcionalmente horaSalida. Si horaSalida <= '10:00', no incluye el día de salida.
@@ -860,7 +861,9 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         return <Newsletter />;
       case 'roomingList':
         return <RoomingList formularios={formularios} />;
-      case 'inicio':
+      case 'roomingList':
+        return <ListadoReferentes readOnly={true} formularios={formularios} />;
+        case 'inicio':
       default:
         return (
           <DashboardInicio

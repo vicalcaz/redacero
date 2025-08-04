@@ -10,11 +10,16 @@ import Newsletter from './components/Newsletter';
 import { EventoDestacadoProvider, useEventoDestacado } from "./context/EventoDestacadoContext";
 import { FirebaseService } from "./services/FirebaseService";
 import './App.css';
+import ListadoReferentes from './components/ListadoReferentes';
+import AdminNavBar from './components/AdminNavBar';
+import RoomingList from './components/RoomingList';
 
 // Agregar esta línea para exposición global:
 window.FirebaseService = FirebaseService;
 
 function App() {
+  // Estado para los formularios
+  const [formularios, setFormularios] = useState([]);
   const [usuario, setUsuario] = useState(null);
   const [vistaActual, setVistaActual] = useState('eventos');
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
@@ -391,7 +396,7 @@ function App() {
             user={usuario}
             evento={eventoSeleccionado}
             onSubmit={handleFormularioSubmit}
-            onCancel={handleFormularioCancel} // <-- aquí pasas la función
+            onCancel={handleFormularioCancel}
           />
         );
 
@@ -405,8 +410,22 @@ function App() {
           />
         );
 
+      case 'roomingList':
+        // Si el array está vacío, cargar los formularios antes de mostrar la vista
+        if (formularios.length === 0) {
+          FirebaseService.obtenerFormularios().then(data => {
+            setFormularios(data);
+          });
+          return <div style={{padding:40, textAlign:'center'}}><h2>🏨 Rooming List</h2><p>Cargando formularios...</p></div>;
+        }
+        return <RoomingList formularios={formularios} />;
+      case 'referentes':
+        return <ListadoReferentes 
+          readOnly={true} 
+          eventId={eventoId}/>;
       case 'newsletter':
         return <Newsletter />;
+   
 
       default:
         console.log('⚠️ App: Vista no reconocida, ir a eventos');
@@ -422,7 +441,19 @@ function App() {
     }
   };
 
-  return renderVistaActual();
+  console.log('🟢 vistaActual:', vistaActual);
+  return renderVistaActual()
+  /*   (
+    <>
+      <AdminNavBar
+        currentView={vistaActual}
+        onViewChange={setVistaActual}
+        user={usuario}
+        onLogout={handleLogout}
+      />
+      {renderVistaActual()}
+    </>
+  ); */
 }
 
 export default function WrappedApp() {

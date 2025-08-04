@@ -1,17 +1,15 @@
-  // Resumen por tipo de formulario
-  const detallePorFormulario = {};
-  detalleFilas.forEach(fila => {
-    detallePorFormulario[fila.tipoFormulario] = detallePorFormulario[fila.tipoFormulario] || [];
-    detallePorFormulario[fila.tipoFormulario].push(fila);
-  });
 import React, { useMemo } from 'react';
-import './Dashboard.css';
-
+import './RoomingList.css';
+// ...existing code...
 // Reutilizamos la lógica de agrupación y detalle de habitaciones
 function getRangoFechas(desde, hasta, horaSalida) {
   const fechas = [];
   let d = new Date(desde + 'T00:00:00Z');
   let h = new Date(hasta + 'T00:00:00Z');
+  // Si la hora de salida es <= 10:00, no incluir el día de salida
+  if (!horaSalida || horaSalida <= '10:00') {
+    h.setUTCDate(h.getUTCDate() - 1);
+  }
   while (d <= h) {
     fechas.push(d.toISOString().slice(0, 10));
     d.setUTCDate(d.getUTCDate() + 1);
@@ -19,57 +17,21 @@ function getRangoFechas(desde, hasta, horaSalida) {
   return fechas;
 }
 
-function RoomingList({ formularios }) {
-  // Agrupación por habitación
-  const habitacionesPorDia = useMemo(() => {
-    const habitacionesPorDia = {};
-    formularios.forEach(f => {
-      if (!f.personas || !Array.isArray(f.personas)) return;
-      const grupos = {};
-      f.personas.forEach(p => {
-        if (!p.fechaLlegada || !p.fechaSalida) return;
-        if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
-          let key;
-          if (p.comparteHabitacion && p.comparteCon) {
-            const ids = [String(p.id), String(p.comparteCon)].sort();
-            key = ids.join('_');
-          } else {
-            key = String(p.id);
-          }
-          if (!grupos[key]) grupos[key] = [];
-          grupos[key].push(p);
-        }
-      });
-      Object.values(grupos).forEach(grupo => {
-        const tipos = grupo.map(p => p.tipoHabitacion).filter(t => t);
-        let tipo = tipos.length > 0 ? tipos[0] : '';
-        if (tipos.length > 1 && !tipos.every(t => t === tipo)) tipo = 'varios';
-        let minLlegada = null, maxSalida = null;
-        grupo.forEach(p => {
-          if (p.fechaLlegada) {
-            const llegada = new Date(p.fechaLlegada);
-            if (!minLlegada || llegada < minLlegada) minLlegada = llegada;
-          }
-          if (p.fechaSalida) {
-            const salida = new Date(p.fechaSalida);
-            if (!maxSalida || salida > maxSalida) maxSalida = salida;
-          }
-        });
-        const fechas = (minLlegada && maxSalida) ? getRangoFechas(minLlegada.toISOString().slice(0,10), maxSalida.toISOString().slice(0,10), grupo[0].horaSalida) : [];
-        fechas.forEach(fecha => {
-          if (!habitacionesPorDia[fecha]) habitacionesPorDia[fecha] = { dobles: 0, matrimoniales: 0 };
-          if (tipo === 'doble') {
-            habitacionesPorDia[fecha].dobles += 1;
-          } else if (tipo === 'matrimonial') {
-            habitacionesPorDia[fecha].matrimoniales += 1;
-          }
-        });
-      });
-    });
-    return habitacionesPorDia;
-  }, [formularios]);
 
-  // Detalle por grupo
+function RoomingList({ formularios }) {
+  // Función para capitalizar cada palabra
+  function toTitleCase(str) {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+  }
+  // Filtros de búsqueda
+  const [filtroTipo, setFiltroTipo] = React.useState('');
+  const [filtroEmpresa, setFiltroEmpresa] = React.useState('');
+  const [filtroPersona, setFiltroPersona] = React.useState('');
+  const [filtroHabitacion, setFiltroHabitacion] = React.useState('');
+// Detalle por grupo (primero)
   const detalleFilas = useMemo(() => {
     let filas = [];
     formularios.forEach(f => {
@@ -144,6 +106,165 @@ function RoomingList({ formularios }) {
     return filas;
   }, [formularios]);
 
+  // Filtrar detalleFilas según los filtros
+  const detalleFilasFiltrado = useMemo(() => {
+    return detalleFilas.filter(fila => {
+      const tipoOk = !filtroTipo || fila.tipoFormulario.toLowerCase().includes(filtroTipo.toLowerCase());
+      const empresaOk = !filtroEmpresa || (fila.empresa && fila.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase()));
+      const personaOk = !filtroPersona || (fila.personas && fila.personas.toLowerCase().includes(filtroPersona.toLowerCase()));
+      const habitacionOk = !filtroHabitacion || fila.tipo.toLowerCase().includes(filtroHabitacion.toLowerCase());
+      return tipoOk && empresaOk && personaOk && habitacionOk;
+    });
+  }, [detalleFilas, filtroTipo, filtroEmpresa, filtroPersona, filtroHabitacion]);
+
+  // Exportar a Excel
+  function exportarExcel() {
+    import('xlsx').then(XLSX => {
+      const ws = XLSX.utils.json_to_sheet(detalleFilasFiltrado);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Rooming List');
+      XLSX.writeFile(wb, 'rooming_list.xlsx');
+    });
+  }
+
+  // Exportar a HTML con formato y resumen de habitaciones por día
+  function exportarHTML() {
+    let html = `<!DOCTYPE html><html><head><meta charset='utf-8'><title>Rooming List Export</title>
+    <style>
+      body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; padding: 2em; }
+      table { border-collapse: collapse; width: 100%; background: #fff; font-size: 0.92em; }
+      th, td { border: 1px solid #90caf9; padding: 6px; text-align: left; }
+      thead tr { background: #e3f2fd; }
+      tfoot tr { background: #bbdefb; font-weight: bold; }
+      .alt-row { background: #e3f2fd; }
+    </style>
+    </head><body>
+    <h2>Rooming List - Resumen de habitaciones por día</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Dobles</th>
+          <th>Matrimoniales</th>
+          <th>Total habitaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    let totalDobles = 0, totalMatrimoniales = 0, totalHabitaciones = 0;
+    Object.keys(habitacionesPorDia).sort().forEach(fecha => {
+      const dobles = habitacionesPorDia[fecha].dobles;
+      const matrimoniales = habitacionesPorDia[fecha].matrimoniales;
+      const total = dobles + matrimoniales;
+      totalDobles += dobles;
+      totalMatrimoniales += matrimoniales;
+      totalHabitaciones += total;
+      html += `<tr>` +
+        `<td>${fecha.split('-').reverse().join('/')}</td>` +
+        `<td style='text-align:center'>${dobles}</td>` +
+        `<td style='text-align:center'>${matrimoniales}</td>` +
+        `<td style='text-align:center;font-weight:600'>${total}</td>` +
+        `</tr>`;
+    });
+    html += `</tbody><tfoot><tr style='background:#bbdefb;font-weight:bold'>` +
+      `<td>Totales</td>` +
+      `<td style='text-align:center'>${totalDobles}</td>` +
+      `<td style='text-align:center'>${totalMatrimoniales}</td>` +
+      `<td style='text-align:center;font-weight:600'>${totalHabitaciones}</td>` +
+      `</tr></tfoot></table>`;
+
+    html += `<hr /><h2>Rooming List - Detalle de habitaciones por grupo</h2>`;
+    html += `<table><thead><tr>` +
+      `<th>Tipo de formulario</th><th>Empresa</th><th>Personas</th><th>Tipo de habitación</th><th>Fecha llegada</th><th>Hora llegada</th><th>Fecha salida</th><th>Hora salida</th><th>Noches</th>` +
+      `</tr></thead><tbody>`;
+    let lastEmpresa = null;
+    let colorToggle = false;
+    detalleFilasFiltrado.forEach((g, idx) => {
+      if (g.empresa !== lastEmpresa) {
+        colorToggle = !colorToggle;
+        lastEmpresa = g.empresa;
+      }
+      html += `<tr class='${colorToggle ? "alt-row" : ""}'>` +
+        `<td>${g.tipoFormulario}</td>` +
+        `<td>${g.empresa || ''}</td>` +
+        `<td>${g.personas}</td>` +
+        `<td>${g.tipo}</td>` +
+        `<td>${g.fechaLlegada || ''}</td>` +
+        `<td>${g.horaLlegada || ''}</td>` +
+        `<td>${g.fechaSalida || ''}</td>` +
+        `<td>${g.horaSalida || ''}</td>` +
+        `<td>${g.noches}</td>` +
+        `</tr>`;
+    });
+    html += `</tbody></table></body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'rooming_list.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  
+  // Agrupación por tipo de formulario (después de detalleFilas)
+  const detallePorFormulario = useMemo(() => {
+    const agrupado = {};
+    detalleFilas.forEach(fila => {
+      agrupado[fila.tipoFormulario] = agrupado[fila.tipoFormulario] || [];
+      agrupado[fila.tipoFormulario].push(fila);
+    });
+    return agrupado;
+  }, [detalleFilas]);
+  // Agrupación por habitación
+  const habitacionesPorDia = useMemo(() => {
+    const habitacionesPorDia = {};
+    formularios.forEach(f => {
+      if (!f.personas || !Array.isArray(f.personas)) return;
+      const grupos = {};
+      f.personas.forEach(p => {
+        if (!p.fechaLlegada || !p.fechaSalida) return;
+        if (p.tipoHabitacion === 'doble' || p.tipoHabitacion === 'matrimonial') {
+          let key;
+          if (p.comparteHabitacion && p.comparteCon) {
+            const ids = [String(p.id), String(p.comparteCon)].sort();
+            key = ids.join('_');
+          } else {
+            key = String(p.id);
+          }
+          if (!grupos[key]) grupos[key] = [];
+          grupos[key].push(p);
+        }
+      });
+      Object.values(grupos).forEach(grupo => {
+        const tipos = grupo.map(p => p.tipoHabitacion).filter(t => t);
+        let tipo = tipos.length > 0 ? tipos[0] : '';
+        if (tipos.length > 1 && !tipos.every(t => t === tipo)) tipo = 'varios';
+        let minLlegada = null, maxSalida = null;
+        grupo.forEach(p => {
+          if (p.fechaLlegada) {
+            const llegada = new Date(p.fechaLlegada);
+            if (!minLlegada || llegada < minLlegada) minLlegada = llegada;
+          }
+          if (p.fechaSalida) {
+            const salida = new Date(p.fechaSalida);
+            if (!maxSalida || salida > maxSalida) maxSalida = salida;
+          }
+        });
+        const fechas = (minLlegada && maxSalida) ? getRangoFechas(minLlegada.toISOString().slice(0,10), maxSalida.toISOString().slice(0,10), grupo[0].horaSalida) : [];
+        fechas.forEach(fecha => {
+          if (!habitacionesPorDia[fecha]) habitacionesPorDia[fecha] = { dobles: 0, matrimoniales: 0 };
+          if (tipo === 'doble') {
+            habitacionesPorDia[fecha].dobles += 1;
+          } else if (tipo === 'matrimonial') {
+            habitacionesPorDia[fecha].matrimoniales += 1;
+          }
+        });
+      });
+    });
+    return habitacionesPorDia;
+  }, [formularios]);
+
+  
   // Render
   const fechas = Object.keys(habitacionesPorDia).sort();
   let totalDobles = 0, totalMatrimoniales = 0, totalHabitaciones = 0;
@@ -158,14 +279,42 @@ function RoomingList({ formularios }) {
   });
 
   // Resumen inferior de totales
-  const totalEmpresas = Array.from(new Set(detalleFilas.map(f => f.empresa && f.empresa.trim()).filter(e => e))).length;
-  const totalDoblesDetalle = detalleFilas.filter(f => f.tipo === 'doble').length;
-  const totalMatrimonialesDetalle = detalleFilas.filter(f => f.tipo === 'matrimonial').length;
-  const totalHabitacionesDetalle = detalleFilas.length;
+  const totalEmpresas = Array.from(new Set(detalleFilasFiltrado.map(f => f.empresa && f.empresa.trim()).filter(e => e))).length;
+  const totalDoblesDetalle = detalleFilasFiltrado.filter(f => f.tipo === 'doble').length;
+  const totalMatrimonialesDetalle = detalleFilasFiltrado.filter(f => f.tipo === 'matrimonial').length;
+  const totalHabitacionesDetalle = detalleFilasFiltrado.length;
 
   return (
     <div className="rooming-list-view" style={{padding:'2rem'}}>
       <h2>Rooming List - Detalle de habitaciones</h2>
+      <div style={{marginBottom:8, display:'flex', flexDirection:'row', alignItems:'center', gap:8, flexWrap:'nowrap', width:'100%', overflowX:'auto'}}>
+        {/* Filtros alineados horizontalmente */}
+        {(() => {
+          const tiposFormulario = Array.from(new Set(detalleFilas.map(f => f.tipoFormulario).filter(Boolean)));
+          const tiposHabitacion = Array.from(new Set(detalleFilas.map(f => f.tipo).filter(Boolean)));
+          return <>
+            <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={{padding:'2px 6px', minWidth:100, fontSize:'0.95em', height:28, marginRight:4, display:'inline-block'}}>
+              <option value="">Tipo de formulario</option>
+              {tiposFormulario.map(tipo => (
+                <option key={tipo} value={tipo}>{tipo}</option>
+              ))}
+            </select>
+            <input placeholder="Empresa" value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)} style={{padding:'2px 6px', minWidth:100, fontSize:'0.95em', height:28, marginRight:4, display:'inline-block'}} />
+            <input placeholder="Nombre persona" value={filtroPersona} onChange={e => setFiltroPersona(e.target.value)} style={{padding:'2px 6px', minWidth:100, fontSize:'0.95em', height:28, marginRight:4, display:'inline-block'}} />
+            <select value={filtroHabitacion} onChange={e => setFiltroHabitacion(e.target.value)} style={{padding:'2px 6px', minWidth:100, fontSize:'0.95em', height:28, marginRight:4, display:'inline-block'}}>
+              <option value="">Tipo de habitación</option>
+              {tiposHabitacion.map(tipo => (
+                <option key={tipo} value={tipo}>{tipo}</option>
+              ))}
+            </select>
+          </>;
+        })()}
+      </div>
+      <div style={{marginBottom:16, display:'flex', flexDirection:'row', justifyContent:'flex-end', alignItems:'center', gap:8, width:'100%'}}>
+        <button onClick={exportarExcel} style={{padding:'0.4em 1em', background:'#ff9800', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>Exportar a Excel</button>
+        <button onClick={exportarHTML} style={{padding:'0.4em 1em', background:'#388e3c', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>Exportar a HTML</button>
+        <button onClick={typeof window.onReload === 'function' ? window.onReload : undefined} style={{padding:'0.4em 1em', background:'#1976d2', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>Actualizar</button>
+      </div>
       <h4>Habitaciones ocupadas por día</h4>
       <table className="tabla-habitaciones" style={{width: '100%', borderCollapse: 'collapse', marginTop: 12}}>
         <thead>
@@ -216,16 +365,27 @@ function RoomingList({ formularios }) {
             {(() => {
               let lastEmpresa = null;
               let colorToggle = false;
-              return detalleFilas.map((g, idx) => {
+              return detalleFilasFiltrado.map((g, idx) => {
                 if (g.empresa !== lastEmpresa) {
                   colorToggle = !colorToggle;
                   lastEmpresa = g.empresa;
                 }
                 return (
                   <tr key={idx} style={{background: colorToggle ? '#e3f2fd' : '#fff'}}>
-                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.tipoFormulario}</td>
-                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.empresa || ''}</td>
-                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.personas}</td>
+                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
+                      <span
+                        className={
+                          'tipo-badge ' +
+                          (g.tipoFormulario && g.tipoFormulario.toLowerCase() === 'socio' ? 'socio' :
+                          g.tipoFormulario && g.tipoFormulario.toLowerCase() === 'proveedor con hotel' ? 'proveedor-con-hotel' : '')
+                        }
+                        style={{display:'inline-block', padding:'2px 10px', borderRadius:'12px', fontWeight:'bold'}}
+                      >
+                        {toTitleCase(g.tipoFormulario)}
+                      </span>
+                    </td>
+                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{toTitleCase(g.empresa || '')}</td>
+                    <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{toTitleCase(g.personas)}</td>
                     <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'60px'}}>{g.tipo}</td>
                     <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'80px'}}>{g.fechaLlegada || ''}</td>
                     <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaLlegada || ''}</td>

@@ -1,9 +1,5 @@
 import { useState } from 'react';
 import './AdminNavbar.css';
-import Newsletter from './Newsletter';
-import { Link } from 'react-router-dom';
-import ListadoReferentesModal from './ListadoReferentes';
-import ListadoReferentes from './ListadoReferentes'; // Asegúrate de importar el componente
 
 function AdminNavBar({ currentView, onViewChange, user, onLogout, usuarios }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -63,7 +59,7 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout, usuarios }) {
                     Listado de control de usuarios referentes (sin Login/Formulario)
                   </button>
                   <button className="dropdown-item" onClick={() => onViewChange('detallado')}>
-                    Listado detallado de personas registradas
+                    Listado detallado de personas para acreditación
                   </button>
                 </div>
               )}
@@ -89,10 +85,6 @@ function AdminNavBar({ currentView, onViewChange, user, onLogout, usuarios }) {
           🚪 Salir
         </button>
       </div>
-
-    
-
-      {currentView === 'referentes' && <ListadoReferentes />}
     </nav>
   );
 }

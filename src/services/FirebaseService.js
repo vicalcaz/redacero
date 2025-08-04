@@ -1,6 +1,4 @@
-
-
-
+  
 import { db } from '../firebase/config';
 import {
   collection,
@@ -18,6 +16,21 @@ import {
 } from 'firebase/firestore';
 
 class FirebaseServiceClass {
+  // ...existing methods...
+
+  // Obtener todos los formularios de un evento
+  async obtenerFormulariosPorEvento(eventoId) {
+    try {
+      if (!eventoId) throw new Error('eventoId es obligatorio');
+      const q = query(collection(db, 'formularios'), where('eventoId', '==', eventoId));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('❌ FirebaseService: Error obteniendo formularios por evento:', error);
+      throw error;
+    }
+  }
+
   // Eliminar todos los usuarios creados hoy
   async eliminarUsuariosCreadosHoy() {
     try {
@@ -26,20 +39,33 @@ class FirebaseServiceClass {
       const q = query(collection(db, 'usuarios'));
       const snapshot = await getDocs(q);
       let eliminados = 0;
-      for (const docSnap of snapshot.docs) {
-        const fecha = docSnap.data().fechaCreacion;
-        if (fecha && fecha.startsWith(hoyISO)) {
-          await deleteDoc(doc(db, 'usuarios', docSnap.id));
-          eliminados++;
-        }
+    for (const docSnap of snapshot.docs) {
+      const fecha = docSnap.data().fechaCreacion;
+      if (fecha && fecha.startsWith(hoyISO)) {
+        await deleteDoc(doc(db, 'usuarios', docSnap.id));
+        eliminados++;
       }
-      console.log(`✅ Usuarios eliminados hoy: ${eliminados}`);
-      return eliminados;
+    }
+    console.log(`✅ Usuarios eliminados hoy: ${eliminados}`);
+    return eliminados;
+  } catch (error) {
+    console.error('❌ Error eliminando usuarios creados hoy:', error);
+    throw error;
+  }
+}
+  // Eliminar formulario por ID
+  async eliminarFormulario(id) {
+    try {
+      if (!id) throw new Error('ID de formulario requerido');
+      await deleteDoc(doc(db, 'formularios', id));
+      console.log('✅ Formulario eliminado:', id);
+      return true;
     } catch (error) {
-      console.error('❌ Error eliminando usuarios creados hoy:', error);
+      console.error('❌ Error eliminando formulario:', error);
       throw error;
     }
   }
+
   // Actualizar formulario genérico
   async actualizarFormulario(coleccion, id, data) {
     try {
