@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
-import './ListadoReferentesModal.css';
+import './ListadoReferentes.css';
 
 function ListadoReferentes({ readOnly, eventId }) {
   const [usuarios, setUsuarios] = useState([]);
@@ -207,7 +207,9 @@ function ListadoReferentes({ readOnly, eventId }) {
                    (usuario.fechaCreacion ? new Date(usuario.fechaCreacion).toLocaleDateString('es-AR') : '')}
                 </td>
                 <td>
-                  {formulariosPorUsuario[usuario.id] ? 'Sí' : 'No'}
+                  <span className={`formulario-cargado-badge ${formulariosPorUsuario[usuario.id] ? 'si' : 'no'}`}>
+                    {formulariosPorUsuario[usuario.id] ? 'Sí' : 'No'}
+                  </span>
                 </td>
               </tr>
             ))}
