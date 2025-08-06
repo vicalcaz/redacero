@@ -105,20 +105,19 @@ function capitalizarPalabras(str) {
             'Hora Salida': persona.horaSalida || '',
             
             // Días de evento
-            'Lunes': persona.lunes ? 'Sí' : 'No',
-            'Martes': persona.martes ? 'Sí' : 'No',
-            'Miércoles': persona.miercoles ? 'Sí' : 'No',
-            'Asiste Cena': persona.asisteCena ? 'Sí' : 'No',
-            'Atiende Reuniones': persona.atendeReuniones ? 'Sí' : 'No',
+            'Lunes': String(persona.lunes).toLowerCase() === 'si' ? 'Sí' : 'No',
+            'Martes': String(persona.martes).toLowerCase() === 'si' ? 'Sí' : 'No',
+            'Miércoles': String(persona.miercoles).toLowerCase() === 'si' ? 'Sí' : 'No',
+            
+            'Asiste Cena': String(persona.asisteCena).toLowerCase() === 'si' ? 'Sí' : 'No',
+            
+            'Atiende Reuniones': String(persona.atiendeReuniones).toLowerCase() === 'si' ? 'Sí' : 'No',
             'Menú Especial': persona.menuEspecial || '',
             
             // Campos específicos por tipo
             'Tipo Habitación': persona.tipoHabitacion || 'N/A',
             'Noches': persona.noches || 'N/A',
             'Acompañantes': persona.acompanantes || 'N/A',
-            'Transporte Propio': persona.transportePropio ? 'Sí' : 'No',
-            'Alojamiento Externo': persona.alojamientoExterno || 'N/A',
-            
             'Comentarios': formulario.comentarios || ''
           });
         });
@@ -244,7 +243,7 @@ function capitalizarPalabras(str) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'formularios_guardados.html';
+    a.download = 'formularios_guardados.xlsx';
     a.click();
     URL.revokeObjectURL(url);
   }

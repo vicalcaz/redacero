@@ -343,7 +343,6 @@
   {
     "id": "2iIHBtbv0cLcXnhNtO16",
     "nombre": "Zandri Edgardo",
-    "empresa": "Liliana",
     "rol": "proveedor-sin-hotel",
     "activo": true,
     "fechaCreacion": "2025-08-01T15:51:44.198Z",
@@ -358,8 +357,9 @@
     "fechaCambioPassword": "2025-08-04T17:50:22.322Z",
     "fechaActualizacionPassword": "2025-08-04T17:50:22.322Z",
     "passwordCambiado": true,
-    "fechaActualizacion": "2025-08-04T17:50:22.573Z",
-    "fechaActualizacionString": "4/8/2025, 02:50:22"
+    "fechaActualizacion": "2025-08-06T19:19:25.455Z",
+    "fechaActualizacionString": "6/8/2025, 04:19:25",
+    "empresa": "Electrolux SA"
   },
   {
     "id": "2x5iXMpr8Tun6iLTBOV0",
@@ -1374,24 +1374,30 @@
     "passwordCambiado": true,
     "fechaActualizacion": "2025-07-30T20:09:31.186Z",
     "fechaActualizacionString": "30/7/2025, 05:09:31",
-    "cantidadLogins": 3,
-    "fechaUltimoLogin": "2025-08-05T13:32:57.727Z",
-    "fechaUltimoLoginString": "5/8/2025, 10:32:57"
+    "cantidadLogins": 4,
+    "fechaUltimoLogin": "2025-08-06T19:54:57.681Z",
+    "fechaUltimoLoginString": "6/8/2025, 04:54:57"
   },
   {
     "id": "JyE8nGLBEqPJ8Olk1gbX",
     "nombre": "Santillan S.H. Venancio rafael",
     "empresa": "Santillan Venancio",
     "rol": "socio",
-    "password": "redacero",
-    "passwordCambiado": false,
     "activo": true,
     "fechaCreacion": "2025-07-26T01:52:14.212Z",
     "fechaCreacionString": "25/7/2025, 10:52:14",
-    "cantidadLogins": 0,
-    "fechaActualizacion": "2025-08-01T12:00:35.624Z",
-    "fechaActualizacionString": "1/8/2025, 09:00:35",
-    "email": "Santillanhogar@hotmail.com.ar"
+    "email": "santillanhogarservi@hotmail.com",
+    "cantidadLogins": 1,
+    "fechaUltimoLogin": "2025-08-06T19:58:30.593Z",
+    "fechaUltimoLoginString": "6/8/2025, 04:58:30",
+    "password": "NESTOr2025",
+    "fechaActualizacionPasswordString": "6/8/2025, 04:58:54",
+    "fechaCambioPasswordString": "6/8/2025, 04:58:54",
+    "fechaCambioPassword": "2025-08-06T19:58:54.138Z",
+    "fechaActualizacionPassword": "2025-08-06T19:58:54.138Z",
+    "passwordCambiado": true,
+    "fechaActualizacion": "2025-08-06T19:58:54.351Z",
+    "fechaActualizacionString": "6/8/2025, 04:58:54"
   },
   {
     "id": "JzcTzv9qxqPH3661wQXq",
@@ -1465,9 +1471,6 @@
     "activo": true,
     "fechaCreacion": "2025-08-01T15:51:20.246Z",
     "fechaCreacionString": "1/8/2025, 12:51:20",
-    "cantidadLogins": 1,
-    "fechaUltimoLogin": "2025-08-05T13:25:50.196Z",
-    "fechaUltimoLoginString": "5/8/2025, 10:25:50",
     "password": "FRANKESPAR",
     "fechaActualizacionPasswordString": "5/8/2025, 10:29:19",
     "fechaCambioPasswordString": "5/8/2025, 10:29:19",
@@ -1475,7 +1478,10 @@
     "fechaActualizacionPassword": "2025-08-05T13:29:19.916Z",
     "passwordCambiado": true,
     "fechaActualizacion": "2025-08-05T13:29:21.346Z",
-    "fechaActualizacionString": "5/8/2025, 10:29:21"
+    "fechaActualizacionString": "5/8/2025, 10:29:21",
+    "cantidadLogins": 2,
+    "fechaUltimoLogin": "2025-08-06T18:49:14.293Z",
+    "fechaUltimoLoginString": "6/8/2025, 03:49:14"
   },
   {
     "id": "Kvw3ReQHCGNANvW16LI1",
@@ -1578,9 +1584,9 @@
     "passwordCambiado": true,
     "fechaActualizacion": "2025-08-06T00:08:11.198Z",
     "fechaActualizacionString": "5/8/2025, 09:08:11",
-    "cantidadLogins": 3,
-    "fechaUltimoLogin": "2025-08-06T00:28:38.695Z",
-    "fechaUltimoLoginString": "5/8/2025, 09:28:38"
+    "cantidadLogins": 4,
+    "fechaUltimoLogin": "2025-08-06T17:54:13.940Z",
+    "fechaUltimoLoginString": "6/8/2025, 02:54:13"
   },
   {
     "id": "Lt0n5XduNGVMIVIWZZ3x",
@@ -1664,9 +1670,9 @@
     "fechaActualizacion": "2025-07-31T22:25:29.004Z",
     "fechaActualizacionString": "31/7/2025, 07:25:29",
     "rol": "admin",
-    "cantidadLogins": 412,
-    "fechaUltimoLogin": "2025-08-06T14:45:29.660Z",
-    "fechaUltimoLoginString": "6/8/2025, 11:45:29"
+    "cantidadLogins": 420,
+    "fechaUltimoLogin": "2025-08-06T20:26:12.402Z",
+    "fechaUltimoLoginString": "6/8/2025, 05:26:12"
   },
   {
     "id": "OSjph4kxFC1NRaacginY",
@@ -2231,9 +2237,9 @@
     "passwordCambiado": true,
     "fechaActualizacion": "2025-07-30T20:12:12.429Z",
     "fechaActualizacionString": "30/7/2025, 05:12:12",
-    "cantidadLogins": 4,
-    "fechaUltimoLogin": "2025-08-04T21:53:52.825Z",
-    "fechaUltimoLoginString": "4/8/2025, 06:53:52"
+    "cantidadLogins": 5,
+    "fechaUltimoLogin": "2025-08-06T20:19:30.529Z",
+    "fechaUltimoLoginString": "6/8/2025, 05:19:30"
   },
   {
     "id": "b56B1brISXW28XIH5Wxj",
@@ -2427,9 +2433,6 @@
     "activo": true,
     "fechaCreacion": "2025-08-01T15:51:12.496Z",
     "fechaCreacionString": "1/8/2025, 12:51:12",
-    "cantidadLogins": 1,
-    "fechaUltimoLogin": "2025-08-04T18:58:15.607Z",
-    "fechaUltimoLoginString": "4/8/2025, 03:58:15",
     "password": "Joaco1010",
     "fechaActualizacionPasswordString": "4/8/2025, 03:58:35",
     "fechaCambioPasswordString": "4/8/2025, 03:58:35",
@@ -2437,7 +2440,10 @@
     "fechaActualizacionPassword": "2025-08-04T18:58:35.636Z",
     "passwordCambiado": true,
     "fechaActualizacion": "2025-08-04T18:58:35.901Z",
-    "fechaActualizacionString": "4/8/2025, 03:58:35"
+    "fechaActualizacionString": "4/8/2025, 03:58:35",
+    "cantidadLogins": 2,
+    "fechaUltimoLogin": "2025-08-06T19:24:24.729Z",
+    "fechaUltimoLoginString": "6/8/2025, 04:24:24"
   },
   {
     "id": "evNljKMyVtzeCTadXoOk",
@@ -3132,9 +3138,9 @@
     "passwordCambiado": true,
     "fechaActualizacion": "2025-08-01T15:40:58.491Z",
     "fechaActualizacionString": "1/8/2025, 12:40:58",
-    "cantidadLogins": 24,
-    "fechaUltimoLogin": "2025-08-06T12:29:22.436Z",
-    "fechaUltimoLoginString": "6/8/2025, 09:29:22"
+    "cantidadLogins": 27,
+    "fechaUltimoLogin": "2025-08-06T20:04:23.143Z",
+    "fechaUltimoLoginString": "6/8/2025, 05:04:23"
   },
   {
     "id": "tcFfAAAMghX1yqw8PVUv",

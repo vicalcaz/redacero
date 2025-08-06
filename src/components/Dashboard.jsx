@@ -501,18 +501,16 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                     return totalCena;
                   })()}
                 </span>
-                {/* Totales por tipo de formulario */}
-                <div style={{marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2, fontSize: '1.08em'}}>
+                {/* Totales por tipo de formulario en columnas verticales y más chico */}
+                <div style={{marginTop: 8, display: 'flex', flexDirection: 'row', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
                   {(() => {
                     const tipos = [
                       { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
-                      { key: 'proveedor-con-hotel', label: 'Proveedor c/hotel', icon: '🏨' },
-                      { key: 'proveedor-sin-hotel', label: 'Proveedor s/hotel', icon: '🚗' }
+                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
+                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
                     ];
                     const totalesPorTipo = {};
-                    tipos.forEach(t => {
-                      totalesPorTipo[t.key] = 0;
-                    });
+                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
                     formularios.forEach(f => {
                       if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
                         const tipo = f.tipo;
@@ -520,16 +518,65 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                       }
                     });
                     return tipos.map(t => (
-                      <div key={t.key} style={{display:'flex', alignItems:'center', gap:8}}>
-                        <span>{t.icon}</span>
-                        <span style={{minWidth:120}}>{t.label}:</span>
-                        <span style={{fontWeight:600}}>{totalesPorTipo[t.key]}</span>
+                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
+                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
+                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
+                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
                       </div>
                     ));
                   })()}
                 </div>
                 <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
                   <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en asiste a la cena.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card de personas que atienden agenda */}
+          <div className="stat-card agenda" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🗓️</div>
+              <div>
+                <h3 style={{margin: 0}}>Personas que atienden agenda</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>
+                  {(() => {
+                    let totalAgenda = 0;
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas)) {
+                        totalAgenda += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return totalAgenda;
+                  })()}
+                </span>
+                {/* Totales por tipo de formulario en columnas verticales y más chico */}
+                <div style={{marginTop: 8, display: 'flex', flexDirection: 'row', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
+                  {(() => {
+                    const tipos = [
+                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
+                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
+                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
+                    ];
+                    const totalesPorTipo = {};
+                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
+                        const tipo = f.tipo;
+                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return tipos.map(t => (
+                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
+                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
+                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
+                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en atiende agenda.</span>
                 </div>
               </div>
             </div>
@@ -604,7 +651,7 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                 })()}</span>
               </div>
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70}}>
-                <span style={{fontSize: '1.1rem'}}>🚚</span>
+                <span style={{fontSize: '1.1rem'}}>🚗</span>
                 <span style={{fontSize: '0.98rem', color: '#1976d2', fontWeight: 500, marginTop: 2}}>Prov. s/hotel</span>
                 <span style={{fontSize: '1.15rem', fontWeight: 600, marginTop: 2}}>{(() => {
                   let provSin = 0;
