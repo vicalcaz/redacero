@@ -1,5 +1,5 @@
 /* Soporte para interlineado personalizado en Quill */
-.ql-editor [style*="line-height"] {
+.ql-editor [style="line-height"] {
   line-height: inherit;
 }
 .personalizacion-formularios {

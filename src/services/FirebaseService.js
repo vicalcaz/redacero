@@ -69,7 +69,7 @@ class FirebaseServiceClass {
   // Actualizar formulario genérico
   async actualizarFormulario(coleccion, id, data) {
     try {
-      const docRef = doc(db, coleccion, id);
+      const docRef = doc(db, coleccion, String(id));
         await updateDoc(docRef, {
         ...data,
         fechaActualizacion: new Date().toISOString(),

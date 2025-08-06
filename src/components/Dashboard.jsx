@@ -791,7 +791,7 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
   );
 }
 
-function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboard, onNavigateToInicio }) {
+function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboard, onNavigateToInicio, eventoId }) {
   const [vistaActual, setVistaActual] = useState('inicio');
   const [estadisticas, setEstadisticas] = useState({
     totalUsuarios: 0,
@@ -861,9 +861,9 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         return <Newsletter />;
       case 'roomingList':
         return <RoomingList formularios={formularios} />;
-      case 'roomingList':
-        return <ListadoReferentes readOnly={true} formularios={formularios} />;
-        case 'inicio':
+      case 'referentes':  
+        return <ListadoReferentes readOnly={true} eventId={eventoId} />;
+      case 'inicio':
       default:
         return (
           <DashboardInicio

@@ -189,7 +189,7 @@ function capitalizarPalabras(str) {
 
   const guardarEdicion = async (formularioEditado) => {
     try {
-      await FirebaseService.actualizarFormulario(formularioEditado.id, formularioEditado);
+      await FirebaseService.actualizarFormulario('formularios',formularioEditado.id, formularioEditado);
       setFormularioSeleccionado(null);
       setModoEdicion(false);
       cargarFormularios();

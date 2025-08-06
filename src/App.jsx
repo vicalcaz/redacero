@@ -244,7 +244,7 @@ function App() {
       if (usuarioActualizado.primerLogin === false && usuarioActualizado.passwordCambiado === true) {
         console.log('✅ App: Estado correcto, redirigiendo al dashboard');
         setMostrarCambioPassword(false);
-        setVistaActual('dashboard');
+        setVistaActual('eventos');
         alert('✅ Contraseña cambiada exitosamente');
       } else {
         console.warn('⚠️ App: Estado inconsistente después del cambio:', usuarioActualizado);
@@ -314,6 +314,7 @@ function App() {
     }
 
     // Renderizar vista según el estado actual
+  
     switch (vistaActual) {
       case 'login':
         return <Login onLogin={handleLogin} />;
@@ -326,6 +327,7 @@ function App() {
           onNavigateToEventos={navegarAEventos}
           onNavigateToDashboard={navegarADashboard}
           onNavigateToInicio={navegarAEventos}
+          eventoId={eventoId}
         />
       );
 
@@ -350,7 +352,7 @@ function App() {
                 <div className="header-actions">
                   <span>👤 {usuario.nombre || usuario.email}</span>
                   {usuario.rol === 'admin' && (
-                    <button aun
+                    <button 
                       onClick={navegarADashboard}
                       className="btn-admin"
                       title="Ir al panel de administración"
@@ -420,13 +422,12 @@ function App() {
         }
         return <RoomingList formularios={formularios} />;
       case 'referentes':
+        
         return <ListadoReferentes 
           readOnly={true} 
           eventId={eventoId}/>;
       case 'newsletter':
         return <Newsletter />;
-   
-
       default:
         console.log('⚠️ App: Vista no reconocida, ir a eventos');
         return (

@@ -12,6 +12,7 @@ function ListadoReferentes({ readOnly, eventId }) {
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroPrimeraVez, setFiltroPrimeraVez] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [filtroFormularioCargado, setFiltroFormularioCargado] = useState('');
 
   useEffect(() => {
     const cargarUsuariosYFormularios = async () => {
@@ -23,8 +24,26 @@ function ListadoReferentes({ readOnly, eventId }) {
         const formulariosData = await FirebaseService.obtenerFormulariosPorEvento(eventId);
         // Mapear si cada usuario tiene formulario cargado
         const map = {};
+        console.log('Usuarios cargados:', usuariosData);
+        console.log('Formularios cargados:', formulariosData);
         usuariosData.forEach(u => {
-          map[u.id] = formulariosData.some(f => f.usuarioCreador === u.id && f.eventoId === eventId && f.rol === u.rol);
+          map[u.id] = formulariosData.some(f => {
+            const match =
+              String(f.usuarioCreador).toLowerCase() === String(u.email).toLowerCase() &&
+              String(f.eventoId) === String(eventId) &&
+              f.tipo === u.rol;
+            if (!match) {
+              console.log('MATCH:', {
+                usuario: u.email,
+                usuarioCreador: f.usuarioCreador,
+                eventoId: f.eventoId,
+                tipo: f.tipo,
+                usuarioRol: u.rol
+              });
+            }
+            return match;
+          });
+          
         });
         setFormulariosPorUsuario(map);
       } catch (error) {
@@ -42,8 +61,10 @@ function ListadoReferentes({ readOnly, eventId }) {
     (!filtroEmpresa || (u.empresa && u.empresa.toLowerCase().includes(filtroEmpresa.toLowerCase()))) &&
     (!filtroRol || (u.rol && u.rol === filtroRol)) &&
     (filtroPrimeraVez === '' ||
-      (filtroPrimeraVez === 'si' ? !u.passwordCambiado : u.passwordCambiado))
-  );
+      (filtroPrimeraVez === 'si' ? !u.passwordCambiado : u.passwordCambiado)) &&
+    (filtroFormularioCargado === '' ||
+      (filtroFormularioCargado === 'si' ? formulariosPorUsuario[u.id] : !formulariosPorUsuario[u.id]))
+    );
 
   // Ordenar usuarios según sortConfig
   const sortedUsuarios = [...filteredUsuarios];
@@ -109,8 +130,8 @@ function ListadoReferentes({ readOnly, eventId }) {
           <option value="">Filtrar por rol</option>
           <option value="admin">Administrador</option>
           <option value="socio">Socio</option>
-          <option value="proveedor-con-hotel">Proveedor CH</option>
-          <option value="proveedor-sin-hotel">Proveedor SH</option>
+          <option value="proveedor-con-hotel">Proveedor con hotel</option>
+          <option value="proveedor-sin-hotel">Proveedor sin hotel</option>
         </select>
         <select
           value={filtroPrimeraVez}
@@ -118,6 +139,15 @@ function ListadoReferentes({ readOnly, eventId }) {
           style={{ maxWidth: 180 }}
         >
           <option value="">¿Primera vez?</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+        <select
+          value={filtroFormularioCargado}
+          onChange={e => setFiltroFormularioCargado(e.target.value)}
+          style={{ maxWidth: 180 }}
+        >
+          <option value="">¿Formulario cargado?</option>
           <option value="si">Sí</option>
           <option value="no">No</option>
         </select>
