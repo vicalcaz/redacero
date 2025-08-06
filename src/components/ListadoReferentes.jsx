@@ -163,7 +163,7 @@ function ListadoReferentes({ readOnly, eventId }) {
         <h2>Listado de Usuarios Referentes</h2>
       </div>
       <button
-        onClick={exportarReferentesHTML}
+        onClick={exportarReferentesXLSX}
         className="export-btn"
         style={{ marginBottom: 16 }}
 >

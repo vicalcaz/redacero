@@ -501,13 +501,39 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                     return totalCena;
                   })()}
                 </span>
+                {/* Totales por tipo de formulario */}
+                <div style={{marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2, fontSize: '1.08em'}}>
+                  {(() => {
+                    const tipos = [
+                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
+                      { key: 'proveedor-con-hotel', label: 'Proveedor c/hotel', icon: '🏨' },
+                      { key: 'proveedor-sin-hotel', label: 'Proveedor s/hotel', icon: '🚗' }
+                    ];
+                    const totalesPorTipo = {};
+                    tipos.forEach(t => {
+                      totalesPorTipo[t.key] = 0;
+                    });
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
+                        const tipo = f.tipo;
+                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return tipos.map(t => (
+                      <div key={t.key} style={{display:'flex', alignItems:'center', gap:8}}>
+                        <span>{t.icon}</span>
+                        <span style={{minWidth:120}}>{t.label}:</span>
+                        <span style={{fontWeight:600}}>{totalesPorTipo[t.key]}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
                 <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
                   <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en asiste a la cena.</span>
                 </div>
               </div>
             </div>
           </div>
-
           {/* Card de habitaciones tomadas */}
           <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
