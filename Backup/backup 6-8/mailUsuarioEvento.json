@@ -1,0 +1,41 @@
+[
+  {
+    "id": "0gL521eBMmpNrEBhZYuQ_Q7sIgsD1uymOEx5B4Irl",
+    "eventoId": "Q7sIgsD1uymOEx5B4Irl",
+    "mail": "dario@saturnohogar.com.ar",
+    "mailleido": false,
+    "mailasociado": true,
+    "fechaleido": null,
+    "mailId": "kkTZFTeAqJw38uOnpdgy",
+    "usuario": "Bertinetti Dario",
+    "usuarioId": "0gL521eBMmpNrEBhZYuQ",
+    "mailenviado": true,
+    "fechaenvio": "2025-07-28T15:19:19.321Z"
+  },
+  {
+    "id": "MfiOPrkxeQMzCWgET53u_Q7sIgsD1uymOEx5B4Irl",
+    "eventoId": "Q7sIgsD1uymOEx5B4Irl",
+    "mail": "marvicalcazar@yahoo.com.ar",
+    "mailleido": false,
+    "mailasociado": true,
+    "fechaleido": null,
+    "mailId": "kkTZFTeAqJw38uOnpdgy",
+    "usuarioId": "MfiOPrkxeQMzCWgET53u",
+    "usuario": "Alcázar Maria Victoria ",
+    "mailenviado": true,
+    "fechaenvio": "2025-07-28T05:09:52.613Z"
+  },
+  {
+    "id": "PzgBV7nyewy9tmoyF4Az_Q7sIgsD1uymOEx5B4Irl",
+    "eventoId": "Q7sIgsD1uymOEx5B4Irl",
+    "mail": "pablo.garrigou@redacero.com.ar",
+    "mailleido": false,
+    "mailasociado": true,
+    "fechaleido": null,
+    "mailId": "kkTZFTeAqJw38uOnpdgy",
+    "usuario": "Garrigou Pablo ",
+    "usuarioId": "PzgBV7nyewy9tmoyF4Az",
+    "mailenviado": true,
+    "fechaenvio": "2025-07-28T12:56:25.546Z"
+  }
+]

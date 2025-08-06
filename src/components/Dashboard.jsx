@@ -484,25 +484,25 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             </button>
           </div>
 
-          {/* Card de noches ocupadas */}
-          <div className="stat-card noches" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+          {/* Card de personas que asisten a la cena */}
+          <div className="stat-card cena" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
-              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🌙</div>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🍽️</div>
               <div>
-                <h3 style={{margin: 0}}>Noches ocupadas</h3>
-                <span className="stat-number" style={{fontSize: '2rem'}}>{totalNoches}</span>
-                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2, display:'flex', gap:32}}>
-                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                    <span style={{fontSize:'1.1em'}}>Dobles</span>
-                    <span style={{fontWeight:600}}>{nochesPorTipo.doble}</span>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                    <span style={{fontSize:'1.1em'}}>Matrimoniales</span>
-                    <span style={{fontWeight:600}}>{nochesPorTipo.matrimonial}</span>
-                  </div>
-                </div>
+                <h3 style={{margin: 0}}>Personas que asisten a la cena</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>
+                  {(() => {
+                    let totalCena = 0;
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas)) {
+                        totalCena += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return totalCena;
+                  })()}
+                </span>
                 <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
-                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Cada noche ocupada por una habitación doble compartida o matrimonial se suma una vez.</span>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en asiste a la cena.</span>
                 </div>
               </div>
             </div>
