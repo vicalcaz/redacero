@@ -13,7 +13,70 @@ function ListadoReferentes({ readOnly, eventId }) {
   const [filtroPrimeraVez, setFiltroPrimeraVez] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filtroFormularioCargado, setFiltroFormularioCargado] = useState('');
+    function exportarReferentesHTML() {
+      // Construye el HTML de la tabla
+      let html = `
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Listado de Referentes</title>
+          <style>
+            table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+            th, td { border: 1px solid #bbb; padding: 8px; text-align: center; }
+            th { background: #e3f2fd; }
+            .formulario-cargado-badge.si { background: #43a047; color: #fff; border-radius: 8px; padding: 2px 8px; }
+            .formulario-cargado-badge.no { background: #e53935; color: #fff; border-radius: 8px; padding: 2px 8px; }
+          </style>
+        </head>
+        <body>
+          <h2>Listado de Usuarios Referentes</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Usuario/Email</th>
+                <th>Empresa</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Primera vez</th>
+                <th>Fecha Creación</th>
+                <th>Formulario Cargado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedUsuarios.map(usuario => `
+                <tr>
+                  <td>${usuario.nombre || ''}</td>
+                  <td>${usuario.email || ''}</td>
+                  <td>${usuario.empresa || ''}</td>
+                  <td>${usuario.rol || ''}</td>
+                  <td>${usuario.activo ? '✅ Activo' : '❌ Inactivo'}</td>
+                  <td>${!usuario.passwordCambiado ? '🔐 Sí' : '✅ No'}</td>
+                  <td>${usuario.fechaCreacionString || (usuario.fechaCreacion ? new Date(usuario.fechaCreacion).toLocaleDateString('es-AR') : '')}</td>
+                  <td>
+                    <span class="formulario-cargado-badge ${formulariosPorUsuario[usuario.id] ? 'si' : 'no'}">
+                      ${formulariosPorUsuario[usuario.id] ? 'Sí' : 'No'}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
 
+      // Crea y descarga el archivo HTML
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ListadoReferentes.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   useEffect(() => {
     const cargarUsuariosYFormularios = async () => {
       try {
@@ -32,15 +95,7 @@ function ListadoReferentes({ readOnly, eventId }) {
               String(f.usuarioCreador).toLowerCase() === String(u.email).toLowerCase() &&
               String(f.eventoId) === String(eventId) &&
               f.tipo === u.rol;
-            if (!match) {
-              console.log('MATCH:', {
-                usuario: u.email,
-                usuarioCreador: f.usuarioCreador,
-                eventoId: f.eventoId,
-                tipo: f.tipo,
-                usuarioRol: u.rol
-              });
-            }
+            
             return match;
           });
           
@@ -99,6 +154,7 @@ function ListadoReferentes({ readOnly, eventId }) {
         </div>
       </div>
     );
+  
   }
 
   return (
@@ -106,6 +162,13 @@ function ListadoReferentes({ readOnly, eventId }) {
       <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <h2>Listado de Usuarios Referentes</h2>
       </div>
+      <button
+        onClick={exportarReferentesHTML}
+        className="export-btn"
+        style={{ marginBottom: 16 }}
+>
+        Exportar a Excel (vía HTML)
+      </button>
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 16, margin: '16px 0' }}>
         <input
