@@ -115,9 +115,10 @@ function capitalizarPalabras(str) {
             'Menú Especial': persona.menuEspecial || '',
             
             // Campos específicos por tipo
-            'Tipo Habitación': persona.tipoHabitacion || 'N/A',
-            'Noches': persona.noches || 'N/A',
-            'Acompañantes': persona.acompanantes || 'N/A',
+            'Tipo Habitación': persona.tipoHabitacion || '',
+            'Commparte con': persona.comparteCon || '',
+            'Comentario habitación': persona.comentario || '',
+            'Noches': persona.noches || '',
             'Comentarios': formulario.comentarios || ''
           });
         });
@@ -205,49 +206,56 @@ function capitalizarPalabras(str) {
     return tipoOk && empresaOk;
   });
   // Exportar a HTML con formato
-  function exportarAHtml() {
-    const style = `
+  const exportarAHtml = () => {
+  let html = `
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Formularios Guardados</title>
       <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; }
-        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.95em; }
-        th, td { border: 1px solid #90caf9; padding: 8px; text-align: left; }
-        thead tr { background: #e3f2fd; }
-        tfoot tr { background: #bbdefb; font-weight: bold; }
-        tbody tr.alt { background: #e3f2fd; }
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }
+        th { background: #e3f2fd; }
+        .tipo-badge { background: #90caf9; color: #fff; border-radius: 8px; padding: 2px 8px; }
       </style>
-    `;
-    let html = `<html><head><meta charset='utf-8'>${style}</head><body>`;
-    html += '<table><thead><tr>';
-    html += '<th>Fecha</th><th>Tipo</th><th>Empresa</th><th>Personas</th><th>Usuario Creador</th>';
-    html += '</tr></thead><tbody>';
-    let lastEmpresa = null;
-    let colorToggle = false;
-    function toTitleCase(str) {
-      return String(str).toLowerCase().replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
-    }
-    formulariosFiltrados.forEach((f, idx) => {
-      const empresa = toTitleCase(f.datosEmpresa?.empresa || '');
-      const personas = f.personas?.length || 0;
-      if (empresa !== lastEmpresa) {
-        colorToggle = !colorToggle;
-        lastEmpresa = empresa;
-      }
-      html += `<tr${colorToggle ? ' class="alt"' : ''}>` +
-        `<td>${f.fechaCreacionString || 'N/A'}</td><td>${f.tipo}</td><td>${empresa}</td><td>${personas}</td><td>${f.usuarioCreador || 'N/A'}</td>` +
-        '</tr>';
-    });
-    html += '</tbody>';
-    html += `<tfoot><tr><td colspan="5">Total formularios: ${formulariosFiltrados.length}</td></tr></tfoot>`;
-    html += '</table></body></html>';
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'formularios_guardados.xlsx';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
+    </head>
+    <body>
+      <h2>Formularios Guardados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Empresa</th>
+            <th>Personas</th>
+            <th>Usuario Creador</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${formulariosFiltrados.map(formulario => `
+            <tr>
+              <td>${formulario.fechaCreacionString || 'N/A'}</td>
+              <td><span class="tipo-badge">${formulario.tipo}</span></td>
+              <td>${capitalizarPalabras(formulario.datosEmpresa?.empresa) || 'N/A'}</td>
+              <td>${formulario.personas?.length || 0}</td>
+              <td>${formulario.usuarioCreador || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'FormulariosGuardados.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
   // Usuarios no admin que no completaron formulario
   const usuariosSinFormulario = usuarios.filter(u =>
     u.perfil !== 'admin' &&
@@ -278,6 +286,115 @@ function capitalizarPalabras(str) {
     setSeleccionados([]);
   };
 
+  // Agrega la función exportarAHtmlConFormato:
+const exportarAHtmlConFormato = () => {
+  let html = `
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Formularios Guardados</title>
+      <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }
+        th { background: #e3f2fd; }
+        .tipo-badge { background: #90caf9; color: #fff; border-radius: 8px; padding: 2px 8px; }
+      </style>
+    </head>
+    <body>
+      <h2>Formularios Guardados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID Formulario</th>
+            <th>Tipo</th>
+            <th>Fecha Envío</th>
+            <th>Usuario</th>
+            <th>Empresa - Nombre</th>
+            <th>Empresa - Dirección</th>
+            <th>Empresa - Ciudad</th>
+            <th>Empresa - Web</th>
+            <th>Empresa - Código Postal</th>
+            <th>Empresa - Rubro</th>
+            <th>Persona #</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>DNI</th>
+            <th>Empresa Persona</th>
+            <th>Cargo</th>
+            <th>Fecha Llegada</th>
+            <th>Hora Llegada</th>
+            <th>Fecha Salida</th>
+            <th>Hora Salida</th>
+            <th>Lunes</th>
+            <th>Martes</th>
+            <th>Miércoles</th>
+            <th>Asiste Cena</th>
+            <th>Atiende Reuniones</th>
+            <th>Menú Especial</th>
+            <th>Tipo Habitación</th>
+            <th>Commparte con</th>
+            <th>Comentario habitación</th>
+            <th>Noches</th>
+            <th>Comentarios</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${formulariosFiltrados.map(formulario =>
+            formulario.personas?.map((persona, index) => `
+              <tr>
+                <td>${formulario.id}</td>
+                <td><span class="tipo-badge">${formulario.tipo}</span></td>
+                <td>${formulario.fechaCreacionString || 'N/A'}</td>
+                <td>${formulario.usuarioCreador || 'N/A'}</td>
+                <td>${capitalizarPalabras(formulario.datosEmpresa?.empresa) || ''}</td>
+                <td>${capitalizarPalabras(formulario.datosEmpresa?.direccion) || ''}</td>
+                <td>${capitalizarPalabras(formulario.datosEmpresa?.ciudad) || ''}</td>
+                <td>${capitalizarPalabras(formulario.datosEmpresa?.paginaWeb) || ''}</td>
+                <td>${formulario.datosEmpresa?.codigoPostal || ''}</td>
+                <td>${capitalizarPalabras(formulario.datosEmpresa?.rubro) || ''}</td>
+                <td>${index + 1}</td>
+                <td>${capitalizarPalabras(persona.nombre) || ''}</td>
+                <td>${capitalizarPalabras(persona.apellido) || ''}</td>
+                <td>${persona.email || ''}</td>
+                <td>${persona.telefono || ''}</td>
+                <td>${persona.dni || ''}</td>
+                <td>${persona.empresa || ''}</td>
+                <td>${capitalizarPalabras(persona.cargo) || ''}</td>
+                <td>${persona.fechaLlegada || ''}</td>
+                <td>${persona.horaLlegada || ''}</td>
+                <td>${persona.fechaSalida || ''}</td>
+                <td>${persona.horaSalida || ''}</td>
+                <td>${String(persona.lunes).toLowerCase() === 'si' ? 'Sí' : 'No'}</td>
+                <td>${String(persona.martes).toLowerCase() === 'si' ? 'Sí' : 'No'}</td>
+                <td>${String(persona.miercoles).toLowerCase() === 'si' ? 'Sí' : 'No'}</td>
+                <td>${String(persona.asisteCena).toLowerCase() === 'si' ? 'Sí' : 'No'}</td>
+                <td>${String(persona.atiendeReuniones).toLowerCase() === 'si' ? 'Sí' : 'No'}</td>
+                <td>${persona.menuEspecial || ''}</td>
+                <td>${persona.tipoHabitacion || ''}</td>
+                <td>${persona.comparteCon || ''}</td>
+                <td>${persona.comentario || ''}</td>
+                <td>${persona.noches || ''}</td>
+                <td>${formulario.comentarios || ''}</td>
+              </tr>
+            `).join('')
+          ).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'FormulariosGuardados.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
   // Exportar a Excel
   const exportarUsuarios = () => {
     const datos = usuariosFiltrados.map(u => ({
@@ -302,6 +419,7 @@ function capitalizarPalabras(str) {
   if (loading) {
     return <div className="loading">Cargando formularios...</div>;
   }
+
 
   return (
     <div className="formularios-guardados">
@@ -336,7 +454,7 @@ function capitalizarPalabras(str) {
             </button>
           )}
           <button className="btn-export" onClick={exportarAHtml} disabled={formulariosFiltrados.length === 0}>
-            🖨️ Exportar a HTML
+            🌐 Exportar a HTML
           </button>
           <button className="btn-refresh" onClick={cargarFormularios}>
             🔄 Actualizar
@@ -379,6 +497,15 @@ function capitalizarPalabras(str) {
           <button className="btn-exportar" onClick={exportarAExcel} style={{padding:'6px 16px', background:'#1976d2', color:'#fff', border:'none', borderRadius:4, cursor:'pointer'}}>
             Exportar a Excel
           </button>
+          <button
+            className="btn-exportar"
+            onClick={exportarAHtmlConFormato}
+            style={{padding:'6px 16px', background:'#388e3c', color:'#fff', border:'none', borderRadius:4, cursor:'pointer', marginLeft:8}}
+            title="Exporta a HTML para abrir en Excel y conservar el formato"
+          >
+            <span role="img" aria-label="Excel con formato" style={{fontSize:'1.2em'}}>📄</span> Exportar a Excel (con formato)
+          </button>
+</div>
         </div>
         {formulariosFiltrados.length === 0 ? (
           <div className="no-data">
@@ -439,8 +566,6 @@ function capitalizarPalabras(str) {
             </tbody>
           </table>
         )}
-      </div>
-
       {/* Modal para ver/editar detalles */}
       {formularioSeleccionado && (
         <DetalleFormulario
