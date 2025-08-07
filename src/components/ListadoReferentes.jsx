@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 import './ListadoReferentes.css';
@@ -13,8 +12,8 @@ function ListadoReferentes({ readOnly, eventId }) {
   const [filtroPrimeraVez, setFiltroPrimeraVez] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filtroFormularioCargado, setFiltroFormularioCargado] = useState('');
-    function exportarReferentesHTML() {
-      // Construye el HTML de la tabla
+    function exportarReferentesXLSX() {
+      // Construye el HTML de la tabla con estilos inline para colores
       let html = `
         <html>
         <head>
@@ -23,9 +22,7 @@ function ListadoReferentes({ readOnly, eventId }) {
           <style>
             table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
             th, td { border: 1px solid #bbb; padding: 8px; text-align: center; }
-            th { background: #e3f2fd; }
-            .formulario-cargado-badge.si { background: #43a047; color: #fff; border-radius: 8px; padding: 2px 8px; }
-            .formulario-cargado-badge.no { background: #e53935; color: #fff; border-radius: 8px; padding: 2px 8px; }
+            th { background: #e3f2fd !important; }
           </style>
         </head>
         <body>
@@ -33,28 +30,42 @@ function ListadoReferentes({ readOnly, eventId }) {
           <table>
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Usuario/Email</th>
-                <th>Empresa</th>
-                <th>Rol</th>
-                <th>Estado</th>
-                <th>Primera vez</th>
-                <th>Fecha Creación</th>
-                <th>Formulario Cargado</th>
+                <th style="background:#e3f2fd; text-align:left; padding-left:12px;">Nombre</th>
+                <th style="background:#e3f2fd; text-align:left; padding-left:12px;">Usuario/Email</th>
+                <th style="background:#e3f2fd; text-align:left; padding-left:12px;">Empresa</th>
+                <th style="background:#e3f2fd;">Rol</th>
+                <th style="background:#e3f2fd;">Estado</th>
+                <th style="background:#e3f2fd;">Primera vez</th>
+                <th style="background:#e3f2fd;">Fecha Creación</th>
+                <th style="background:#e3f2fd;">Formulario Cargado</th>
               </tr>
             </thead>
             <tbody>
               ${sortedUsuarios.map(usuario => `
                 <tr>
-                  <td>${usuario.nombre || ''}</td>
-                  <td>${usuario.email || ''}</td>
-                  <td>${usuario.empresa || ''}</td>
+                  <td style="text-align:left; padding-left:12px;">
+                    ${usuario.nombre || ''}
+                  </td>
+                  <td style="text-align:left; padding-left:12px;">
+                    ${usuario.email || ''}
+                  </td>
+                  <td style="text-align:left; padding-left:12px;">
+                    ${usuario.empresa || ''}
+                  </td>
                   <td>${usuario.rol || ''}</td>
                   <td>${usuario.activo ? '✅ Activo' : '❌ Inactivo'}</td>
                   <td>${!usuario.passwordCambiado ? '🔐 Sí' : '✅ No'}</td>
                   <td>${usuario.fechaCreacionString || (usuario.fechaCreacion ? new Date(usuario.fechaCreacion).toLocaleDateString('es-AR') : '')}</td>
                   <td>
-                    <span class="formulario-cargado-badge ${formulariosPorUsuario[usuario.id] ? 'si' : 'no'}">
+                    <span
+                      style="
+                        background: ${formulariosPorUsuario[usuario.id] ? '#43a047' : '#e53935'};
+                        color: #fff;
+                        border-radius: 8px;
+                        padding: 2px 8px;
+                        display: inline-block;
+                      "
+                    >
                       ${formulariosPorUsuario[usuario.id] ? 'Sí' : 'No'}
                     </span>
                   </td>
@@ -71,7 +82,7 @@ function ListadoReferentes({ readOnly, eventId }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ListadoReferentes.xlsx';
+      a.download = 'ListadoReferentes.xls';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -159,16 +170,17 @@ function ListadoReferentes({ readOnly, eventId }) {
 
   return (
     <div className="user-management">
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: 16, justifyContent: 'space-between' }}>
         <h2>Listado de Usuarios Referentes</h2>
+        <button
+          onClick={exportarReferentesXLSX}
+          className="export-btn"
+          style={{ marginBottom: 0, marginLeft: 'auto', padding: '8px 18px', background: '#388e3c', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 500 }}
+          title="Exporta a HTML para abrir en Excel y conservar el formato"
+        >
+          <span role="img" aria-label="Excel con formato" style={{fontSize:'1.2em'}}>📄</span> Exportar a Excel (con formato)
+        </button>
       </div>
-      <button
-        onClick={exportarReferentesXLSX}
-        className="export-btn"
-        style={{ marginBottom: 16 }}
->
-        Exportar a Excel (vía HTML)
-      </button>
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 16, margin: '16px 0' }}>
         <input
