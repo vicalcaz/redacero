@@ -398,17 +398,42 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
   });
 
   return (
-    <div className="dashboard-inicio">
+    <div className="dashboard-inicio" style={{padding:'1rem'}}>
+      <style>{`
+        @media (max-width: 900px) {
+          .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .stat-card {
+            min-width: 0 !important;
+            width: 100% !important;
+            margin: 0 0 1rem 0 !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .dashboard-inicio {
+            padding: 0.5rem !important;
+          }
+          .welcome-header h1 {
+            font-size: 1.2rem !important;
+          }
+          .stat-card {
+            font-size: 0.95em !important;
+            padding: 0.7rem 0.5rem !important;
+          }
+        }
+      `}</style>
       <div className="welcome-section">
         <div className="welcome-header">
-          <h1>¡Bienvenido al Panel de Administración!</h1>
-          <p>Gestiona eventos, usuarios y formularios de Red Acero</p>
+          <h1 style={{fontSize:'2rem', marginBottom:8}}>¡Bienvenido al Panel de Administración!</h1>
+          <p style={{fontSize:'1rem'}}>Gestiona eventos, usuarios y formularios de Red Acero</p>
         </div>
-        <div className="user-info-card">
-          <div className="user-avatar">👤</div>
+        <div className="user-info-card" style={{display:'flex', alignItems:'center', gap:12, flexWrap:'wrap'}}>
+          <div className="user-avatar" style={{fontSize:'2.2rem'}}>👤</div>
           <div className="user-details">
-            <h3>{usuario.email}</h3>
-            <span className="user-role">{usuario.perfil}</span>
+            <h3 style={{margin:0, fontSize:'1.1rem'}}>{usuario.email}</h3>
+            <span className="user-role" style={{fontSize:'0.95em'}}>{usuario.perfil}</span>
           </div>
         </div>
       </div>
@@ -419,7 +444,7 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
           <p>Cargando estadísticas...</p>
         </div>
       ) : (
-        <div className="stats-grid">
+        <div className="stats-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:'1.5rem', marginTop:'1.5rem'}}>
           {/* Usuarios */}
           <div className="stat-card usuarios">
             <div className="stat-icon">👥</div>
@@ -435,7 +460,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               Gestionar →
             </button>
           </div>
-
           {/* Eventos */}
           <div className="stat-card eventos">
             <div className="stat-icon">📅</div>
@@ -451,7 +475,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               Gestionar →
             </button>
           </div>
-
           {/* Formularios cargados */}
           <div className="stat-card formularios">
             <div className="stat-icon">📝</div>
@@ -467,9 +490,9 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               Ver →
             </button>
           </div>
-
           {/* Card de personas registradas */}
           <div className="stat-card personas-registradas" style={{background:'#f8fafc', border:'1px solid #90caf9', position: 'relative', minHeight: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem 1rem'}}>
+            {/* ...contenido igual... */}
             <div style={{display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8}}>
               <div className="stat-icon" style={{fontSize: '2.2rem'}}>👥</div>
               <div>
@@ -483,7 +506,9 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                 })()}</span>
               </div>
             </div>
+            {/* ...resto igual... */}
             <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 32, marginTop: 0, width: '100%'}}>
+              {/* ...columnas de tipos... */}
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70}}>
                 <span style={{fontSize: '1.1rem'}}>🧑‍💼</span>
                 <span style={{fontSize: '0.98rem', color: '#1976d2', fontWeight: 500, marginTop: 2}}>Socios</span>
@@ -532,12 +557,8 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               </button>
             </div>
           </div>
-
           {/* Card de personas que asisten a la cena */}
-          <div 
-            className="stat-card cena" 
-            style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
-          >
+          <div className="stat-card cena" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
               <div className="stat-icon" style={{fontSize: '2.2rem'}}>🍽️</div>
               <div>
@@ -595,7 +616,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               </div>
             </div>
           </div>
-
           {/* Card de personas que atienden agenda */}
           <div className="stat-card agenda" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
@@ -655,7 +675,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               </div>
             </div>
           </div>
-
           {/* Destacados */}
           <div className="stat-card destacados">
             <div className="stat-icon">⭐</div>
@@ -671,7 +690,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               Ver sitio →
             </button>
           </div>
-          
           {/* Card de habitaciones tomadas */}
           <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
@@ -702,8 +720,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               {showHabitacionesDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
             </button>
           </div>
-
-
           {/* Usuarios sin formulario */}
           <div className="stat-card sin-formulario" style={{background:'#fff3cd', border:'1px solid #ffeeba'}}>
             <div className="stat-icon">❗</div>

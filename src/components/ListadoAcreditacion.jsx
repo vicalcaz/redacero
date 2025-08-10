@@ -65,73 +65,65 @@ function ListadoAcreditacion({ eventId }) {
   let contadorUnico = 1;
   const contadorPorEmpresa = {};
   let personasDetalladas = [];
-
-  // Controlar que no haya formularios para el evento destacado
-  // Si el evento está marcado como destacado y no hay formularios, no mostrar personas
-  const eventoDestacado = window?.eventoDestacadoId || null;
-  const hayFormulariosEventoDestacado = eventoDestacado && formularios.some(f => f.eventoId === eventoDestacado);
-
-  if (!eventoDestacado || hayFormulariosEventoDestacado || eventId !== eventoDestacado) {
-    formularios.forEach(formulario => {
-      formulario.personas?.forEach((persona, idx) => {
-        const tieneComentarioPersona = persona.comentario && persona.comentario.trim() !== '';
-        const tieneComentarioFormulario = formulario.comentarios && formulario.comentarios.trim() !== '';
-        const pasaFiltroComentario =
-          filtroConComentario === '' ||
-          (filtroConComentario === 'si' ? (tieneComentarioPersona || tieneComentarioFormulario) : (!tieneComentarioPersona && !tieneComentarioFormulario));
-        if (
-          (!filtroEmpresa || (formulario.datosEmpresa?.empresa || '').toLowerCase().includes(filtroEmpresa.toLowerCase())) &&
-          (!filtroTipo || formulario.tipo === filtroTipo) &&
-          (!filtroNombre || ((persona.nombre + ' ' + persona.apellido).toLowerCase().includes(filtroNombre.toLowerCase()))) &&
-          (!filtroCargo || (persona.cargo || '').toLowerCase().includes(filtroCargo.toLowerCase())) &&
-          pasaFiltroComentario &&
-          (filtroAsisteCena === '' || (filtroAsisteCena === 'si' ? String(persona.asisteCena).toLowerCase() === 'si' : String(persona.asisteCena).toLowerCase() !== 'si')) &&
-          (filtroAtiendeReuniones === '' || (filtroAtiendeReuniones === 'si' ? String(persona.atiendeReuniones).toLowerCase() === 'si' : String(persona.atiendeReuniones).toLowerCase() !== 'si'))
-        ) {
-          const empresa = formulario.datosEmpresa?.empresa || '';
-          if (!contadorPorEmpresa[empresa]) contadorPorEmpresa[empresa] = 1;
-          else contadorPorEmpresa[empresa]++;
-          personasDetalladas.push({
-            // idFormulario: formulario.id, // Eliminado
-            contadorUnico: contadorUnico++,
-            contadorEmpresa: contadorPorEmpresa[empresa],
-            tipo: formulario.tipo,
-            fechaEnvio: formulario.fechaCreacionString || '',
-            usuario: formulario.usuarioCreador || '',
-            empresa: empresa,
-            direccion: formulario.datosEmpresa?.direccion || '',
-            ciudad: formulario.datosEmpresa?.ciudad || '',
-            web: formulario.datosEmpresa?.paginaWeb || '',
-            codigoPostal: formulario.datosEmpresa?.codigoPostal || '',
-            rubro: formulario.datosEmpresa?.rubro || '',
-            personaNum: idx + 1,
-            nombre: persona.nombre || '',
-            apellido: persona.apellido || '',
-            email: persona.email || '',
-            telefono: persona.telefono || '',
-            dni: persona.dni || '',
-            empresaPersona: persona.empresa || '',
-            cargo: persona.cargo || '',
-            fechaLlegada: persona.fechaLlegada || '',
-            horaLlegada: persona.horaLlegada || '',
-            fechaSalida: persona.fechaSalida || '',
-            horaSalida: persona.horaSalida || '',
-            lunes: String(persona.lunes).toLowerCase() === 'si' ? 'Sí' : 'No',
-            martes: String(persona.martes).toLowerCase() === 'si' ? 'Sí' : 'No',
-            miercoles: String(persona.miercoles).toLowerCase() === 'si' ? 'Sí' : 'No',
-            asisteCena: String(persona.asisteCena).toLowerCase() === 'si' ? 'Sí' : 'No',
-            atiendeReuniones: String(persona.atiendeReuniones).toLowerCase() === 'si' ? 'Sí' : 'No',
-            menuEspecial: persona.menuEspecial || '',
-            tipoHabitacion: persona.tipoHabitacion || '',
-            comparteCon: persona.comparteCon || '',
-            comentarioHabitacion: persona.comentario || '',
-            noches: persona.noches || '',
-            comentarios: formulario.comentarios || ''
-          });
-        }
-      });
+  formularios.forEach(formulario => {
+    formulario.personas?.forEach((persona, idx) => {
+      const tieneComentarioPersona = persona.comentario && persona.comentario.trim() !== '';
+      const tieneComentarioFormulario = formulario.comentarios && formulario.comentarios.trim() !== '';
+      const pasaFiltroComentario =
+        filtroConComentario === '' ||
+        (filtroConComentario === 'si' ? (tieneComentarioPersona || tieneComentarioFormulario) : (!tieneComentarioPersona && !tieneComentarioFormulario));
+      if (
+        (!filtroEmpresa || (formulario.datosEmpresa?.empresa || '').toLowerCase().includes(filtroEmpresa.toLowerCase())) &&
+        (!filtroTipo || formulario.tipo === filtroTipo) &&
+        (!filtroNombre || ((persona.nombre + ' ' + persona.apellido).toLowerCase().includes(filtroNombre.toLowerCase()))) &&
+        (!filtroCargo || (persona.cargo || '').toLowerCase().includes(filtroCargo.toLowerCase())) &&
+        pasaFiltroComentario &&
+        (filtroAsisteCena === '' || (filtroAsisteCena === 'si' ? String(persona.asisteCena).toLowerCase() === 'si' : String(persona.asisteCena).toLowerCase() !== 'si')) &&
+        (filtroAtiendeReuniones === '' || (filtroAtiendeReuniones === 'si' ? String(persona.atiendeReuniones).toLowerCase() === 'si' : String(persona.atiendeReuniones).toLowerCase() !== 'si'))
+      ) {
+        const empresa = formulario.datosEmpresa?.empresa || '';
+        if (!contadorPorEmpresa[empresa]) contadorPorEmpresa[empresa] = 1;
+        else contadorPorEmpresa[empresa]++;
+        personasDetalladas.push({
+          // idFormulario: formulario.id, // Eliminado
+          contadorUnico: contadorUnico++,
+          contadorEmpresa: contadorPorEmpresa[empresa],
+          tipo: formulario.tipo,
+          fechaEnvio: formulario.fechaCreacionString || '',
+          usuario: formulario.usuarioCreador || '',
+          empresa: empresa,
+          direccion: formulario.datosEmpresa?.direccion || '',
+          ciudad: formulario.datosEmpresa?.ciudad || '',
+          web: formulario.datosEmpresa?.paginaWeb || '',
+          codigoPostal: formulario.datosEmpresa?.codigoPostal || '',
+          rubro: formulario.datosEmpresa?.rubro || '',
+          personaNum: idx + 1,
+          nombre: persona.nombre || '',
+          apellido: persona.apellido || '',
+          email: persona.email || '',
+          telefono: persona.telefono || '',
+          dni: persona.dni || '',
+          empresaPersona: persona.empresa || '',
+          cargo: persona.cargo || '',
+          fechaLlegada: persona.fechaLlegada || '',
+          horaLlegada: persona.horaLlegada || '',
+          fechaSalida: persona.fechaSalida || '',
+          horaSalida: persona.horaSalida || '',
+          lunes: String(persona.lunes).toLowerCase() === 'si' ? 'Sí' : 'No',
+          martes: String(persona.martes).toLowerCase() === 'si' ? 'Sí' : 'No',
+          miercoles: String(persona.miercoles).toLowerCase() === 'si' ? 'Sí' : 'No',
+          asisteCena: String(persona.asisteCena).toLowerCase() === 'si' ? 'Sí' : 'No',
+          atiendeReuniones: String(persona.atiendeReuniones).toLowerCase() === 'si' ? 'Sí' : 'No',
+          menuEspecial: persona.menuEspecial || '',
+          tipoHabitacion: persona.tipoHabitacion || '',
+          comparteCon: persona.comparteCon || '',
+          comentarioHabitacion: persona.comentario || '',
+          noches: persona.noches || '',
+          comentarios: formulario.comentarios || ''
+        });
+      }
     });
-  }
+  });
 
   // Ordenar por columna seleccionada
   if (sortConfig.key) {
