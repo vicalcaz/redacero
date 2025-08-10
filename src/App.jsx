@@ -422,10 +422,12 @@ function App() {
         }
         return <RoomingList formularios={formularios} />;
       case 'referentes':
-        
-        return <ListadoReferentes 
+          return <ListadoReferentes 
           readOnly={true} 
           eventId={eventoId}/>;
+      case 'listadoAcreditacion':  
+        return <ListadoAcreditacion eventId={eventoId} />;
+
       case 'newsletter':
         return <Newsletter />;
       default:

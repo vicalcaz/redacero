@@ -13,7 +13,7 @@ import Newsletter from './Newsletter';
 import './Dashboard.css';
 import RoomingList from './RoomingList.jsx';
 import ListadoReferentes from './ListadoReferentes.jsx';
-
+import ListadoAcreditacion from './ListadoAcreditacion.jsx';
 // Utilidad para obtener rango de fechas entre dos strings YYYY-MM-DD (inclusive)
 // Recibe opcionalmente horaSalida. Si horaSalida <= '10:00', no incluye el día de salida.
 function getRangoFechas(desde, hasta, horaSalida) {
@@ -468,150 +468,6 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
             </button>
           </div>
 
-          {/* Destacados */}
-          <div className="stat-card destacados">
-            <div className="stat-icon">⭐</div>
-            <div className="stat-content">
-              <h3>Destacados</h3>
-              <span className="stat-number">{estadisticas.eventosDestacados}</span>
-              <p>Eventos destacados</p>
-            </div>
-            <button 
-              onClick={onNavigateToEventos}
-              className="stat-action"
-            >
-              Ver sitio →
-            </button>
-          </div>
-
-          {/* Card de personas que asisten a la cena */}
-          <div className="stat-card cena" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
-              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🍽️</div>
-              <div>
-                <h3 style={{margin: 0}}>Personas que asisten a la cena</h3>
-                <span className="stat-number" style={{fontSize: '2rem'}}>
-                  {(() => {
-                    let totalCena = 0;
-                    formularios.forEach(f => {
-                      if (Array.isArray(f.personas)) {
-                        totalCena += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
-                      }
-                    });
-                    return totalCena;
-                  })()}
-                </span>
-                {/* Totales por tipo de formulario en columnas verticales y más chico */}
-                <div style={{marginTop: 8, display: 'flex', flexDirection: 'row', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
-                  {(() => {
-                    const tipos = [
-                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
-                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
-                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
-                    ];
-                    const totalesPorTipo = {};
-                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
-                    formularios.forEach(f => {
-                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
-                        const tipo = f.tipo;
-                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
-                      }
-                    });
-                    return tipos.map(t => (
-                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
-                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
-                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
-                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
-                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en asiste a la cena.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card de personas que atienden agenda */}
-          <div className="stat-card agenda" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
-              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🗓️</div>
-              <div>
-                <h3 style={{margin: 0}}>Personas que atienden agenda</h3>
-                <span className="stat-number" style={{fontSize: '2rem'}}>
-                  {(() => {
-                    let totalAgenda = 0;
-                    formularios.forEach(f => {
-                      if (Array.isArray(f.personas)) {
-                        totalAgenda += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
-                      }
-                    });
-                    return totalAgenda;
-                  })()}
-                </span>
-                {/* Totales por tipo de formulario en columnas verticales y más chico */}
-                <div style={{marginTop: 8, display: 'flex', flexDirection: 'row', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
-                  {(() => {
-                    const tipos = [
-                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
-                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
-                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
-                    ];
-                    const totalesPorTipo = {};
-                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
-                    formularios.forEach(f => {
-                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
-                        const tipo = f.tipo;
-                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
-                      }
-                    });
-                    return tipos.map(t => (
-                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
-                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
-                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
-                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
-                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en atiende agenda.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Card de habitaciones tomadas */}
-          <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
-              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🏨</div>
-              <div>
-                <h3 style={{margin: 0}}>Habitaciones tomadas</h3>
-                <span className="stat-number" style={{fontSize: '2rem'}}>{totalHabitaciones}</span>
-                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2, display:'flex', gap:32}}>
-                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                    <span style={{fontSize:'1.1em'}}>Dobles</span>
-                    <span style={{fontWeight:600}}>{habitacionesPorTipo.doble}</span>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                    <span style={{fontSize:'1.1em'}}>Matrimoniales</span>
-                    <span style={{fontWeight:600}}>{habitacionesPorTipo.matrimonial}</span>
-                  </div>
-                </div>
-                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2}}>
-                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Si una habitación doble es compartida por varias noches, se cuenta solo una vez en el total.</span>
-                </div>
-              </div>
-            </div>
-            <button 
-              onClick={() => setShowHabitacionesDetalle(v => !v)}
-              className="stat-action"
-              style={{marginTop: 16}}
-            >
-              {showHabitacionesDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
-            </button>
-          </div>
-
           {/* Card de personas registradas */}
           <div className="stat-card personas-registradas" style={{background:'#f8fafc', border:'1px solid #90caf9', position: 'relative', minHeight: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem 1rem'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8}}>
@@ -662,7 +518,191 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                 })()}</span>
               </div>
             </div>
+            <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:16}}>
+              <button 
+                onClick={() => {
+                  if (window.__setAsisteCenaSi) {
+                    window.__setAsisteCenaSi = true;
+                  }
+                  handleViewChange('listadoAcreditacion');
+                }}
+                className="stat-action"
+              >
+                Ver detalle →
+              </button>
+            </div>
           </div>
+
+          {/* Card de personas que asisten a la cena */}
+          <div 
+            className="stat-card cena" 
+            style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+          >
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🍽️</div>
+              <div>
+                <h3 style={{margin: 0}}>Personas que asisten a la cena</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>
+                  {(() => {
+                    let totalCena = 0;
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas)) {
+                        totalCena += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return totalCena;
+                  })()}
+                </span>
+                {/* Totales por tipo de formulario en columnas verticales y más chico */}
+                <div style={{marginTop: 8, display: 'flex', flexDirection: 'row', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
+                  {(() => {
+                    const tipos = [
+                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
+                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
+                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
+                    ];
+                    const totalesPorTipo = {};
+                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
+                        const tipo = f.tipo;
+                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.asisteCena).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return tipos.map(t => (
+                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
+                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
+                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
+                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en asiste a la cena.</span>
+                </div>
+                <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:16}}>
+                  <button 
+                    onClick={() => {
+                      window.__setAsisteCenaSi = true;
+                      handleViewChange('listadoAcreditacion');
+                    }}
+                    className="stat-action"
+                  >
+                    Ver detalle →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card de personas que atienden agenda */}
+          <div className="stat-card agenda" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🗓️</div>
+              <div>
+                <h3 style={{margin: 0}}>Personas que atienden agenda</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>
+                  {(() => {
+                    let totalAgenda = 0;
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas)) {
+                        totalAgenda += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return totalAgenda;
+                  })()}
+                </span>
+                {/* Totales por tipo de formulario en columnas verticales y más chico */}
+                <div style={{marginTop: 8, display: 'flex', gap: 18, fontSize: '0.98em', justifyContent: 'center'}}>
+                  {(() => {
+                    const tipos = [
+                      { key: 'socio', label: 'Socios', icon: '🧑‍💼' },
+                      { key: 'proveedor-con-hotel', label: 'Prov. c/hotel', icon: '🏨' },
+                      { key: 'proveedor-sin-hotel', label: 'Prov. s/hotel', icon: '🚗' }
+                    ];
+                    const totalesPorTipo = {};
+                    tipos.forEach(t => { totalesPorTipo[t.key] = 0; });
+                    formularios.forEach(f => {
+                      if (Array.isArray(f.personas) && tipos.some(t => t.key === f.tipo)) {
+                        const tipo = f.tipo;
+                        totalesPorTipo[tipo] += f.personas.filter(p => String(p.atiendeReuniones).toLowerCase() === 'si').length;
+                      }
+                    });
+                    return tipos.map(t => (
+                      <div key={t.key} style={{display:'flex', flexDirection:'column', alignItems:'center', minWidth:60}}>
+                        <span style={{fontSize:'1.3em'}}>{t.icon}</span>
+                        <span style={{fontSize:'0.92em', color:'#1976d2', fontWeight:500, marginTop:2}}>{t.label}</span>
+                        <span style={{fontWeight:600, fontSize:'1.08em', marginTop:2}}>{totalesPorTipo[t.key]}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div style={{fontSize: '0.98em', color: '#388e3c', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Se cuentan todas las personas que indicaron "Sí" en atiende agenda.</span>
+                </div>
+                <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:16}}>
+                  <button 
+                    onClick={() => {
+                      window.__setAtiendeReunionesSi = true;
+                      handleViewChange('listadoAcreditacion');
+                    }}
+                    className="stat-action"
+                  >
+                    Ver detalle →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Destacados */}
+          <div className="stat-card destacados">
+            <div className="stat-icon">⭐</div>
+            <div className="stat-content">
+              <h3>Destacados</h3>
+              <span className="stat-number">{estadisticas.eventosDestacados}</span>
+              <p>Eventos destacados</p>
+            </div>
+            <button 
+              onClick={onNavigateToEventos}
+              className="stat-action"
+            >
+              Ver sitio →
+            </button>
+          </div>
+          
+          {/* Card de habitaciones tomadas */}
+          <div className="stat-card habitaciones" style={{background:'#e3f2fd', border:'1px solid #90caf9', position: 'relative', minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+              <div className="stat-icon" style={{fontSize: '2.2rem'}}>🏨</div>
+              <div>
+                <h3 style={{margin: 0}}>Habitaciones tomadas</h3>
+                <span className="stat-number" style={{fontSize: '2rem'}}>{totalHabitaciones}</span>
+                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2, display:'flex', gap:32}}>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Dobles</span>
+                    <span style={{fontWeight:600}}>{habitacionesPorTipo.doble}</span>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                    <span style={{fontSize:'1.1em'}}>Matrimoniales</span>
+                    <span style={{fontWeight:600}}>{habitacionesPorTipo.matrimonial}</span>
+                  </div>
+                </div>
+                <div style={{fontSize: '0.98em', color: '#1976d2', marginTop: 2}}>
+                  <b>Nota:</b> <span style={{fontSize: '0.78em'}}>Si una habitación doble es compartida por varias noches, se cuenta solo una vez en el total.</span>
+                </div>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowHabitacionesDetalle(v => !v)}
+              className="stat-action"
+              style={{marginTop: 16}}
+            >
+              {showHabitacionesDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
+            </button>
+          </div>
+
 
           {/* Usuarios sin formulario */}
           <div className="stat-card sin-formulario" style={{background:'#fff3cd', border:'1px solid #ffeeba'}}>
@@ -676,7 +716,7 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               onClick={() => setShowUsuariosSinFormDetalle(v => !v)}
               className="stat-action"
             >
-              {showUsuariosSinFormDetalle ? 'Ocultar detalle' : 'Ver detalle'}
+              {showUsuariosSinFormDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
             </button>
           </div>
         </div>
@@ -722,28 +762,33 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               </thead>
               <tbody>
                 {(() => {
-                  let lastEmpresa = null;
-                  let colorToggle = false;
-                  return detalleFilas.map((g, idx) => {
-                    if (g.empresa !== lastEmpresa) {
-                      colorToggle = !colorToggle;
-                      lastEmpresa = g.empresa;
-                    }
-                    return (
-                      <tr key={idx} style={{background: colorToggle ? '#e3f2fd' : '#fff'}}>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.tipoFormulario}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.empresa || ''}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.personas}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'60px'}}>{g.tipo}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'80px'}}>{g.fechaLlegada || ''}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaLlegada || ''}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'100px', maxWidth:'140px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{g.fechaSalida || ''}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaSalida || ''}</td>
-                        <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.noches}</td>
-                      </tr>
-                    );
-                  });
-                })()}
+                    // Paleta pastel
+                    const pastelColors = [
+                      '#ffe0e0', '#e0ffe0', '#e0e0ff', '#fffbe0', '#e0fff7', '#f0e0ff', '#e0f7ff', '#ffe0f7', '#f7ffe0', '#e0f0ff', '#f0ffe0', '#ffe0f0'
+                    ];
+                    // Asignar color por empresa
+                    const empresasUnicas = Array.from(new Set(detalleFilas.map(f => (f.empresa || '').trim())));
+                    const empresaColorMap = {};
+                    empresasUnicas.forEach((emp, i) => {
+                      empresaColorMap[emp] = pastelColors[i % pastelColors.length];
+                    });
+                    return detalleFilas.map((g, idx) => {
+                      const colorFondo = empresaColorMap[(g.empresa || '').trim()] || '#fff';
+                      return (
+                        <tr key={idx} style={{background: colorFondo}}>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.tipoFormulario}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.empresa || ''}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.personas}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'60px'}}>{g.tipo}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'80px'}}>{g.fechaLlegada || ''}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaLlegada || ''}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left', minWidth:'100px', maxWidth:'140px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{g.fechaSalida || ''}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.horaSalida || ''}</td>
+                          <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>{g.noches}</td>
+                        </tr>
+                      );
+                    });
+                  })()}
               </tbody>
               <tfoot>
                 <tr style={{background:'#bbdefb', fontWeight:'bold'}}>
@@ -762,11 +807,22 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
                 <tr style={{background:'#e3f2fd', fontWeight:'bold'}}>
                   <td style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>Por tipo de formulario</td>
                   <td colSpan={4} style={{border:'1px solid #90caf9', padding:'6px', textAlign:'left'}}>
-                    {Object.entries(detallePorFormulario).map(([tipo, grupos], i) => (
-                      <span key={tipo} style={{marginRight:16}}>
-                        {tipo}: <b>{grupos.length}</b>
-                      </span>
-                    ))}
+                    <div>
+                      {Object.entries(detallePorFormulario).map(([tipo, grupos], i) => (
+                        <span key={tipo} style={{marginRight:16}}>
+                          {tipo}: <b>{grupos.length}</b>
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{textAlign:'center', marginTop:'10px'}}>
+                      <button 
+                        onClick={() => handleViewChange('listadoAcreditacion')}
+                        className="stat-action"
+                        style={{marginTop: 8}}
+                      >
+                        Ver detalle →
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tfoot>
@@ -782,11 +838,24 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
           {usuariosSinFormulario.length === 0 ? (
             <p>Todos los usuarios han completado el formulario.</p>
           ) : (
-            <ul>
-              {usuariosSinFormulario.map(u => (
-                <li key={u.id || u.email}>{u.email}</li>
-              ))}
-            </ul>
+            <table style={{borderCollapse:'collapse', width:'100%', fontSize:'0.9em', background:'#fff'}}>
+              <thead>
+                <tr style={{background:'#ffeeba'}}>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Rol</th>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Email</th>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Empresa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuariosSinFormulario.map(u => (
+                  <tr key={u.id || u.email}>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.rol || ''}</td>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.email}</td>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.empresa || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}
@@ -847,19 +916,33 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
       </div>
 
       {!loading && (
-        <div className="usuarios-sin-formulario" style={{margin: '2rem 0', padding: '1rem', background: '#fff3cd', border: '1px solid #ffeeba', borderRadius: 8}}>
+      <div className="usuarios-sin-formulario" style={{margin: '2rem 0', padding: '1rem', background: '#fff3cd', border: '1px solid #ffeeba', borderRadius: 8}}>
           <h4>Usuarios que no completaron el formulario</h4>
           {usuariosSinFormulario.length === 0 ? (
             <p>Todos los usuarios han completado el formulario.</p>
           ) : (
-            <ul>
-              {usuariosSinFormulario.map(u => (
-                <li key={u.id || u.email}>{u.email}</li>
-              ))}
-            </ul>
+            <table style={{borderCollapse:'collapse', width:'100%', fontSize:'0.9em', background:'#fff'}}>
+              <thead>
+                <tr style={{background:'#ffeeba'}}>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Rol</th>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Email</th>
+                  <th style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>Empresa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuariosSinFormulario.map(u => (
+                  <tr key={u.id || u.email}>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.rol || ''}</td>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.email}</td>
+                    <td style={{border:'1px solid #ffeeba', padding:'6px', textAlign:'left'}}>{u.empresa || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}
+
     </div>
   );
 }
@@ -889,7 +972,7 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
       const [usuariosData, eventosData, formulariosData] = await Promise.all([
         FirebaseService.obtenerUsuarios ? FirebaseService.obtenerUsuarios() : [],
         FirebaseService.obtenerEventos ? FirebaseService.obtenerEventos() : [],
-        FirebaseService.obtenerFormularios ? FirebaseService.obtenerFormularios() : []
+        FirebaseService.obtenerFormularios ? FirebaseService.obtenerFormularios(eventoId) : []
       ]);
       setUsuarios(usuariosData);
       setFormularios(formulariosData);
@@ -901,8 +984,8 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
       });
       // Usuarios sin formulario (no admin)
       const sinFormulario = usuariosData.filter(u =>
-        u.perfil !== 'admin' &&
-        !formulariosData.some(f => f.usuarioCreador === u.email)
+        u.rol !== 'admin' &&
+        !formulariosData.some(f => f.usuarioCreador === u.email && f.eventoId === eventoId)
       );
       setUsuariosSinFormulario(sinFormulario);
       setLoading(false);
@@ -936,6 +1019,8 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
         return <RoomingList formularios={formularios} />;
       case 'referentes':  
         return <ListadoReferentes readOnly={true} eventId={eventoId} />;
+      case 'listadoAcreditacion':  
+        return <ListadoAcreditacion eventId={eventoId} />;
       case 'inicio':
       default:
         return (

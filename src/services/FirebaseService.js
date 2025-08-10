@@ -762,7 +762,15 @@ await this.crearUsuario({
   async obtenerFormularios() {
     try {
       console.log('🔍 FirebaseService: Obteniendo formularios (unificado)');
-      const snapshot = await getDocs(collection(db, 'formularios'));
+      let snapshot;
+      if (arguments.length > 0 && arguments[0]) {
+        // Si se pasa eventoId, filtrar por evento
+        const eventoId = arguments[0];
+        const q = query(collection(db, 'formularios'), where('eventoId', '==', eventoId));
+        snapshot = await getDocs(q);
+      } else {
+        snapshot = await getDocs(collection(db, 'formularios'));
+      }
       const formularios = [];
       snapshot.forEach((doc) => {
         formularios.push({ id: doc.id, ...doc.data() });
