@@ -729,10 +729,10 @@ function DashboardInicio({ usuario, loading, estadisticas, handleViewChange, onN
               <p>No han completado el formulario</p>
             </div>
             <button 
-              onClick={() => setShowUsuariosSinFormDetalle(v => !v)}
+              onClick={() => handleViewChange('referentes', { filtroFormularioCargado: 'no' })}
               className="stat-action"
             >
-              {showUsuariosSinFormDetalle ? 'Ocultar detalle' : 'Ver detalle →'}
+              Ver listado →
             </button>
           </div>
         </div>
@@ -1010,10 +1010,14 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
     }
   };
 
-  const handleViewChange = (vista) => {
+  const [filtroReferentes, setFiltroReferentes] = useState('');
+  const handleViewChange = (vista, options = {}) => {
     setVistaActual(vista);
     if (vista === 'inicio') {
       cargarEstadisticas();
+    }
+    if (vista === 'referentes' && options.filtroFormularioCargado) {
+      setFiltroReferentes(options.filtroFormularioCargado);
     }
   };
 
@@ -1034,7 +1038,7 @@ function Dashboard({ usuario, onLogout, onNavigateToEventos, onNavigateToDashboa
       case 'roomingList':
         return <RoomingList formularios={formularios} />;
       case 'referentes':  
-        return <ListadoReferentes readOnly={true} eventId={eventoId} />;
+        return <ListadoReferentes readOnly={true} eventId={eventoId} filtroFormularioCargado={filtroReferentes} />;
       case 'listadoAcreditacion':  
         return <ListadoAcreditacion eventId={eventoId} />;
       case 'inicio':

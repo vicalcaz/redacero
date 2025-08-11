@@ -9,7 +9,7 @@ function capitalizarPalabras(str) {
   if (!str) return '';
   return str
     .toLowerCase()
-    .replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+    .replace(/(^|[\s.-])([a-záéíóúüñ])/g, (m, sep, c) => sep + c.toUpperCase()).replace(/([A-ZÁÉÍÓÚÜÑ])([A-ZÁÉÍÓÚÜÑ]+)/g, (m, first, rest) => first + rest.toLowerCase());
 }
 import { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';

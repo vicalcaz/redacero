@@ -51,9 +51,8 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
   // Función para capitalizar la primera letra de cada palabra
 function capitalizarPalabras(str) {
   if (!str) return '';
-  return str
-    .toLowerCase()
-    .replace(/\b\w/g, l => l.toUpperCase());
+  // Solo pone mayúscula después de espacio, inicio, guion o punto, respeta acentos
+  return str.replace(/(^|[\s.-])([a-záéíóúüñ])/g, (m, sep, c) => sep + c.toUpperCase()).replace(/([A-ZÁÉÍÓÚÜÑ])([A-ZÁÉÍÓÚÜÑ]+)/g, (m, first, rest) => first + rest.toLowerCase());
 }
   const exportarAExcel = async () => {
     const formulariosFiltrados = filtroTipo === 'todos' 

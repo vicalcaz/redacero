@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FirebaseService } from '../services/FirebaseService';
 import './ListadoReferentes.css';
 
-function ListadoReferentes({ readOnly, eventId }) {
+function ListadoReferentes({ readOnly, eventId, filtroFormularioCargado: filtroFormularioCargadoProp }) {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formulariosPorUsuario, setFormulariosPorUsuario] = useState({});
@@ -11,7 +11,7 @@ function ListadoReferentes({ readOnly, eventId }) {
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroPrimeraVez, setFiltroPrimeraVez] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [filtroFormularioCargado, setFiltroFormularioCargado] = useState('');
+  const [filtroFormularioCargado, setFiltroFormularioCargado] = useState(filtroFormularioCargadoProp || '');
     function exportarReferentesXLSX() {
       // Construye el HTML de la tabla con estilos inline para colores
       let html = `

@@ -1,3 +1,60 @@
+/* Responsive para pantalla principal de evento destacado */
+@media (max-width: 900px) {
+  .eventos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+    max-width: 100vw;
+    padding: 0 0.5rem;
+  }
+  .evento-card {
+    border-radius: 14px;
+    font-size: 0.98em;
+    min-height: 320px;
+    max-height: 480px;
+  }
+  .evento-imagen {
+    height: 180px;
+    min-height: 100px;
+  }
+  .evento-content {
+    padding: 0.7rem;
+  }
+  .form-btn {
+    padding: 1rem 1.5rem;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventos-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    padding: 0 0.2rem;
+  }
+  .evento-card {
+    border-radius: 10px;
+    font-size: 0.95em;
+    min-height: 220px;
+    max-height: 340px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  .evento-imagen {
+    height: 90px;
+    min-height: 60px;
+  }
+  .evento-content {
+    padding: 0.5rem;
+  }
+  .evento-header h3 {
+    font-size: 1rem;
+    margin-bottom: 2px;
+  }
+  .form-btn {
+    padding: 0.7rem 1rem;
+    font-size: 0.95em;
+    border-radius: 8px;
+  }
+}
 
 .alarma-fecha .alarma-ico {
   display: inline-block;

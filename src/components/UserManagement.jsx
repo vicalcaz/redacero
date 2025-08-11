@@ -284,9 +284,8 @@ function UserManagement() {
   // Función para capitalizar la primera letra de cada palabra
 function capitalizarPalabras(str) {
   if (!str) return '';
-  return str
-    .toLowerCase()
-    .replace(/\b\w/g, l => l.toUpperCase());
+  // Solo pone mayúscula después de espacio, inicio, guion o punto, respeta acentos
+  return str.replace(/(^|[\s.-])([a-záéíóúüñ])/g, (m, sep, c) => sep + c.toUpperCase()).replace(/([A-ZÁÉÍÓÚÜÑ])([A-ZÁÉÍÓÚÜÑ]+)/g, (m, first, rest) => first + rest.toLowerCase());
 }
   // Función para marcar que el usuario ya cambió su contraseña (solo para casos especiales)
   const marcarPasswordCambiado = async (usuario) => {

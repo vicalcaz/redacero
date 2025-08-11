@@ -213,10 +213,9 @@ function RoomingList({ formularios }) {
   }
   // Función para capitalizar cada palabra
   function toTitleCase(str) {
-    if (!str) return '';
-    return str
-      .toLowerCase()
-      .replace(/\b\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+  if (!str) return '';
+  // Solo pone mayúscula después de espacio, inicio, guion o punto, respeta acentos
+  return str.replace(/(^|[\s.-])([a-záéíóúüñ])/g, (m, sep, c) => sep + c.toUpperCase()).replace(/([A-ZÁÉÍÓÚÜÑ])([A-ZÁÉÍÓÚÜÑ]+)/g, (m, first, rest) => first + rest.toLowerCase());
   }
   function toSentenceCase(str) {
   if (!str) return '';
