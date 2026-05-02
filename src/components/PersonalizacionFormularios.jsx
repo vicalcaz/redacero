@@ -161,8 +161,8 @@ function PersonalizacionFormularios({ user }) {
     reader.onload = () => {
       setConfigFormularios(prev => ({
         ...prev,
-        [formularioSeleccionado]: {
-          ...prev[formularioSeleccionado],
+        [pestaniaFormulario]: {
+          ...prev[pestaniaFormulario],
           imageninicio: reader.result
         }
       }));
@@ -573,6 +573,15 @@ function PersonalizacionFormularios({ user }) {
                 </div>
               </div>
             </div>
+          </div>
+          <div className="form-actions" style={{ marginTop: 24, textAlign: 'right' }}>
+            <button
+              type="submit"
+              className="btn-save primary"
+              disabled={guardando}
+            >
+              {guardando ? 'Guardando...' : 'Guardar'}
+            </button>
           </div>
         </form>
       )}

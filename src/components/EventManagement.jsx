@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useEventoDestacado } from '../context/EventoDestacadoContext';
 import { FirebaseService } from '../services/FirebaseService';
 import './EventManagement.css';
 import SubirImagen from './SubirImagen';
 
 function EventManagement() {
+  const { setEvento, setEventoId, setNombre, setFechaDesde, setFechaHasta, setFechaLimiteEdicion } = useEventoDestacado();
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -55,6 +57,7 @@ function EventManagement() {
       ubicacion: nuevoEvento.ubicacion || '', // string
       fechaLimiteEdicion: nuevoEvento.fechaLimiteEdicion, // string
       imagenBase64: imagenBase64,
+      estado: nuevoEvento.estado || 'planificado',
       fechaCreacion: editando ? editando.fechaCreacion : new Date().toISOString(),
       fechaActualizacion: new Date().toISOString(),
       fechaCreacionString: editando ? editando.fechaCreacionString : new Date().toLocaleString('es-AR'),
@@ -62,12 +65,44 @@ function EventManagement() {
     };
 
     try {
+      // Si el evento se marca como destacado, desmarcar los demás antes de guardar
+      let eventoDestacadoActualizado = null;
+      if (eventoData.destacado) {
+        const eventosTodos = await FirebaseService.obtenerEventos();
+        const destacados = eventosTodos.filter(ev => ev.id !== (editando ? editando.id : null) && ev.destacado);
+        const updates = destacados.map(ev => FirebaseService.actualizarEvento(ev.id, {
+          nombre: ev.nombre,
+          descripcion: ev.descripcion,
+          fechaDesde: ev.fechaDesde,
+          fechaHasta: ev.fechaHasta,
+          fechaLimiteEdicion: ev.fechaLimiteEdicion,
+          ubicacion: ev.ubicacion,
+          estado: ev.estado,
+          destacado: false,
+          imagenBase64: ev.imagenBase64 || null
+        }));
+        await Promise.all(updates);
+      }
+      let eventoIdGuardado = null;
       if (editando) {
         await FirebaseService.actualizarEvento(editando.id, eventoData);
+        eventoIdGuardado = editando.id;
         alert('✅ Evento actualizado exitosamente');
       } else {
-        await FirebaseService.crearEvento(eventoData);
+        const idNuevo = await FirebaseService.crearEvento(eventoData);
+        eventoIdGuardado = idNuevo;
         alert('✅ Evento creado exitosamente');
+      }
+      // Si el evento guardado es destacado, actualizar el contexto
+      if (eventoData.destacado) {
+        // Obtener el evento actualizado desde Firebase
+        const eventoActualizado = await FirebaseService.obtenerEventoPorId(eventoIdGuardado);
+        setEvento(eventoActualizado);
+        setEventoId(eventoActualizado.id);
+        setNombre(eventoActualizado.nombre);
+        setFechaDesde(eventoActualizado.fechaDesde);
+        setFechaHasta(eventoActualizado.fechaHasta);
+        setFechaLimiteEdicion(eventoActualizado.fechaLimiteEdicion);
       }
       limpiarFormulario();
       cargarEventos();
@@ -125,7 +160,17 @@ function EventManagement() {
     setEditando(null);
   };
 
-  const actualizarCampo = (campo, valor) => {
+  // Maneja el cambio de cualquier campo, pero intercepta el cambio a destacado=true para mostrar confirmación
+  const actualizarCampo = async (campo, valor) => {
+    if (campo === 'destacado' && valor === true) {
+      // Si se intenta marcar como destacado, mostrar confirmación
+      const eventosTodos = await FirebaseService.obtenerEventos();
+      const destacados = eventosTodos.filter(ev => ev.id !== (editando ? editando.id : null) && ev.destacado);
+      if (destacados.length > 0) {
+        const confirmar = window.confirm('Al marcar este evento como destacado, se desmarcará cualquier otro que esté como destacado. ¿Desea continuar?');
+        if (!confirmar) return;
+      }
+    }
     setNuevoEvento(prev => ({
       ...prev,
       [campo]: valor
@@ -147,19 +192,26 @@ function EventManagement() {
   const toggleDestacado = async (evento) => {
     try {
       const nuevoEstadoDestacado = !evento.destacado;
-
+      if (nuevoEstadoDestacado) {
+        const confirmar = window.confirm('Al marcar este evento como destacado, se desmarcará cualquier otro que esté como destacado. ¿Desea continuar?');
+        if (!confirmar) return;
+        const eventosTodos = await FirebaseService.obtenerEventos();
+        const destacados = eventosTodos.filter(ev => ev.id !== evento.id && ev.destacado);
+        const updates = destacados.map(ev => FirebaseService.actualizarEvento(ev.id, {
+          nombre: ev.nombre,
+          descripcion: ev.descripcion,
+          fechaDesde: ev.fechaDesde,
+          fechaHasta: ev.fechaHasta,
+          fechaLimiteEdicion: ev.fechaLimiteEdicion,
+          ubicacion: ev.ubicacion,
+          estado: ev.estado,
+          destacado: false,
+          imagenBase64: ev.imagenBase64 || null
+        }));
+        await Promise.all(updates);
+      }
       // Crea una copia del evento y reemplaza undefined por valores vacíos
       const eventoLimpio = {
-        ...evento,
-        destacado: nuevoEstadoDestacado,
-        fechaActualizacion: new Date().toISOString(),
-        fechaActualizacionString: new Date().toLocaleString('es-AR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
         nombre: evento.nombre || '',
         descripcion: evento.descripcion || '',
         fechaDesde: evento.fechaDesde || '',
@@ -167,11 +219,20 @@ function EventManagement() {
         fechaLimiteEdicion: evento.fechaLimiteEdicion || '',
         ubicacion: evento.ubicacion || '',
         estado: evento.estado || 'planificado',
+        destacado: nuevoEstadoDestacado,
         imagenBase64: evento.imagenBase64 || null
       };
-
       await FirebaseService.actualizarEvento(evento.id, eventoLimpio);
-
+      if (nuevoEstadoDestacado) {
+        // Actualizar el contexto de evento destacado
+        const eventoActualizado = await FirebaseService.obtenerEventoPorId(evento.id);
+        setEvento(eventoActualizado);
+        setEventoId(eventoActualizado.id);
+        setNombre(eventoActualizado.nombre);
+        setFechaDesde(eventoActualizado.fechaDesde);
+        setFechaHasta(eventoActualizado.fechaHasta);
+        setFechaLimiteEdicion(eventoActualizado.fechaLimiteEdicion);
+      }
       alert(nuevoEstadoDestacado ?
         '⭐ Evento marcado como destacado' :
         '☆ Evento removido de destacados'
@@ -310,7 +371,9 @@ function EventManagement() {
                 type="checkbox"
                 id="destacado"
                 checked={nuevoEvento.destacado}
-                onChange={(e) => actualizarCampo('destacado', e.target.checked)}
+                onChange={async (e) => {
+                  await actualizarCampo('destacado', e.target.checked);
+                }}
                 className="destacado-checkbox"
               />
               <label htmlFor="destacado" className="destacado-label">

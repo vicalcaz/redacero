@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useEventoDestacado } from '../context/EventoDestacadoContext';
 import { FirebaseService } from '../services/FirebaseService';
 import DetalleFormulario from './DetalleFormulario';
 import DetalleUsuariosSinFormulario from './DetalleUsuariosSinFormulario';
@@ -6,6 +7,7 @@ import './FormulariosGuardados.css';
 import * as XLSX from 'xlsx';
 
 function FormulariosGuardados({ userPerfil, userEmail }) {
+  const { eventoId } = useEventoDestacado();
   // Filtro por nombre para usuarios sin formulario
   const [filtroNombre, setFiltroNombre] = useState('');
   const [formularios, setFormularios] = useState([]);
@@ -21,23 +23,27 @@ function FormulariosGuardados({ userPerfil, userEmail }) {
 
   const tiposFormulario = ['todos', 'socio', 'proveedor-con-hotel', 'proveedor-sin-hotel'];
 
+
+
   useEffect(() => {
     cargarFormularios();
-    
     // Cargar usuarios
     const cargarUsuarios = async () => {
-    const lista = await FirebaseService.obtenerUsuarios(); // ✅ Correcto
-    setUsuarios(lista);
-};
+      const lista = await FirebaseService.obtenerUsuarios();
+      setUsuarios(lista);
+    };
     cargarUsuarios();
-  }, []);
+  }, [eventoId]);
 
   const cargarFormularios = async () => {
     try {
       setLoading(true);
-      const data = await FirebaseService.obtenerFormularios();
-      
-      // Mostrar todos los formularios, sin filtrar por usuario ni rol
+      let data = [];
+      if (eventoId) {
+        data = await FirebaseService.obtenerFormulariosPorEvento(eventoId);
+      } else {
+        data = await FirebaseService.obtenerFormularios();
+      }
       console.log('Formularios cargados:', data.length);
       setFormularios(data);
     } catch (error) {
@@ -199,6 +205,7 @@ function capitalizarPalabras(str) {
     }
   };
 
+  // Filtrar solo por tipo y empresa (el evento ya viene filtrado desde Firebase)
   const formulariosFiltrados = formularios.filter(f => {
     const tipoOk = filtroTipo === 'todos' ? true : f.tipo === filtroTipo;
     const empresaOk = !filtroEmpresa ? true : (f.datosEmpresa?.empresa || '').toLowerCase().includes(filtroEmpresa.toLowerCase());

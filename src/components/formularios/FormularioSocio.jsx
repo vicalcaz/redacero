@@ -112,8 +112,8 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
   useEffect(() => {
     const cargarFormularioExistente = async () => {
       const emailParaBuscar = rolUsuario === 'admin' && usuarioSeleccionado?.email ? usuarioSeleccionado.email : user?.email;
-      if (!eventoSeleccionado || !emailParaBuscar) return;
-      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(emailParaBuscar, eventoSeleccionado);
+      if (!eventoContext || !emailParaBuscar) return;
+      const existente = await FirebaseService.obtenerFormularioSocioPorUsuarioYEvento(emailParaBuscar, eventoContext.id);
       if (existente) {
         console.log('🟢 [CARGA] Personas cargadas desde Firebase:', JSON.stringify(existente.personas, null, 2));
         setFormularioExistente(existente);
@@ -169,7 +169,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
     };
     cargarFormularioExistente();
     // eslint-disable-next-line
-  }, [eventoSeleccionado, user, rolUsuario, usuarioSeleccionado]);
+  }, [eventoContext, user, rolUsuario, usuarioSeleccionado]);
 
   // Cargar usuarios para admin
   useEffect(() => {
@@ -201,7 +201,12 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         setEventos(eventosObtenidos);
         // Si hay uno destacado, selecciónalo por defecto
         if (eventosObtenidos.length > 0 && !eventoSeleccionado) {
-          setEventoSeleccionado(eventosObtenidos[0].id);
+          const destacado = eventosObtenidos.find(ev => ev.destacado);
+          if (destacado) {
+            setEventoSeleccionado(destacado.id);
+          } else {
+            setEventoSeleccionado(eventosObtenidos[0].id);
+          }
         }
       } catch (error) {
         console.error("Error cargando eventos:", error);

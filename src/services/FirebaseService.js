@@ -1,3 +1,4 @@
+
   
 import { db } from '../firebase/config';
 import {
@@ -30,7 +31,20 @@ class FirebaseServiceClass {
       throw error;
     }
   }
-
+    // Obtener un evento por su ID
+    async obtenerEventoPorId(id) {
+      try {
+        if (!id) throw new Error('ID de evento requerido');
+        const docRef = doc(db, 'eventos', String(id));
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) throw new Error('Evento no encontrado');
+        return { id: docSnap.id, ...docSnap.data() };
+      } catch (error) {
+        console.error('❌ FirebaseService: Error obteniendo evento por ID:', error);
+        throw error;
+      }
+    }
+    
   // Eliminar todos los usuarios creados hoy
   async eliminarUsuariosCreadosHoy() {
     try {

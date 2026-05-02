@@ -202,7 +202,12 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         setEventos(eventosObtenidos);
         // Si hay uno destacado, selecciónalo por defecto
         if (eventosObtenidos.length > 0 && !eventoSeleccionado) {
-          setEventoSeleccionado(eventosObtenidos[0].id);
+          const destacado = eventosObtenidos.find(ev => ev.destacado);
+          if (destacado) {
+            setEventoSeleccionado(destacado.id);
+          } else {
+            setEventoSeleccionado(eventosObtenidos[0].id);
+          }
         }
       } catch (error) {
         console.error("Error cargando eventos:", error);

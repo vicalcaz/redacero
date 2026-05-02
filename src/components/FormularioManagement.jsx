@@ -86,7 +86,7 @@ function FormularioManagement({ user }) {
   };
 
   return (
-    <EventoDestacadoProvider>
+  //  <EventoDestacadoProvider>
       <div className="formulario-management">
         <div className="header">
           <h2>Gestión de Formularios</h2>
@@ -141,7 +141,7 @@ function FormularioManagement({ user }) {
           />
         )}
       </div>
-    </EventoDestacadoProvider>
+   // </EventoDestacadoProvider>
   );
 }
 
