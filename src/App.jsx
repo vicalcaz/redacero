@@ -339,13 +339,13 @@ function App() {
               <div className="header-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                   <img
-                    src="/ENCUENTRO 2025-01.svg"
-                    alt="Encuentro 2025"
+                    src="/encuentro 2026.png"
+                    alt="Encuentro 2026"
                     style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
                   />
                   <img
-                    src="/25-26-27 AGOSTO-01.svg"
-                    alt="25-26-27 Agosto"
+                    src="/fechaevento.png"
+                    alt="31 de Agosto, 1 y 2 de Septiembre"
                     style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
                   />
                 </div>

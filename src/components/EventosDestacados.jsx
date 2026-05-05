@@ -112,7 +112,7 @@ function EventosDestacados({
     return (
       <div className="eventos-destacados">
         <div className="page-header">
-          <h1>🌟 Eventos Destacados</h1>
+          <h1>🌟 Evento Destacado</h1>
           <p>Completa el formulario correspondiente a tu perfil</p>
 
           {/* INFO DE FILTRO ACTUALIZADA */}
@@ -357,7 +357,7 @@ function EventosDestacados({
   return (
     <div className="eventos-destacados" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 2px 12px #e0e0e0', padding: '2rem 1.5rem' }}>
       <div className="page-header" style={{ marginBottom: '2.5rem', padding: '1.5rem 0 1.2rem 0' }}>
-        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 8 }}>🌟 Eventos Destacados</h1>
+        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 8 }}>🌟 Evento Destacado</h1>
         <p style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1a237e', letterSpacing: '0.01em', margin: 0, textShadow: '0 1px 6px #e3e6f3' }}>
           Completa el formulario correspondiente a tu perfil
         </p>
