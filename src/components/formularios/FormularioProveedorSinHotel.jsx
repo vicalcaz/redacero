@@ -314,10 +314,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
           )}
         </div>
       )}
-      <div className="formulario-header">
-        <h1>Eventos Red Acero</h1>
-        <h2>📝 Formulario Proveedor sin Hotel</h2>
-      </div>
+   
 
       {!edicionHabilitada && (
         <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 16 }}>
@@ -346,7 +343,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
             <img
               src={configProveedorSinHotel.imageninicio}
               alt="Imagen de inicio"
-              style={{ maxWidth: '100%', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
+              style={{ maxWidth: '100%', backgroundColor: 'white', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
                     borderRadius: '12px' }}
             />
           </div>
@@ -361,9 +358,10 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         {eventosLoading ? (
           <div style={{ marginBottom: 24 }}>Cargando eventos...</div>
         ) : (
-          <div className="seccion-formulario" >
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Evento seleccionado<span style={{ color: 'red' }}>*</span>
+          <div className="seccion1-formulario" >
+            <h3 style={{ marginBottom: '0.5rem', fontSize: '1.3rem' }}>
+              <img src="/rediseño/Formulario/calendario-estrella.svg" alt="Evento destacado" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+              Evento seleccionado<span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -394,8 +392,11 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
         )}
 
         {/* Sección Datos de la Empresa - Color Azul */}
-        <div className="seccion-formulario">
-          <h3>   🏢 Datos de la Empresa    </h3>
+        <div className="seccion1-formulario">
+          <h3>
+            <img src="/rediseño/Formulario/datos de la empresa.svg" alt="Datos de la Empresa" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+            Datos de la Empresa
+          </h3>
           <div className="campo-fila"> {/* ✅ Cambio: campo-fila en lugar de form-grid */}
             <div className="campo-grupo">
                   <label>Empresa: (Razón Social)</label>
@@ -480,19 +481,14 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
           </div>  
         </div>
         
-        <div className="seccion-formulario" style={{
-          border: '2px solid --color-azul-oscuro',
-          borderRadius: '12px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
-        }}>
-          <h3 style={{ marginBottom: '1.2rem', color: '#1976d2', fontWeight: 700, fontSize: '1.25rem' }}>
-            Resumen información formulario
-          </h3>
+        <div className="seccion1-formulario">
+           <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+              <img src="/rediseño/Formulario/resumen informacion formulario.svg" alt="resumen informacion formulario" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+              Resumen información formulario<span style={{ color: 'red' }}>*</span>
+            </h3>
           <div style={{
             background: '#e3f2fd',
-            border: '1px solid #90caf9',
+            border: '0.4cm solid #d1c4e9',
             borderRadius: 8,
             padding: '1rem',
             marginBottom: '1.5rem',
@@ -503,13 +499,17 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
             fontSize: '1.08rem',
             fontWeight: 500
           }}>
-            <span>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '0.92em' }}>
+              <img src="/rediseño/Formulario/personas que asistiran.svg" alt="Personas que asistirán" style={{ width: '1.3em', height: '1.3em', verticalAlign: 'middle', marginRight: 0, paddingRight: 0 }} />
+              Personas registradas: <b style={{ marginLeft: 2 }}>{personas.length}</b>
+            </span>
             <span style={{ fontSize: '0.98rem', color: '#333', marginLeft: 12 }}>
               {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
             </span>
           </div>
           <h3>
-            👥 Personas que asistirán
+            <img src="/rediseño/Formulario/personas que asistiran.svg" alt="Personas que asistirán" style={{ width: '1.3em', height: '1.3em', verticalAlign: 'middle', marginRight: '0.5em' }} />
+            Personas que asistirán
           </h3>
           {personas.map((persona, index) => (
             <div key={persona.id} >
@@ -521,7 +521,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
                 paddingBottom: '0.5rem',
                 borderBottom: '1px solid --color-gris'
               }}>
-                <h5>Persona {index + 1}</h5>
+                <h3>Persona {index + 1}</h3>
                 {personas.length > 1 && (
                   <button
                     type="button"
@@ -645,12 +645,10 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
               {/* Subsección Actividades - Color Púrpura */}
               <div >
                 <div className="checkbox-section" style={{ marginTop: '0' }}>
-                  <h6 style={{ 
-                    marginBottom: '0.75rem', 
-                    fontSize: '1.1rem'
-                  }}>
-                    📅 Días de asistencia y actividades:
-                  </h6>
+                  <h3> 
+                    <img src="/rediseño/Formulario/dias asistencia.svg" alt="Días de asistencia y actividades" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+                    Días de asistencia y actividades
+                  </h3>
                   <div className="checkbox-grid" style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -789,23 +787,23 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
                 boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
               }}
             >
-              ➕ Agregar Persona
+              <span style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+                <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10.25" y="4" width="3.5" height="16" rx="1.5" fill="#fff"/>
+                  <rect x="4" y="10.25" width="16" height="3.5" rx="1.5" fill="#fff"/>
+                </svg>
+              </span>Agregar Persona
             </button>
           </div>
         </div>
 
         {/* Sección Comentarios - Color Gris */}
-        <div className="seccion-formulario" style={{
-          background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
-          border: '2px solid #757575',
-          borderRadius: '12px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(117, 117, 117, 0.15)'
-        }}>
-          <h3 style={{ color: '#424242', marginBottom: '1.5rem', fontSize: '1.4rem' }}>
-            💬 Comentarios
-          </h3>
+        <div className="seccion1-formulario">
+          <h6 style={{ marginBottom: '0.75rem', fontSize: '1.1rem'}}>
+              
+            <img src="/rediseño/Formulario/comentarios.svg" alt="Comentarios" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+            Comentarios
+          </h6>
           <div className="campo-grupo">
             <label>Comentarios adicionales:</label>
             <textarea

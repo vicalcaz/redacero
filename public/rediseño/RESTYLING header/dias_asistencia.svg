@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262 256">
+  <g fill="none" stroke="#d4873a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Marco del calendario simple -->
+    <rect x="8" y="40" width="246" height="200" rx="24"/>
+    <!-- Argollas -->
+    <line x1="56" y1="16" x2="56" y2="56"/>
+    <line x1="206" y1="16" x2="206" y2="56"/>
+    <!-- Tres filas de días simples -->
+    <rect x="40" y="88" width="40" height="24" rx="8"/>
+    <rect x="111" y="88" width="40" height="24" rx="8"/>
+    <rect x="182" y="88" width="40" height="24" rx="8"/>
+    <rect x="40" y="128" width="40" height="24" rx="8"/>
+    <rect x="111" y="128" width="40" height="24" rx="8"/>
+    <rect x="182" y="128" width="40" height="24" rx="8"/>
+    <rect x="40" y="168" width="40" height="24" rx="8"/>
+    <rect x="111" y="168" width="40" height="24" rx="8"/>
+    <rect x="182" y="168" width="40" height="24" rx="8"/>
+  </g>
+</svg>

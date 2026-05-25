@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 352">
+  <g fill="none" stroke="#d4873a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Edificio bajo -->
+    <rect x="48" y="160" width="104" height="120" rx="16"/>
+    <!-- Edificio alto -->
+    <rect x="168" y="32" width="152" height="248" rx="32"/>
+    <!-- Ventanas edificio bajo -->
+    <rect x="80" y="224" width="48" height="16" rx="8"/>
+    <!-- Ventanas edificio alto -->
+    <rect x="208" y="80" width="48" height="16" rx="8"/>
+    <rect x="208" y="144" width="48" height="16" rx="8"/>
+    <rect x="208" y="208" width="48" height="16" rx="8"/>
+    <!-- Línea base unida a los edificios -->
+    <line x1="48" y1="280" x2="152" y2="280" /> <!-- base edificio bajo -->
+    <line x1="168" y1="280" x2="320" y2="280" /> <!-- base edificio alto -->
+  </g>
+</svg>

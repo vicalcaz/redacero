@@ -1,0 +1,43 @@
+.form-btn.socio img,
+.form-btn.proveedor-hotel img,
+.form-btn.proveedor-sin-hotel img {
+  height: 3.2rem;
+  width: auto;
+  display: block;
+  max-width: 100%;
+}
+@media (max-width: 700px) {
+  .form-btn.socio img,
+  .form-btn.proveedor-hotel img,
+  .form-btn.proveedor-sin-hotel img {
+    height: 2.1rem;
+    min-width: 80px;
+    max-width: 90vw;
+  }
+  .page-header > h1 > div[style] {
+    margin-right: 0.2rem !important;
+    gap: 0.5rem !important;
+  }
+}
+.form-btn.socio,
+.form-btn.proveedor-hotel,
+.form-btn.proveedor-sin-hotel {
+  padding: 0;
+  margin-left: 1.5rem;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  cursor: pointer;
+  max-width: 100%;
+}
+@media (max-width: 700px) {
+  .form-btn.socio,
+  .form-btn.proveedor-hotel,
+  .form-btn.proveedor-sin-hotel {
+    margin-left: 0.5rem;
+  }
+}

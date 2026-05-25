@@ -52,10 +52,10 @@ input, textarea, select {
 /* Contenedor principal del formulario */
 .formulario-container {
   min-height: 100vh;
-  background: var(--color-gris);
-  border: 2px solid var(--color-azul-claro);
+  background: #fff;
+  /* border: 2px solid var(--color-azul-claro); */
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(25, 13, 255, 0.08);
+  /* box-shadow: 0 4px 12px rgba(25, 13, 255, 0.08); */
   padding: 2rem;
   line-height: 1;
 }
@@ -66,7 +66,7 @@ input, textarea, select {
   align-items: center;
   padding: 1.5rem 2rem;
   border-radius: 8px 8px 0 0;
-  color: var(--color-azul-oscuro);
+  color: var(--white);
   position: relative;
   min-height: 100px;
   /* El fondo se setea inline con backgroundImage */
@@ -75,17 +75,17 @@ input, textarea, select {
 .formulario-logo {
   max-height: 60px;
   margin-right: 24px;
-  background: var(--color-gris);
+  background: var(--white);
   border-radius: 8px;
   padding: 4px 8px;
-  box-shadow: 0 2px 8px var(--color-gris);
+  box-shadow: 0 2px 8px var(--white);
 }
 
 .formulario-header h1 {
   font-size: 2.5rem;
   font-weight: 300  ;
   margin-bottom: 0.5rem;
-  text-shadow: 2px 2px 4px var(--color-azul-oscuro);
+  text-shadow: 2px 2px 4px var(--white);
 }
 
 .formulario-header h2 {
@@ -195,22 +195,25 @@ input, textarea, select {
   line-height: 1;
   max-width: 800px;
   margin: 0 auto;
-  background: var(--color-azul-claro);
+  background: #fff;
+  
   border-radius: var(--radius-large);
   padding: 2rem;
   box-shadow: var(--shadow-heavy);
 }
 
 /* Secciones del formulario */
-.seccion-formulario {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-color);
+
+
+.seccion1-formulario {
   background: white;
-  border: 2px solid var(--color-azul-medio);
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  border: 0.4cm solid #d1c4e9;
+  border-radius: 12px;
+  margin-top: -1rem;
+  margin-bottom: 0rem;
   padding: 1rem;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+  
 }
 
 .seccion-formulario:last-of-type {
@@ -225,8 +228,9 @@ input, textarea, select {
   font-weight: 600;
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--primary-color);
+  border-bottom: none;
   display: inline-block;
+  text-decoration: none !important;
 }
 .line-height-compact {
   line-height: 1.05 !important;
@@ -236,9 +240,9 @@ input, textarea, select {
 .seccion-formulario,
 .formulario-header,
 .formulario-form {
-  margin-bottom: 0.3rem !important;
-  padding-bottom: 0.2rem !important;
-  padding-top: 0.2rem !important;
+  margin-bottom: 0.0rem !important;
+  padding-bottom: 0.0rem !important;
+  padding-top: 0.0rem !important;
 }
 .seccion-formulario h3,
 .formulario-header h1,
@@ -424,6 +428,7 @@ select {
   gap: 1rem;
   justify-content: center;
   margin-top: 3rem;
+  margin-bottom: 1rem;
   padding-top: 2rem;
   border-top: 2px solid var(--border-color);
 }
@@ -436,9 +441,10 @@ select {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+  margin-bottom: 1rem;
   transition: all 0.3s ease;
   min-width: 140px;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
   letter-spacing: 0.5px;
   background: var(--color-naranja);
   color: white;
@@ -775,7 +781,7 @@ button:disabled {
 
 .nota-inicio-formulario {
   margin: 12px 0 24px 0;
-  color: var(--color-gris);
+  /*color: var(--color-gris);*/
  /* font-weight: 500;*/
   text-align: left;
 }

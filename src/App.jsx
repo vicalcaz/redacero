@@ -337,27 +337,56 @@ function App() {
             {/* Header con imágenes del evento */}
             <header className="app-header">
               <div className="header-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <div className="header-imgs-responsive">
+                  <div className="logo-header-separador-group">
+                    <span className="header-separador">
+                      <img
+                        src="/rediseño/RESTYLING header/separador png@150x.png"
+                        alt="Separador violeta"
+                        style={{ display: 'inline-block', verticalAlign: 'middle', width: '10px', maxWidth: '10px', minHeight: '32px', maxHeight: '80px', flexShrink: 0, background: 'transparent' }}
+                      />
+                    </span>
+                    <img
+                      src="/rediseño/RESTYLING header/Logo.svg"
+                      alt="Encuentro 2026"
+                      className="header-logo"
+                    />
+                  </div>
                   <img
-                    src="/encuentro 2026.png"
-                    alt="Encuentro 2026"
-                    style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
-                  />
-                  <img
-                    src="/fechaevento.png"
+                    src="/rediseño/RESTYLING header/FECHA.svg"
                     alt="31 de Agosto, 1 y 2 de Septiembre"
-                    style={{ height: '5.8rem', maxWidth: '399px', objectFit: 'contain', background: 'transparent' }}
+                    className="header-fecha"
                   />
                 </div>
                 <div className="header-actions">
-                  <span>👤 {usuario.nombre || usuario.email}</span>
+                  <div className="header-actions-user-row">
+                    <span className="usuario-img-wrapper">
+                      <img
+                        src="/rediseño/RESTYLING header/usuario.svg"
+                        alt="Usuario"
+                        className="usuario-img"
+                        style={{ objectFit: 'contain', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                      />
+                    </span>
+                        <span className="header-actions-user-text" style={{display: 'flex', alignItems: 'center', height: '100%'}}>
+                          {usuario.nombre || usuario.email}
+                        </span>
+                    <span className="header-separador-wrapper">
+                      <img
+                        src="/rediseño/RESTYLING header/separador png@150x.png"
+                        alt="Separador violeta"
+                        className="header-separador-img"
+                        style={{ objectFit: 'contain', background: 'transparent', marginl: '0.5rem' }}
+                      />
+                    </span>
+                  </div>
                   {usuario.rol === 'admin' && (
                     <button 
                       onClick={navegarADashboard}
                       className="btn-admin"
                       title="Ir al panel de administración"
                     >
-                      🔧 Administración
+                      Administración
                     </button>
                   )}
                   <button 
@@ -365,7 +394,14 @@ function App() {
                     className="btn-logout"
                     title="Cerrar sesión"
                   >
-                    🚪 Salir
+                    <span className="salir-img-wrapper">
+                      <img
+                        src="/rediseño/RESTYLING header/salir.png"
+                        alt="Salir"
+                        className="salir-img"
+                        style={{ objectFit: 'contain', verticalAlign: 'middle' }}
+                      />
+                    </span>
                   </button>
                 </div>
               </div>

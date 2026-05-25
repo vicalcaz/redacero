@@ -1,3 +1,55 @@
+@media (max-width: 600px) {
+  .formulario-botones button {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0 !important;
+    box-sizing: border-box;
+  }
+  .formulario-botones svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 3.2rem !important;
+    box-sizing: border-box;
+  }
+}
+
+.formulario-botones {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-right: 1cm;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .formulario-botones {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    margin-right: 0;
+    gap: 1rem;
+    width: 100%;
+  }
+  .formulario-botones button {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0 !important;
+    display: block;
+    box-sizing: border-box;
+  }
+  .formulario-botones svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 3.2rem !important;
+    box-sizing: border-box;
+    display: block;
+  }
+}
 /* Responsive para pantalla principal de evento destacado */
 @media (max-width: 900px) {
   .eventos-grid {
@@ -58,7 +110,7 @@
 
 .alarma-fecha .alarma-ico {
   display: inline-block;
-  animation: alarmaJump 0.7s infinite cubic-bezier(.36,1.56,.64,1);
+  
   font-size: 1.25em;
   margin-right: 0.3em;
 }
@@ -80,8 +132,8 @@
   border-radius: 12px 12px 0 0;
   overflow: hidden;
   z-index: 1;
-  background: var(--color-naranja);
-  animation: brilloNaranjaCont 2.2s infinite cubic-bezier(.4,1.6,.6,1) alternate;
+  background: var(white);
+  
   box-shadow: 0 0 32px 8px #ff9800cc, 0 0 64px 24px #ff980088;
 }
 
@@ -473,9 +525,13 @@ body {
 }
 
 /* Información del evento */
+
+
 .evento-info {
   padding: 0 1.5rem 1rem 1.5rem;
 }
+
+
 
 .evento-titulo {
   font-size: 1.8rem;
@@ -842,5 +898,25 @@ body {
   
   .btn-icon {
     font-size: 1.3rem;
+  }
+}
+.evento-imagen img, .evento-img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 12px 12px 0 0;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+}
+
+@media (max-width: 700px) {
+  .evento-imagen {
+    height: 140px !important;
+    min-height: 80px !important;
+  }
+  .evento-imagen img, .evento-img {
+    max-height: 120px !important;
   }
 }

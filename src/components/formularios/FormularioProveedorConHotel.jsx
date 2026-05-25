@@ -787,10 +787,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           )}
         </div>
       )}
-      <div className="formulario-header">
-        <h1>Eventos Red Acero</h1>
-        <h2>📝 Formulario Proveedor</h2>
-      </div>
+    
 
       {!edicionHabilitada && (
         <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 16 }}>
@@ -818,7 +815,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
             <img
               src={configSocio.imageninicio}
               alt="Imagen de inicio"
-              style={{ maxWidth: '100%', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
+              style={{ maxWidth: '100%', backgroundColor: 'white', height: 'auto', maxHeight: 180, display: 'block',  objectFit: 'cover',
                     borderRadius: '12px' }}
             />
           </div>
@@ -833,9 +830,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         {eventosLoading ? (
           <div style={{ marginBottom: 24 }}>Cargando eventos...</div>
         ) : (
-          <div className="seccion-formulario" >
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>
-              📅 Evento seleccionado <span style={{ color: 'red' }}>*</span>
+          <div className="seccion1-formulario" >
+           <h3 style={{ marginBottom: '0.5rem', fontSize: '1.3rem' }}>
+              <img src="/rediseño/Formulario/calendario-estrella.svg" alt="Evento destacado" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+              Evento seleccionado<span style={{ color: 'red' }}>*</span>
             </h3>
             <select
               value={eventoSeleccionado}
@@ -866,8 +864,11 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
         )}
 
         {/* Sección Datos de la Empresa - Color Azul */}
-        <div className="seccion-formulario">
-          <h3>   🏢 Datos de la Empresa    </h3>
+        <div className="seccion1-formulario">
+          <h3>
+            <img src="/rediseño/Formulario/datos de la empresa.svg" alt="Datos de la Empresa" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+            Datos de la Empresa
+          </h3>
           <div className="campo-fila"> {/* ✅ Cambio: campo-fila en lugar de form-grid */}
             <div className="campo-grupo">
                   <label>Empresa: (Razón Social)</label>
@@ -955,18 +956,12 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           </div>  
         </div>
         
-        <div className="seccion-formulario" style={{
-          border: '2px solid --color-azul-oscuro',
-          borderRadius: '12px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
-        }}>
-     
-   
-          <h3>
-            👥 Personas que asistirán
+        <div className="seccion1-formulario">
+           <h3>
+            <img src="/rediseño/Formulario/personas que asistiran.svg" alt="Personas que asistirán" style={{ width: '1.3em', height: '1.3em', verticalAlign: 'middle', marginRight: '0.5em' }} />
+            Personas que asistirán
           </h3>
+  
           {personas.map((persona, index) => (
             <div key={persona.id} >
               <div className="persona-header" style={{
@@ -977,7 +972,7 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 paddingBottom: '0.5rem',
                 borderBottom: '1px solid --color-gris'
               }}>
-                <h5>Persona {index + 1}</h5>
+                <h3>Persona {index + 1}</h3>
                 {personas.length > 1 && (
                   <button
                     type="button"
@@ -1091,7 +1086,8 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                   marginBottom: '1rem',
                   fontSize: '1.2rem'
                 }}>
-                  🏨 Información de Alojamiento
+                  <img src="/rediseño/Formulario/info alojamiento.svg" alt="Información de Alojamiento" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+                  Información de Alojamiento
                 </h5>
                 {/* Mostrar noches y días tomados */}
                 {(persona.fechaLlegada && persona.fechaSalida) && (
@@ -1399,12 +1395,10 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
               {/* Subsección Actividades - Color Púrpura */}
               <div >
                 <div className="checkbox-section" style={{ marginTop: '0' }}>
-                  <h6 style={{ 
-                    marginBottom: '0.75rem', 
-                    fontSize: '1.1rem'
-                  }}>
-                    📅 Días de asistencia y actividades:
-                  </h6>
+                  <h3> 
+                    <img src="/rediseño/Formulario/dias asistencia.svg" alt="Días de asistencia y actividades" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+                    Días de asistencia y actividades
+                  </h3>
                   <div className="checkbox-grid" style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -1542,22 +1536,22 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
                 boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
               }}
             >
-              ➕ Agregar Persona
+              <span style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }}>
+                <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10.25" y="4" width="3.5" height="16" rx="1.5" fill="#fff"/>
+                  <rect x="4" y="10.25" width="16" height="3.5" rx="1.5" fill="#fff"/>
+                </svg>
+              </span>Agregar Persona
             </button>
           </div>
         </div>
 
         {/* Sección Comentarios - Color Gris */}
-        <div className="seccion-formulario" style={{
-          background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
-          border: '2px solid #757575',
-          borderRadius: '12px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(117, 117, 117, 0.15)'
-        }}>
-          <h3 style={{ color: '#424242', marginBottom: '1.5rem', fontSize: '1.4rem' }}>
-            💬 Comentarios
+        <div className="seccion1-formulario">
+          <h3 style={{ marginBottom: '0.75rem', fontSize: '1.1rem'}}>
+              
+            <img src="/rediseño/Formulario/comentarios.svg" alt="Comentarios" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+            Comentarios
           </h3>
           <div className="campo-grupo">
             <label>Comentarios adicionales:</label>
@@ -1571,13 +1565,14 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
           </div>
         </div>
      {/* Tabla resumen de personas */}
-          <h3 style={{ marginBottom: '1.2rem', color: '#f7d205ff', fontWeight: 700, fontSize: '1.25rem' }}>
-            Resumen información formulario
+          <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+              <img src="/rediseño/Formulario/resumen informacion formulario.svg" alt="resumen informacion formulario" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
+              Resumen información formulario<span style={{ color: 'red' }}>*</span>
           </h3>
           {/* Resumen de personas */}
           <div style={{
             background: '#e3f2fd',
-            border: '1px solid #90caf9',
+            border: '0.4cm solid #d1c4e9',
             borderRadius: 8,
             padding: '1rem',
             marginBottom: '1.5rem',
@@ -1588,11 +1583,26 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
             fontSize: '1.08rem',
             fontWeight: 500
           }}>
-            <span style={{ fontSize: '0.92em' }}>👥 Personas registradas: <b>{personas.length}</b></span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '0.92em' }}>
+              <img src="/rediseño/Formulario/personas que asistiran.svg" alt="Personas que asistirán" style={{ width: '1.3em', height: '1.3em', verticalAlign: 'middle', marginRight: 0, paddingRight: 0 }} />
+              Personas registradas: <b style={{ marginLeft: 2 }}>{personas.length}</b>
+            </span>
             <span style={{ fontSize: '0.68em', color: '#333', marginLeft: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
               {personas.map((p, i) => `${p.nombre} ${p.apellido}`.trim()).filter(n => n !== '').join(', ')}
             </span>
-            <span style={{ fontSize: '0.92em' }}>🛏️ Total noches tomadas: <b>{(() => {
+            <span style={{ fontSize: '0.92em', display: 'inline-flex', alignItems: 'center' }}>
+              <svg width="1.3em" height="1.3em" viewBox="0 0 24 24" fill="none" stroke="#e38027" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, minWidth: '1.3em' }}>
+                {/* Cama estilo emoji 🛏️, líneas naranjas */}
+                <rect x="3" y="12" width="18" height="6" rx="2" stroke="#e38027" fill="none"/>
+                <rect x="3" y="10" width="7" height="4" rx="1.5" stroke="#e38027" fill="none"/>
+                <rect x="10" y="13" width="8" height="2.5" rx="1" stroke="#e38027" fill="none"/>
+                <line x1="3" y1="18" x2="3" y2="20.5" stroke="#e38027"/>
+                <line x1="21" y1="18" x2="21" y2="20.5" stroke="#e38027"/>
+                <rect x="3" y="20" width="18" height="1" rx="0.5" stroke="#e38027" fill="none"/>
+                <rect x="3" y="9" width="7" height="1.5" rx="0.75" stroke="#e38027" fill="none"/>
+                <circle cx="6.5" cy="12" r="0.7" fill="#e38027"/>
+              </svg>
+              Total noches tomadas: <b>{(() => {
               // Calcular noches únicas por habitación compartida (doble/matrimonial) o individual
               const habitaciones = new Map();
               personas.forEach(p => {
@@ -1622,7 +1632,9 @@ function FormularioProveedorConHotel({ user, evento, onSubmit, onCancel }) {
               habitaciones.forEach(n => { totalNoches += n; });
               return totalNoches;
             })()}</b></span>
-            <span style={{ fontSize: '0.92em' }}>🏨 Habitaciones tomadas: <b>{(() => {
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '0.92em' }}>
+              <img src="/rediseño/Formulario/info alojamiento.svg" alt="Habitaciones tomadas" style={{ width: '1.3em', height: '1.3em', verticalAlign: 'middle', marginRight: 0, paddingRight: 0 }} />
+              Habitaciones tomadas: <b>{(() => {
               // Contar habitaciones únicas: cada persona con tipoHabitacion doble/matrimonial y que NO comparte, o solo una vez por pareja que comparte
               const habitaciones = new Set();
               personas.forEach(p => {

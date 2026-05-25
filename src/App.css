@@ -1,3 +1,80 @@
+.header-logo {
+  height: auto;
+  max-width: auto;
+  width: auto;
+  object-fit: contain;
+  display: inline-block;
+}
+.header-actions-user-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+img[alt="Salir"] {
+  height: 0.8rem;
+  width: 0.8rem;
+  min-width: 0.8rem;
+  min-height: 0.8rem;
+  object-fit: contain;
+  display: inline-block;
+}
+
+@media (max-width: 600px) {
+  img[alt="Salir"] {
+    height: 0.6rem;
+    width: 0.6rem;
+    min-width: 0.6rem;
+    min-height: 0.6rem;
+  }
+}
+/* Tamaño reducido para logo, fecha e imagen de usuario */
+img[alt="Encuentro 2026"] {
+  height: 1.1rem;
+  max-width: 30px;
+  width: auto;
+  object-fit: contain;
+}
+img[alt="31 de Agosto, 1 y 2 de Septiembre"] {
+  height: 0.8rem;
+  max-width: 40px;
+  width: auto;
+  object-fit: contain;
+}
+img[alt="Usuario"] {
+  height: 1.7rem;
+  width: 1.7rem;
+  min-width: 1.7rem;
+  min-height: 1.7rem;
+  object-fit: contain;
+  display: inline-block;
+}
+
+header-actions-user-text {
+  display: flex;
+  align-items: left;
+  color: black;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  img[alt="Encuentro 2026"] {
+    height: auto;
+    max-width: 24px;
+  }
+  img[alt="31 de Agosto, 1 y 2 de Septiembre"] {
+    height: 0.;
+    max-width: 30px;
+  }
+  img[alt="Usuario"] {
+    height: 1.1rem;
+    width: 1.1rem;
+    min-width: 1.1rem;
+    min-height: 1.1rem;
+  }
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -14,7 +91,7 @@
 }
 
 .logo {
-  height: 6em;
+  height: auto;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
@@ -79,37 +156,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1210px;
   margin: 0 auto;
   padding: 0 2rem;
+  padding-top: 1cm;
+    padding-bottom: 1cm;
 }
 
-@media (max-width: 700px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1.2rem;
-    padding: 1rem 0.5rem;
-    text-align: center;
-  }
-  .header-content > div:first-child {
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-    width: 100%;
-  }
-  .header-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  .header-content img {
-    max-width: 95vw !important;
-    height: 3.2rem !important;
-    margin-bottom: 0.3rem;
-  }
-}
 
 .header-actions {
   display: flex;
@@ -118,7 +171,7 @@ body {
 }
 
 .header-actions span {
-  color: white;
+  color: black;
   font-weight: 500;
 }
 
@@ -170,7 +223,40 @@ body {
 }
 
 .app-header {
-  background: var(--color-azul-claro);
-  /* Si quieres que el texto sea blanco: */
-  color: #fff;
+  background: #fff;
+  color: #453796; /* Color de texto sugerido para contraste */
+}
+
+
+.header-imgs-responsive {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 120px;
+  justify-content: flex-start;
+.logo-header-separador-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+}
+.header-imgs-responsive img {
+  height: 120px;
+  max-width: 200px;
+  object-fit: contain;
+  background: transparent;
+}
+.header-separador {
+  height: auto;
+  width: 10px;
+  max-width: 10px;
+  min-height: 32px;
+  max-height: 80px;
+  flex-shrink: 0;
+  
+  
 }

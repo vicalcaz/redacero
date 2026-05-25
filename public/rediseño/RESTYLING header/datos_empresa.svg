@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 352">
+  <g fill="none" stroke="#d4873a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Edificio bajo simple -->
+    <rect x="48" y="160" width="104" height="120" rx="16"/>
+    <!-- Edificio alto simple -->
+    <rect x="168" y="32" width="152" height="248" rx="32"/>
+    <!-- Línea base simple -->
+    <line x1="48" y1="280" x2="320" y2="280" />
+  </g>
+</svg>
