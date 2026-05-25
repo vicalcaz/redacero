@@ -1547,7 +1547,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
         {/* Sección Comentarios - Color Gris */}
         <div className="seccion1-formulario"> 
         
-            <h6 style={{ marginBottom: '0.75rem', fontSize: '1.1rem'}}>
+          <h6 style={{ marginBottom: '0.75rem', fontSize: '1.1rem'}}>
               
             <img src="/rediseño/Formulario/comentarios.svg" alt="Comentarios" style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: '0.3em' }} />
             Comentarios
@@ -1696,7 +1696,7 @@ function FormularioSocio({ user, evento, onSubmit, onCancel }) {
             type="button"
             className="btn-secundario"
             onClick={onCancel}
-            style={{ marginLeft: '1rem' }}
+            style={{ marginLeft: '0rem' }}
           >
             ← Volver
           </button>

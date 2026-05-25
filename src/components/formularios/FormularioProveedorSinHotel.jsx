@@ -829,7 +829,7 @@ function FormularioProveedorSinHotel({ user, onCancel }) {
             type="button"
             className="btn-secundario"
             onClick={onCancel}
-            style={{ marginLeft: '1rem' }}
+            style={{ marginLeft: '0rem' }}
           >
             ← Volver
           </button>
