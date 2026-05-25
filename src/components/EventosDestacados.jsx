@@ -475,8 +475,9 @@ function EventosDestacados({
   }
 
   return (
+    
     <div className="eventos-destacados" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 2px 12px #e0e0e0', padding: '2rem 1.5rem' }}>
-      <div className="page-header" style={{ marginBottom: '2.5rem', padding: '1.5rem 0 1.2rem 0', minHeight: '120px' }}>
+      <div className="page-header" style={{ marginBottom: '2.5rem', padding: '1.5rem 0 1.2rem 0', minHeight: '120px' }} >
         <h1 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: '0.7rem', flexWrap: 'wrap', width: '100%' }}>
           <img
             src="/rediseño/HERO/ESTRELLA.svg"
@@ -487,7 +488,7 @@ function EventosDestacados({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            justifyContent: 'center',
+            justifyContent: 'left',
             minWidth: 180,
             maxWidth: 600,
             marginLeft: '0.2rem',
@@ -512,7 +513,9 @@ function EventosDestacados({
               fontFamily: 'Manrope, Arial, sans-serif',
               fontWeight: 400,
               fontSize: 13,
+              paddingLeft: '1.2rem',
               color: '#282828',
+              textAlign: 'left',
               lineHeight: 1.1,
               wordBreak: 'break-word',
               whiteSpace: 'normal',
@@ -625,7 +628,8 @@ function EventosDestacados({
         {/* Botón Panel Adm. eliminado por solicitud */}
       </div>
 
-      <div className="eventos-grid">
+      <div className="page-header" style={{ marginBottom: '2.5rem', padding: '0rem 0 1.2rem 0', minHeight: '120px' }} >
+       
         {eventos.map(evento => {
           return (
             <div key={evento.id} className="evento-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', maxHeight: "none", minHeight: 380, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
